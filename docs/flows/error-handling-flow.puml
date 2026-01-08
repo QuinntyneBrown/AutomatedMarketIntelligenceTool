@@ -1,0 +1,158 @@
+@startuml error-handling-flow
+!theme plain
+title Car Search CLI - Error Handling Flow
+
+start
+
+:Exception Occurred;
+
+:Capture Exception Details;
+note right
+  Type, Message,
+  StackTrace, InnerException
+end note
+
+:Log Exception;
+
+switch (Exception Type?)
+
+case (ValidationException)
+    :Format Validation Errors;
+    :Display All Errors;
+    note right
+      List all invalid
+      parameters, not
+      just first one
+    end note
+    :Suggest Correct Usage;
+    :Exit Code = 2;
+
+case (NetworkException)
+    :Identify Failed Request;
+
+    if (Retry Count < Max?) then (yes)
+        :Calculate Backoff Delay;
+        note right
+          Exponential: 2^n seconds
+          Max: 30 seconds
+        end note
+        :Wait for Delay;
+        :Retry Operation;
+        -> Retry Path;
+    else (no)
+        :Display Network Error;
+        :Suggest Checking Connection;
+        :Exit Code = 1;
+    endif
+
+case (DatabaseException)
+    if (Is Transient?) then (yes)
+        if (Retry Count < Max?) then (yes)
+            :Wait and Retry;
+            -> Retry Path;
+        else (no)
+            :Log Persistent Failure;
+        endif
+    endif
+
+    :Rollback Transaction;
+    :Display Database Error;
+    :Suggest Checking DB Config;
+    :Exit Code = 1;
+
+case (ScrapingException)
+    :Identify Failed Site;
+
+    if (CAPTCHA Detected?) then (yes)
+        :Display CAPTCHA Warning;
+        :Skip Site, Continue Others;
+        -> Partial Continue;
+    else if (Blocked?) then (yes)
+        :Display Blocked Warning;
+        :Suggest Using Proxy;
+        :Skip Site, Continue Others;
+        -> Partial Continue;
+    else (other error)
+        :Log Site Error;
+        :Mark Site as Unhealthy;
+        :Skip Site, Continue Others;
+        -> Partial Continue;
+    endif
+
+case (TimeoutException)
+    :Identify Timed Out Operation;
+
+    if (Retry Count < Max?) then (yes)
+        :Increase Timeout;
+        :Retry Operation;
+        -> Retry Path;
+    else (no)
+        :Display Timeout Error;
+        :Suggest Checking Network;
+        :Exit Code = 1;
+    endif
+
+case (ConfigurationException)
+    :Display Config Error;
+    :Show Invalid Setting;
+    :Suggest Fix;
+    :Exit Code = 2;
+
+case (OperationCanceledException)
+    :User Interrupted;
+    :Save Partial Results;
+    :Cleanup Resources;
+    :Display Cancellation Message;
+    :Exit Code = 130;
+
+case (other)
+    :Display Generic Error;
+
+    if (Debug Mode?) then (yes)
+        :Display Stack Trace;
+    else (no)
+        :Suggest --verbose flag;
+    endif
+
+    :Exit Code = 1;
+
+endswitch
+
+partition "Retry Path" {
+    :Increment Retry Count;
+    :Re-execute Operation;
+
+    if (Success?) then (yes)
+        :Continue Normal Flow;
+        stop
+    else (no)
+        :Return to Exception Handler;
+    endif
+}
+
+partition "Partial Continue" {
+    :Record Partial Failure;
+    :Continue with Other Operations;
+
+    if (All Operations Failed?) then (yes)
+        :Display Complete Failure;
+        :Exit Code = 1;
+    else (no)
+        :Complete with Warnings;
+        :Display Partial Success;
+        :Exit Code = 0;
+    endif
+}
+
+partition "Cleanup" {
+    :Close Database Connections;
+    :Dispose Browser Instances;
+    :Flush Log Buffers;
+    :Release File Handles;
+}
+
+:Exit with Appropriate Code;
+
+stop
+
+@enduml

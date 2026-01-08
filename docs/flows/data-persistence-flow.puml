@@ -1,0 +1,105 @@
+@startuml data-persistence-flow
+!theme plain
+title Car Search CLI - Data Persistence Flow
+
+start
+
+:Receive Processed Listings;
+:Receive Deduplication Results;
+
+:Begin Database Transaction;
+
+partition "Batch Processing" {
+
+    while (More Listings to Process?) is (yes)
+        :Get Next Listing Batch;
+        note right
+          Default batch size: 100
+        end note
+
+        while (For Each Listing in Batch) is (more)
+
+            if (New Listing?) then (yes)
+                :Generate New GUID;
+                :Set FirstSeenDate = Now;
+                :Set LastSeenDate = Now;
+                :Set IsActive = true;
+                :Set NewListingFlag = true;
+
+                :Insert Listing Record;
+
+                :Create Initial Price History;
+
+                if (Cross-Site Match Found?) then (yes)
+                    :Link to Vehicle Record;
+                else (no)
+                    :Create New Vehicle Record;
+                    :Link Listing to Vehicle;
+                endif
+
+            else (existing listing)
+                :Load Existing Record;
+                :Update LastSeenDate = Now;
+
+                if (Price Changed?) then (yes)
+                    :Create Price History Record;
+                    :Update Listing Price;
+                    :Set PriceChangedFlag = true;
+                endif
+
+                if (Other Fields Changed?) then (yes)
+                    :Update Changed Fields;
+                endif
+
+                :Set UpdatedAt = Now;
+
+                :Update Listing Record;
+            endif
+
+        endwhile (done)
+
+        :Flush Batch to Database;
+
+    endwhile (done)
+}
+
+partition "Deactivation Check" {
+    :Query Listings Not Seen Recently;
+    note right
+      Threshold: configurable
+      Default: 7 days
+    end note
+
+    while (For Each Stale Listing) is (more)
+        :Set IsActive = false;
+        :Update Listing Record;
+    endwhile (done)
+}
+
+partition "Session Logging" {
+    :Update Search Session;
+    :Set EndTime = Now;
+    :Set ResultCount;
+    :Set NewListingsCount;
+    :Set PriceChangesCount;
+    :Set Status = Success;
+}
+
+if (Transaction Successful?) then (yes)
+    :Commit Transaction;
+else (no)
+    :Rollback Transaction;
+    :Log Error Details;
+    :Throw Exception;
+endif
+
+:Return Persistence Summary;
+note right
+  Inserted: X
+  Updated: Y
+  Deactivated: Z
+end note
+
+stop
+
+@enduml

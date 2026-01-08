@@ -1,0 +1,237 @@
+# Reporting Feature Requirements
+
+## Overview
+
+The Reporting feature provides comprehensive output and visualization of search results, statistics, and market analysis. This feature transforms raw listing data into actionable insights for users.
+
+---
+
+## REQ-RP-001: Search Results Summary
+
+### Formal Statement
+
+The system SHALL display a summary of search results upon completion of each search operation.
+
+### Acceptance Criteria
+
+- [ ] AC-001.1: Summary includes total listings found across all sources
+- [ ] AC-001.2: Summary includes count of new listings (not previously seen)
+- [ ] AC-001.3: Summary includes count of price changes detected
+- [ ] AC-001.4: Summary includes breakdown by source site
+- [ ] AC-001.5: Summary includes search duration and performance metrics
+- [ ] AC-001.6: Summary format adapts to terminal width
+
+---
+
+## REQ-RP-002: Listing Table Display
+
+### Formal Statement
+
+The system SHALL display search results in a formatted table with configurable columns.
+
+### Acceptance Criteria
+
+- [ ] AC-002.1: Default columns: Year, Make, Model, Price, Mileage, Location, Source
+- [ ] AC-002.2: User can select columns (e.g., `--columns year,make,model,price,vin`)
+- [ ] AC-002.3: Column widths auto-adjust to content and terminal width
+- [ ] AC-002.4: Long values truncated with ellipsis
+- [ ] AC-002.5: Rows alternate colors for readability (if color enabled)
+- [ ] AC-002.6: Header row clearly distinguished from data rows
+
+---
+
+## REQ-RP-003: New Listing Highlighting
+
+### Formal Statement
+
+The system SHALL visually highlight listings that are new since the last search.
+
+### Acceptance Criteria
+
+- [ ] AC-003.1: New listings marked with [NEW] indicator
+- [ ] AC-003.2: New listings displayed in distinct color (green by default)
+- [ ] AC-003.3: Option to show only new listings (e.g., `--new-only`)
+- [ ] AC-003.4: Count of new listings shown in summary
+- [ ] AC-003.5: Definition of "new" is configurable (default: not seen in last 24 hours)
+
+---
+
+## REQ-RP-004: Price Change Notifications
+
+### Formal Statement
+
+The system SHALL identify and highlight listings with price changes.
+
+### Acceptance Criteria
+
+- [ ] AC-004.1: Price decreases highlighted in green with down arrow (↓)
+- [ ] AC-004.2: Price increases highlighted in red with up arrow (↑)
+- [ ] AC-004.3: Amount and percentage of change displayed
+- [ ] AC-004.4: Option to show only price-changed listings (e.g., `--price-changed`)
+- [ ] AC-004.5: Price history viewable for individual listings
+
+---
+
+## REQ-RP-005: Sorting Options
+
+### Formal Statement
+
+The system SHALL support sorting of search results by various criteria.
+
+### Acceptance Criteria
+
+- [ ] AC-005.1: Sort by price (e.g., `--sort price` or `--sort price:desc`)
+- [ ] AC-005.2: Sort by mileage
+- [ ] AC-005.3: Sort by year
+- [ ] AC-005.4: Sort by distance from search location
+- [ ] AC-005.5: Sort by date listed
+- [ ] AC-005.6: Sort by date first seen (by tool)
+- [ ] AC-005.7: Default sort is by date first seen (newest first)
+- [ ] AC-005.8: Multiple sort criteria supported (e.g., `--sort price,mileage`)
+
+---
+
+## REQ-RP-006: Filtering Results
+
+### Formal Statement
+
+The system SHALL support post-search filtering of displayed results.
+
+### Acceptance Criteria
+
+- [ ] AC-006.1: Filter by any listing attribute
+- [ ] AC-006.2: Multiple filters can be combined (AND logic)
+- [ ] AC-006.3: Filters apply to display only, don't affect database
+- [ ] AC-006.4: Filter syntax supports comparison operators (e.g., `--filter "price<20000"`)
+- [ ] AC-006.5: Text filters support wildcards (e.g., `--filter "model=*Sport*"`)
+
+---
+
+## REQ-RP-007: Statistics Report
+
+### Formal Statement
+
+The system SHALL generate statistical reports on market data.
+
+### Acceptance Criteria
+
+- [ ] AC-007.1: `car-search stats` command generates market statistics
+- [ ] AC-007.2: Statistics include: average price, median price, price range
+- [ ] AC-007.3: Statistics include: average mileage, median mileage, mileage range
+- [ ] AC-007.4: Statistics include: count by make, model, year, body style
+- [ ] AC-007.5: Statistics include: average days on market
+- [ ] AC-007.6: Statistics filterable by same criteria as search
+
+---
+
+## REQ-RP-008: Price Analysis
+
+### Formal Statement
+
+The system SHALL provide price analysis features to help users evaluate deals.
+
+### Acceptance Criteria
+
+- [ ] AC-008.1: Market average price calculated for similar listings
+- [ ] AC-008.2: Listing price compared to market average (above/below/at)
+- [ ] AC-008.3: Deal rating provided (Great, Good, Fair, High)
+- [ ] AC-008.4: Price per mile/km calculated
+- [ ] AC-008.5: Historical price trend shown for tracked listings
+
+---
+
+## REQ-RP-009: Listing Detail View
+
+### Formal Statement
+
+The system SHALL provide a detailed view of individual listings.
+
+### Acceptance Criteria
+
+- [ ] AC-009.1: `car-search show <listing-id>` displays full listing details
+- [ ] AC-009.2: All available fields displayed in formatted layout
+- [ ] AC-009.3: Image URLs listed (or thumbnails in supported terminals)
+- [ ] AC-009.4: Full description displayed
+- [ ] AC-009.5: Price history shown if available
+- [ ] AC-009.6: Direct link to original listing provided
+
+---
+
+## REQ-RP-010: Watch List
+
+### Formal Statement
+
+The system SHALL allow users to maintain a watch list of interesting listings.
+
+### Acceptance Criteria
+
+- [ ] AC-010.1: User can add listing to watch list (e.g., `car-search watch add <listing-id>`)
+- [ ] AC-010.2: User can remove listing from watch list
+- [ ] AC-010.3: User can view watch list (e.g., `car-search watch list`)
+- [ ] AC-010.4: Watch list shows current status and any changes
+- [ ] AC-010.5: Notification when watched listing price changes
+- [ ] AC-010.6: Notification when watched listing is no longer available
+
+---
+
+## REQ-RP-011: Comparison View
+
+### Formal Statement
+
+The system SHALL support side-by-side comparison of multiple listings.
+
+### Acceptance Criteria
+
+- [ ] AC-011.1: `car-search compare <id1> <id2> [<id3>...]` shows comparison
+- [ ] AC-011.2: Up to 5 listings can be compared simultaneously
+- [ ] AC-011.3: Differences highlighted between listings
+- [ ] AC-011.4: Best values highlighted in each category (lowest price, lowest mileage)
+- [ ] AC-011.5: Comparison exportable to file
+
+---
+
+## REQ-RP-012: Alert Configuration
+
+### Formal Statement
+
+The system SHALL support configurable alerts for listings matching specific criteria.
+
+### Acceptance Criteria
+
+- [ ] AC-012.1: User can create alerts with search criteria (e.g., `car-search alert create --make Toyota --price-max 15000`)
+- [ ] AC-012.2: Alerts checked during each search operation
+- [ ] AC-012.3: Matching listings trigger notification (console, email, webhook)
+- [ ] AC-012.4: User can list, edit, and delete alerts
+- [ ] AC-012.5: Alert notification includes listing summary and link
+
+---
+
+## REQ-RP-013: Report Generation
+
+### Formal Statement
+
+The system SHALL generate formatted reports for sharing and archival.
+
+### Acceptance Criteria
+
+- [ ] AC-013.1: HTML report generation (e.g., `car-search report --format html`)
+- [ ] AC-013.2: PDF report generation
+- [ ] AC-013.3: Report includes search criteria, results, and statistics
+- [ ] AC-013.4: Report date and generation timestamp included
+- [ ] AC-013.5: Custom report templates supported
+
+---
+
+## REQ-RP-014: Dashboard View
+
+### Formal Statement
+
+The system SHALL provide a dashboard view summarizing all tracked data.
+
+### Acceptance Criteria
+
+- [ ] AC-014.1: `car-search dashboard` shows overview of all tracking
+- [ ] AC-014.2: Dashboard shows: active searches, watch list count, recent alerts
+- [ ] AC-014.3: Dashboard shows: total listings tracked, new today, price drops today
+- [ ] AC-014.4: Dashboard shows: market trends summary
+- [ ] AC-014.5: Dashboard refreshable in place (watch mode)

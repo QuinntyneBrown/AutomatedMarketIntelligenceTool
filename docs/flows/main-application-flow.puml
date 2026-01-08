@@ -1,0 +1,55 @@
+@startuml main-application-flow
+!theme plain
+title Car Search CLI - Main Application Flow
+
+start
+
+:Parse Command Line Arguments;
+
+if (Valid Arguments?) then (no)
+    :Display Error Message;
+    :Show Help/Usage;
+    stop
+else (yes)
+endif
+
+:Load Configuration File;
+:Merge CLI Args with Config;
+
+switch (Command?)
+case (search)
+    :Execute Search Command;
+    -> See Search Execution Flow;
+case (list)
+    :Query Database;
+    :Display Results Table;
+case (export)
+    :Query Database with Filters;
+    :Generate Export File;
+    :Save to Specified Path;
+case (config)
+    :Manage Configuration;
+    :Update Config File;
+case (profile)
+    :Manage Search Profiles;
+    :Update Profiles Storage;
+case (status)
+    :Query Scraper Health;
+    :Display Status Dashboard;
+case (stats)
+    :Calculate Statistics;
+    :Display Market Report;
+case (watch)
+    :Manage Watch List;
+    :Update Watch Records;
+case (alert)
+    :Manage Alerts;
+    :Update Alert Configuration;
+endswitch
+
+:Cleanup Resources;
+:Close Database Connection;
+
+stop
+
+@enduml

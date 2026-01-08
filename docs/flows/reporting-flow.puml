@@ -1,0 +1,133 @@
+@startuml reporting-flow
+!theme plain
+title Car Search CLI - Reporting Flow
+
+start
+
+:Receive Processed Results;
+:Receive Search Session Data;
+
+partition "Results Preparation" {
+    :Load User Display Preferences;
+
+    :Apply Post-Search Filters;
+
+    :Apply Sorting;
+    note right
+      Default: by FirstSeenDate desc
+      Options: price, mileage,
+      year, distance
+    end note
+
+    :Apply Pagination;
+    note right
+      Default page size: 25
+      for terminal display
+    end note
+}
+
+partition "Summary Generation" {
+    :Calculate Total Listings;
+    :Calculate New Listings Count;
+    :Calculate Price Changes Count;
+    :Calculate By-Source Breakdown;
+    :Calculate Search Duration;
+}
+
+switch (Output Format?)
+case (table - default)
+    partition "Table Display" {
+        :Determine Terminal Width;
+        :Select Columns to Display;
+        :Calculate Column Widths;
+
+        :Render Table Header;
+
+        while (For Each Listing) is (more)
+            if (Is New Listing?) then (yes)
+                :Apply New Highlight Style;
+                :Add [NEW] Indicator;
+            endif
+
+            if (Has Price Change?) then (yes)
+                if (Price Decreased?) then (yes)
+                    :Apply Green Color;
+                    :Add ↓ Indicator;
+                else (no)
+                    :Apply Red Color;
+                    :Add ↑ Indicator;
+                endif
+                :Show Change Amount;
+            endif
+
+            :Format Row Values;
+            :Truncate Long Values;
+            :Render Table Row;
+        endwhile (done)
+
+        :Render Table Footer;
+    }
+
+case (json)
+    partition "JSON Output" {
+        :Build JSON Structure;
+        :Include Metadata;
+        :Serialize to JSON;
+        :Output to Stream;
+    }
+
+case (csv)
+    partition "CSV Output" {
+        :Write CSV Header;
+        while (For Each Listing) is (more)
+            :Escape Special Characters;
+            :Write CSV Row;
+        endwhile (done)
+    }
+
+case (html)
+    partition "HTML Report" {
+        :Load HTML Template;
+        :Populate Summary Section;
+        :Generate Results Table;
+        :Generate Charts/Graphs;
+        :Write HTML File;
+    }
+endswitch
+
+partition "Summary Display" {
+    :Display Separator;
+
+    :Display Total Found;
+    :Display New Listings;
+    :Display Price Changes;
+    :Display By-Source Stats;
+
+    :Display Search Duration;
+    :Display Timestamp;
+}
+
+if (Alerts Triggered?) then (yes)
+    partition "Alert Display" {
+        :Display Alert Header;
+        while (For Each Alert Match) is (more)
+            :Display Alert Name;
+            :Display Matching Listing;
+        endwhile (done)
+    }
+endif
+
+if (Export Requested?) then (yes)
+    :Write to Export File;
+    :Display Export Path;
+endif
+
+if (Watch Mode Enabled?) then (yes)
+    :Display Watch Instructions;
+    :Wait for Interval;
+    :Repeat Search;
+endif
+
+stop
+
+@enduml
