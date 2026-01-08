@@ -1,18 +1,20 @@
 # AutomatedMarketIntelligenceTool
 
-A comprehensive market intelligence solution for automated car listing search, web scraping, and analysis. This tool provides a CLI interface, REST API, and web application for gathering and analyzing automotive market data across multiple platforms.
+A comprehensive market intelligence solution for automated car listing search, web scraping, and analysis across Canadian automotive markets. This tool provides a CLI interface, REST API, and web application for gathering and analyzing automotive market data from Canadian platforms.
 
 ## Overview
 
-AutomatedMarketIntelligenceTool is a multi-tier application that enables users to:
+AutomatedMarketIntelligenceTool is a Canada-focused multi-tier application that enables users to:
 
-- Search and scrape automotive listings from multiple sources
-- Configure search parameters and location-based queries
+- Search and scrape automotive listings from Canadian sources (Autotrader.ca, Kijiji.ca, and more)
+- Configure search parameters with postal codes and location-based queries across Canada
 - Detect and filter duplicate listings
 - Store and persist listing data with multi-tenant support
 - Export data in multiple formats (JSON, CSV)
 - View real-time scraping statistics and health metrics
 - Access data through CLI, REST API, or web interface
+
+**Note:** This tool is specifically designed for the Canadian automotive market, supporting Canadian postal codes, provinces, and local listing platforms.
 
 ## Architecture
 
@@ -44,7 +46,7 @@ The project follows Clean Architecture principles with a clear separation of con
 - Graceful signal handling
 
 ### Web Scraping
-- Multi-site scraping support
+- Canadian automotive sites support (Autotrader.ca, Kijiji.ca)
 - Rate limiting and retry logic
 - Browser automation for dynamic content
 - Intelligent duplicate detection
@@ -139,9 +141,14 @@ npm start
 
 ### CLI Commands
 
-Search for cars:
+Search for cars with Canadian location:
 ```bash
-car-search search --make Toyota --model Camry --location "New York" --max-price 25000
+car-search search --make Toyota --model Camry --postal-code "M5V 3L9" --max-price 30000
+```
+
+Search by province and city:
+```bash
+car-search search --make Honda --city "Toronto" --province ON --radius 50
 ```
 
 Interactive mode:
