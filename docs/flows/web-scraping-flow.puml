@@ -1,0 +1,100 @@
+@startuml web-scraping-flow
+!theme plain
+title Car Search CLI - Web Scraping Flow (Per Site)
+
+start
+
+:Receive Site Configuration;
+:Receive Search Parameters;
+
+:Initialize Playwright Browser;
+
+if (Proxy Configured?) then (yes)
+    :Configure Proxy Settings;
+endif
+
+:Set User-Agent;
+:Configure Request Headers;
+
+:Create Browser Context;
+
+:Build Search URL with Parameters;
+
+:Navigate to Search Page;
+
+if (Page Loaded?) then (no)
+    :Log Error;
+    :Retry with Backoff;
+
+    if (Max Retries Exceeded?) then (yes)
+        :Mark Site as Failed;
+        :Return Empty Results;
+        stop
+    else (no)
+        :Navigate to Search Page;
+    endif
+else (yes)
+endif
+
+:Wait for Results to Render;
+
+if (CAPTCHA Detected?) then (yes)
+    :Log CAPTCHA Warning;
+    :Notify User;
+    :Return Partial Results;
+    stop
+else (no)
+endif
+
+:Parse Result Count;
+
+:Initialize Results Collection;
+
+repeat
+    :Extract Listings from Current Page;
+
+    while (For Each Listing on Page) is (more listings)
+        :Extract Basic Info;
+        note right
+          Title, Price,
+          Year, Make, Model,
+          Mileage, Location
+        end note
+
+        if (Detail Page Required?) then (yes)
+            :Navigate to Detail Page;
+            :Extract Extended Info;
+            note right
+              VIN, Full Description,
+              All Images, Features,
+              Seller Info, etc.
+            end note
+            :Return to Results;
+        endif
+
+        :Create Listing DTO;
+        :Add to Results Collection;
+    endwhile (no more)
+
+    :Update Progress;
+
+    if (More Pages Available?) then (yes)
+        if (Max Pages Reached?) then (yes)
+            :Stop Pagination;
+        else (no)
+            :Apply Rate Limit Delay;
+            :Navigate to Next Page;
+        endif
+    else (no)
+    endif
+
+repeat while (More Pages to Process?) is (yes)
+->no;
+
+:Close Browser Context;
+
+:Return Collected Results;
+
+stop
+
+@enduml

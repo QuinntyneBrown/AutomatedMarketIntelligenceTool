@@ -1,0 +1,110 @@
+@startuml cli-startup-flow
+!theme plain
+title Car Search CLI - CLI Startup Flow
+
+start
+
+:Application Entry Point;
+
+:Register Signal Handlers;
+note right
+  SIGINT, SIGTERM
+  for graceful shutdown
+end note
+
+:Parse Environment Variables;
+
+:Locate Configuration File;
+
+if (Config File Exists?) then (yes)
+    :Load Configuration;
+    :Validate Configuration;
+else (no)
+    :Create Default Configuration;
+    :Save Default Config File;
+endif
+
+:Initialize Logging;
+note right
+  Based on verbosity
+  level and config
+end note
+
+:Check for Updates;
+note right
+  Optional, can be
+  disabled in config
+end note
+
+if (Update Available?) then (yes)
+    :Display Update Notice;
+endif
+
+:Parse Command Line Arguments;
+
+if (--help flag?) then (yes)
+    :Display Help Documentation;
+    stop
+endif
+
+if (--version flag?) then (yes)
+    :Display Version Info;
+    stop
+endif
+
+:Validate Arguments;
+
+if (Arguments Valid?) then (no)
+    :Display Validation Errors;
+    :Display Usage Hint;
+    :Exit with Code 2;
+    stop
+else (yes)
+endif
+
+:Merge Config with CLI Args;
+note right
+  CLI args override
+  config file values
+end note
+
+:Initialize Database;
+
+if (Database Migration Needed?) then (yes)
+    :Run Migrations;
+    if (Migration Failed?) then (yes)
+        :Display Error;
+        :Exit with Code 1;
+        stop
+    endif
+endif
+
+:Test Database Connection;
+
+if (Connection Failed?) then (yes)
+    :Display Connection Error;
+    :Suggest Troubleshooting;
+    :Exit with Code 1;
+    stop
+endif
+
+:Initialize Playwright;
+
+if (Browser Not Available?) then (yes)
+    :Display Browser Install Prompt;
+    if (User Confirms Install?) then (yes)
+        :Install Browser;
+    else (no)
+        :Exit with Code 1;
+        stop
+    endif
+endif
+
+:Application Ready;
+
+:Dispatch to Command Handler;
+-> See Main Application Flow;
+
+stop
+
+@enduml

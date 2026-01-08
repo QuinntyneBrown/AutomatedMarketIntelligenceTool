@@ -1,0 +1,141 @@
+@startuml duplicate-detection-flow
+!theme plain
+title Car Search CLI - Duplicate Detection Flow
+
+start
+
+:Receive Raw Listing;
+
+partition "VIN-Based Matching" {
+    if (VIN Available?) then (yes)
+        :Normalize VIN;
+        :Query Database by VIN;
+
+        if (VIN Match Found?) then (yes)
+            :Set MatchType = VIN;
+            :Set Confidence = 100%;
+            :Link to Existing Listing;
+            -> Duplicate Found;
+        else (no)
+            :Continue to Next Check;
+        endif
+    else (no)
+        :Continue to Next Check;
+    endif
+}
+
+partition "External ID Matching" {
+    :Query by (SourceSite, ExternalId);
+
+    if (ExternalId Match Found?) then (yes)
+        :Set MatchType = ExternalId;
+        :Set Confidence = 100%;
+        :Link to Existing Listing;
+        -> Duplicate Found;
+    else (no)
+        :Continue to Fuzzy Matching;
+    endif
+}
+
+partition "Fuzzy Matching" {
+    :Build Matching Criteria;
+    note right
+      Make, Model, Year,
+      Mileage (±500),
+      Price (±$500),
+      Location (10mi radius)
+    end note
+
+    :Query Potential Matches;
+    note right
+      Filter by: same make,
+      model, year range,
+      location proximity
+    end note
+
+    if (Potential Matches Found?) then (yes)
+        while (For Each Candidate) is (more)
+            :Calculate Match Score;
+
+            partition "Score Calculation" {
+                :+30 if Make exact match;
+                :+25 if Model exact match;
+                :+15 if Year exact match;
+                :+10 if Mileage within tolerance;
+                :+10 if Price within tolerance;
+                :+10 if Location within radius;
+            }
+
+            if (Image Matching Enabled?) then (yes)
+                :Compare Image Hashes;
+                :+15 if Images match;
+            endif
+
+            :Store Candidate Score;
+        endwhile (done)
+
+        :Select Best Match;
+
+        if (Best Score >= Threshold?) then (yes)
+            :Set MatchType = Fuzzy;
+            :Set Confidence = Score;
+            :Link to Best Match;
+            -> Duplicate Found;
+        else (no)
+            :Flag for Manual Review;
+            note right
+              If score between
+              60% and threshold
+            end note
+        endif
+    else (no)
+    endif
+}
+
+:Mark as New Listing;
+:Set IsNew = true;
+-> New Listing;
+
+partition "Duplicate Found" {
+    :Load Existing Record;
+    :Set IsNew = false;
+
+    if (Price Different?) then (yes)
+        :Set HasPriceChange = true;
+        :Calculate PriceChange Amount;
+    endif
+
+    :Merge Additional Data;
+    note right
+      Keep most complete
+      information from
+      either record
+    end note
+}
+
+partition "Cross-Source Linking" {
+    if (Same Vehicle, Different Source?) then (yes)
+        :Find or Create Vehicle Record;
+        :Link Listing to Vehicle;
+        :Update Vehicle Best Data;
+    endif
+}
+
+partition "Audit Logging" {
+    :Create Dedup Audit Record;
+    :Log MatchType, Confidence;
+    :Log Source and Target IDs;
+}
+
+:Return Dedup Result;
+note right
+  IsNew: bool
+  MatchedListingId: guid?
+  VehicleId: guid?
+  Confidence: int
+  HasPriceChange: bool
+end note
+
+stop
+
+@enduml

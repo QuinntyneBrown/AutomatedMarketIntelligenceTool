@@ -1,0 +1,83 @@
+@startuml search-execution-flow
+!theme plain
+title Car Search CLI - Search Execution Flow
+
+start
+
+:Receive Search Parameters;
+
+:Validate Search Parameters;
+
+if (Parameters Valid?) then (no)
+    :Display Validation Errors;
+    stop
+else (yes)
+endif
+
+:Load/Create Search Profile;
+
+:Initialize Database Connection;
+
+:Create Search Session Record;
+
+:Resolve Location Parameters;
+note right
+  Convert ZIP/City to coordinates
+  Calculate search boundaries
+end note
+
+:Determine Target Sites;
+
+if (Specific Sites Requested?) then (yes)
+    :Filter to Requested Sites;
+else (no)
+    :Use All Enabled Sites;
+endif
+
+:Initialize Progress Display;
+
+partition "Parallel Site Scraping" {
+    fork
+        :Scrape Site 1;
+        -> See Web Scraping Flow;
+    fork again
+        :Scrape Site 2;
+        -> See Web Scraping Flow;
+    fork again
+        :Scrape Site N;
+        -> See Web Scraping Flow;
+    end fork
+}
+
+:Aggregate Raw Results;
+
+:Process Each Listing;
+-> See Duplicate Detection Flow;
+
+:Persist Results;
+-> See Data Persistence Flow;
+
+:Calculate Search Statistics;
+
+:Update Search Session Record;
+note right
+  Record: end time,
+  result count,
+  new listings count,
+  status
+end note
+
+:Check Alert Conditions;
+
+if (Alerts Matched?) then (yes)
+    :Send Alert Notifications;
+endif
+
+:Generate Results Report;
+-> See Reporting Flow;
+
+:Display Summary;
+
+stop
+
+@enduml
