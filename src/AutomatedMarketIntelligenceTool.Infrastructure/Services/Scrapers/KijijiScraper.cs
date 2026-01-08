@@ -1,4 +1,6 @@
 using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Web;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using Microsoft.Extensions.Logging;
@@ -17,75 +19,76 @@ public class KijijiScraper : BaseScraper
 
     protected override string BuildSearchUrl(SearchParameters parameters, int page)
     {
-        var baseUrl = "https://www.kijiji.ca/b-cars-vehicles/";
-        var location = "canada";
-        
-        if (!string.IsNullOrEmpty(parameters.PostalCode))
-        {
-            location = parameters.PostalCode.Replace(" ", string.Empty);
-        }
-        else if (parameters.Province.HasValue)
-        {
-            location = parameters.Province.Value.ToString().ToLower();
-        }
+        // Kijiji SRP has moved away from the old query-param based make/model filters.
+        // A more stable approach is to use keyword search paths.
+        var location = parameters.Province?.ToString().ToLowerInvariant() ?? "canada";
+        var keywords = BuildKeywordSlug(parameters);
 
-        baseUrl += $"{location}/";
-        
-        var queryParams = new StringBuilder();
+        var baseUrl = new StringBuilder("https://www.kijiji.ca/b-cars-trucks/");
+        baseUrl.Append(location);
+        baseUrl.Append('/');
 
-        if (!string.IsNullOrEmpty(parameters.Make))
+        if (!string.IsNullOrWhiteSpace(keywords))
         {
-            queryParams.Append($"&carmake={HttpUtility.UrlEncode(parameters.Make)}");
-        }
-
-        if (!string.IsNullOrEmpty(parameters.Model))
-        {
-            queryParams.Append($"&carmodel={HttpUtility.UrlEncode(parameters.Model)}");
-        }
-
-        if (parameters.YearMin.HasValue)
-        {
-            queryParams.Append($"&carypmin={parameters.YearMin.Value}");
-        }
-
-        if (parameters.YearMax.HasValue)
-        {
-            queryParams.Append($"&carypmax={parameters.YearMax.Value}");
-        }
-
-        if (parameters.PriceMin.HasValue)
-        {
-            queryParams.Append($"&pricemin={parameters.PriceMin.Value}");
-        }
-
-        if (parameters.PriceMax.HasValue)
-        {
-            queryParams.Append($"&pricemax={parameters.PriceMax.Value}");
-        }
-
-        if (parameters.MileageMax.HasValue)
-        {
-            queryParams.Append($"&carod={parameters.MileageMax.Value}");
-        }
-
-        if (parameters.RadiusKilometers.HasValue)
-        {
-            queryParams.Append($"&radius={parameters.RadiusKilometers.Value}");
+            baseUrl.Append(keywords);
+            baseUrl.Append('/');
         }
 
         if (page > 1)
         {
-            baseUrl += $"page-{page}/";
+            baseUrl.Append($"page-{page}/");
         }
 
-        baseUrl += "c174";
+        // Category code for Cars & Trucks.
+        baseUrl.Append("k0c174l0");
 
-        if (queryParams.Length > 0)
+        // Preserve support for filters via query parameters.
+        var queryParams = new List<string>();
+
+        if (parameters.YearMin.HasValue)
         {
-            baseUrl += "?" + queryParams.ToString().TrimStart('&');
+            queryParams.Add($"carypmin={parameters.YearMin.Value}");
         }
 
-        return baseUrl;
+        if (parameters.YearMax.HasValue)
+        {
+            queryParams.Add($"carypmax={parameters.YearMax.Value}");
+        }
+
+        if (parameters.PriceMin.HasValue)
+        {
+            queryParams.Add($"pricemin={decimal.ToInt32(parameters.PriceMin.Value)}");
+        }
+
+        if (parameters.PriceMax.HasValue)
+        {
+            queryParams.Add($"pricemax={decimal.ToInt32(parameters.PriceMax.Value)}");
+        }
+
+        if (parameters.MileageMax.HasValue)
+        {
+            queryParams.Add($"carod={parameters.MileageMax.Value}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(parameters.PostalCode))
+        {
+            var normalizedPostal = Regex.Replace(parameters.PostalCode, "[^A-Za-z0-9]+", string.Empty)
+                .ToLowerInvariant();
+            queryParams.Add($"postalCode={HttpUtility.UrlEncode(normalizedPostal)}");
+        }
+
+        if (parameters.RadiusKilometers.HasValue)
+        {
+            queryParams.Add($"radius={parameters.RadiusKilometers.Value}");
+        }
+
+        var url = baseUrl.ToString();
+        if (queryParams.Count > 0)
+        {
+            url += "?" + string.Join("&", queryParams);
+        }
+
+        return url;
     }
 
     protected override async Task<IEnumerable<ScrapedListing>> ParseListingsAsync(
@@ -96,11 +99,15 @@ public class KijijiScraper : BaseScraper
 
         try
         {
-            await page.WaitForSelectorAsync(".search-item", new PageWaitForSelectorOptions
+            // Prefer JSON-LD if present (works better with modern Next.js markup).
+            var jsonLdListings = await TryParseListingsFromJsonLdAsync(page, cancellationToken);
+            if (jsonLdListings.Count > 0)
             {
-                Timeout = 10000
-            });
+                return jsonLdListings;
+            }
 
+            // Fallback: legacy markup.
+            await page.WaitForSelectorAsync(".search-item", new PageWaitForSelectorOptions { Timeout = 10000 });
             var listingElements = await page.QuerySelectorAllAsync(".search-item");
 
             _logger.LogDebug("Found {Count} listing elements on page", listingElements.Count);
@@ -127,6 +134,182 @@ public class KijijiScraper : BaseScraper
         }
 
         return listings;
+    }
+
+    private async Task<List<ScrapedListing>> TryParseListingsFromJsonLdAsync(
+        IPage page,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<ScrapedListing>();
+
+        try
+        {
+            var scripts = await page.QuerySelectorAllAsync("script[type='application/ld+json']");
+            foreach (var script in scripts)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var json = await script.InnerTextAsync();
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    continue;
+                }
+
+                foreach (var itemList in ExtractItemLists(json))
+                {
+                    foreach (var item in itemList)
+                    {
+                        if (string.IsNullOrWhiteSpace(item.Url) || string.IsNullOrWhiteSpace(item.Name))
+                        {
+                            continue;
+                        }
+
+                        var (make, model, year) = ParseTitle(item.Name);
+                        if (string.IsNullOrWhiteSpace(make) || string.IsNullOrWhiteSpace(model) || year == 0)
+                        {
+                            continue;
+                        }
+
+                        results.Add(new ScrapedListing
+                        {
+                            ExternalId = ExtractExternalId(item.Url),
+                            SourceSite = SiteName,
+                            ListingUrl = item.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                ? item.Url
+                                : $"https://www.kijiji.ca{item.Url}",
+                            Make = make,
+                            Model = model,
+                            Year = year,
+                            Price = item.Price ?? 0,
+                            Mileage = null,
+                            City = null,
+                            Province = null,
+                            Condition = Condition.Used
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed JSON-LD parse; falling back to DOM");
+        }
+
+        return results;
+    }
+
+    private static string BuildKeywordSlug(SearchParameters parameters)
+    {
+        var keyword = string.Join(' ', new[] { parameters.Make, parameters.Model }
+            .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            return string.Empty;
+        }
+
+        var lower = keyword.Trim().ToLowerInvariant();
+        lower = Regex.Replace(lower, "[^a-z0-9]+", "-");
+        lower = Regex.Replace(lower, "-+", "-").Trim('-');
+        return Uri.EscapeDataString(lower);
+    }
+
+    private static IEnumerable<List<(string Url, string Name, decimal? Price)>> ExtractItemLists(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        foreach (var list in ExtractItemLists(doc.RootElement))
+        {
+            yield return list;
+        }
+    }
+
+    private static IEnumerable<List<(string Url, string Name, decimal? Price)>> ExtractItemLists(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var child in element.EnumerateArray())
+            {
+                foreach (var list in ExtractItemLists(child))
+                {
+                    yield return list;
+                }
+            }
+
+            yield break;
+        }
+
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            yield break;
+        }
+
+        if (element.TryGetProperty("@type", out var typeProp) &&
+            typeProp.ValueKind == JsonValueKind.String &&
+            string.Equals(typeProp.GetString(), "ItemList", StringComparison.OrdinalIgnoreCase) &&
+            element.TryGetProperty("itemListElement", out var itemsProp) &&
+            itemsProp.ValueKind == JsonValueKind.Array)
+        {
+            var items = new List<(string Url, string Name, decimal? Price)>();
+
+            foreach (var entry in itemsProp.EnumerateArray())
+            {
+                // Common shapes:
+                // { "@type":"ListItem", "item": { "url":"...", "name":"...", "offers": {"price": 12345 } } }
+                // or { "item": { ... } }
+                var itemObj = entry;
+                if (entry.ValueKind == JsonValueKind.Object && entry.TryGetProperty("item", out var nestedItem))
+                {
+                    itemObj = nestedItem;
+                }
+
+                if (itemObj.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                var url = itemObj.TryGetProperty("url", out var urlProp) && urlProp.ValueKind == JsonValueKind.String
+                    ? urlProp.GetString() ?? string.Empty
+                    : string.Empty;
+
+                var name = itemObj.TryGetProperty("name", out var nameProp) && nameProp.ValueKind == JsonValueKind.String
+                    ? nameProp.GetString() ?? string.Empty
+                    : string.Empty;
+
+                decimal? price = null;
+                if (itemObj.TryGetProperty("offers", out var offersProp) && offersProp.ValueKind == JsonValueKind.Object)
+                {
+                    if (offersProp.TryGetProperty("price", out var priceProp))
+                    {
+                        if (priceProp.ValueKind == JsonValueKind.Number && priceProp.TryGetDecimal(out var p))
+                        {
+                            price = p;
+                        }
+                        else if (priceProp.ValueKind == JsonValueKind.String && decimal.TryParse(priceProp.GetString(), out var ps))
+                        {
+                            price = ps;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(url) && !string.IsNullOrWhiteSpace(name))
+                {
+                    items.Add((url, name, price));
+                }
+            }
+
+            if (items.Count > 0)
+            {
+                yield return items;
+            }
+        }
+
+        foreach (var prop in element.EnumerateObject())
+        {
+            foreach (var list in ExtractItemLists(prop.Value))
+            {
+                yield return list;
+            }
+        }
     }
 
     private async Task<ScrapedListing?> ParseListingElementAsync(

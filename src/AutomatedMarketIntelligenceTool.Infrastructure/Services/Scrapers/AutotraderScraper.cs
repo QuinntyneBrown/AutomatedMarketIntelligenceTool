@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using Microsoft.Extensions.Logging;
@@ -17,17 +18,43 @@ public class AutotraderScraper : BaseScraper
 
     protected override string BuildSearchUrl(SearchParameters parameters, int page)
     {
-        var baseUrl = "https://www.autotrader.ca/cars/";
-        var queryParams = new StringBuilder();
+        // Autotrader uses make/model as path segments (e.g. /cars/volkswagen/jetta/)
+        // and paging via rcp/rcs query parameters.
+        var baseUrl = new StringBuilder("https://www.autotrader.ca/cars");
 
-        if (!string.IsNullOrEmpty(parameters.Make))
+        if (!string.IsNullOrWhiteSpace(parameters.Make))
         {
-            queryParams.Append($"&make={HttpUtility.UrlEncode(parameters.Make)}");
+            baseUrl.Append('/');
+            baseUrl.Append(EscapePathSegment(parameters.Make));
         }
 
-        if (!string.IsNullOrEmpty(parameters.Model))
+        if (!string.IsNullOrWhiteSpace(parameters.Model))
         {
-            queryParams.Append($"&model={HttpUtility.UrlEncode(parameters.Model)}");
+            baseUrl.Append('/');
+            baseUrl.Append(EscapePathSegment(parameters.Model));
+        }
+
+        baseUrl.Append('/');
+
+        var queryParams = new StringBuilder();
+
+        // These match the observed SRP query string in debug dumps.
+        const int resultsPerPage = 15;
+        queryParams.Append($"&rcp={resultsPerPage}&rcs={Math.Max(0, (page - 1) * resultsPerPage)}");
+        queryParams.Append("&srt=39");
+        queryParams.Append("&prx=-1");
+        queryParams.Append("&hprc=True");
+        queryParams.Append("&wcp=True");
+        queryParams.Append("&inMarket=advancedSearch");
+
+        if (!string.IsNullOrWhiteSpace(parameters.PostalCode))
+        {
+            queryParams.Append($"&loc={HttpUtility.UrlEncode(parameters.PostalCode)}");
+        }
+
+        if (parameters.RadiusKilometers.HasValue)
+        {
+            queryParams.Append($"&radius={parameters.RadiusKilometers.Value}");
         }
 
         if (parameters.YearMin.HasValue)
@@ -42,12 +69,12 @@ public class AutotraderScraper : BaseScraper
 
         if (parameters.PriceMin.HasValue)
         {
-            queryParams.Append($"&priceMin={parameters.PriceMin.Value}");
+            queryParams.Append($"&priceMin={decimal.ToInt32(parameters.PriceMin.Value)}");
         }
 
         if (parameters.PriceMax.HasValue)
         {
-            queryParams.Append($"&priceMax={parameters.PriceMax.Value}");
+            queryParams.Append($"&priceMax={decimal.ToInt32(parameters.PriceMax.Value)}");
         }
 
         if (parameters.MileageMax.HasValue)
@@ -55,27 +82,10 @@ public class AutotraderScraper : BaseScraper
             queryParams.Append($"&odommax={parameters.MileageMax.Value}");
         }
 
-        if (!string.IsNullOrEmpty(parameters.PostalCode))
-        {
-            queryParams.Append($"&loc={HttpUtility.UrlEncode(parameters.PostalCode)}");
+        // Note: Province/year/price filters vary by Autotrader search mode and can change;
+        // keep this URL minimal and let parsing do the heavy lifting.
 
-            if (parameters.RadiusKilometers.HasValue)
-            {
-                queryParams.Append($"&radius={parameters.RadiusKilometers.Value}");
-            }
-        }
-
-        if (parameters.Province.HasValue)
-        {
-            queryParams.Append($"&prv={parameters.Province.Value}");
-        }
-
-        if (page > 1)
-        {
-            queryParams.Append($"&rcp={20}&rcs={((page - 1) * 20)}");
-        }
-
-        var url = baseUrl;
+        var url = baseUrl.ToString();
         if (queryParams.Length > 0)
         {
             url += "?" + queryParams.ToString().TrimStart('&');
@@ -92,12 +102,13 @@ public class AutotraderScraper : BaseScraper
 
         try
         {
-            await page.WaitForSelectorAsync("[data-cmp='inventoryListing']", new PageWaitForSelectorOptions
+            // Current SRP markup (seen in debug dump) uses .result-item under #SearchListings.
+            await page.WaitForSelectorAsync("#SearchListings .result-item", new PageWaitForSelectorOptions
             {
                 Timeout = 10000
             });
 
-            var listingElements = await page.QuerySelectorAllAsync("[data-cmp='inventoryListing']");
+            var listingElements = await page.QuerySelectorAllAsync("#SearchListings .result-item");
 
             _logger.LogDebug("Found {Count} listing elements on page", listingElements.Count);
 
@@ -131,26 +142,26 @@ public class AutotraderScraper : BaseScraper
     {
         try
         {
-            var titleElement = await element.QuerySelectorAsync("[data-cmp='subheading']");
+            var titleElement = await element.QuerySelectorAsync(".result-title .title-with-trim");
             var title = titleElement != null ? await titleElement.InnerTextAsync() : string.Empty;
 
-            var priceElement = await element.QuerySelectorAsync("[data-cmp='price']");
+            var priceElement = await element.QuerySelectorAsync(".price .price-amount");
             var priceText = priceElement != null ? await priceElement.InnerTextAsync() : "0";
             var price = ParsePrice(priceText);
 
-            var linkElement = await element.QuerySelectorAsync("a[href*='/cars-for-sale/']");
+            var linkElement = await element.QuerySelectorAsync("a.inner-link[href^='/a/']");
             var href = linkElement != null ? await linkElement.GetAttributeAsync("href") ?? string.Empty : string.Empty;
-            var listingUrl = href.StartsWith("http") ? href : $"https://www.autotrader.com{href}";
+            var listingUrl = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? href
+                : $"https://www.autotrader.ca{href}";
 
             var externalId = ExtractExternalId(listingUrl);
 
-            var mileageElement = await element.QuerySelectorAsync("[data-cmp='mileage']");
+            var mileageElement = await element.QuerySelectorAsync(".odometer-proximity");
             var mileageText = mileageElement != null ? await mileageElement.InnerTextAsync() : string.Empty;
             var mileage = ParseMileage(mileageText);
 
-            var locationElement = await element.QuerySelectorAsync("[data-cmp='location']");
-            var locationText = locationElement != null ? await locationElement.InnerTextAsync() : string.Empty;
-            var (city, province) = ParseLocation(locationText);
+            var (city, province) = TryParseCityProvinceFromListingUrl(listingUrl);
 
             var (make, model, year) = ParseTitle(title);
 
@@ -186,14 +197,28 @@ public class AutotraderScraper : BaseScraper
     {
         try
         {
-            var nextButton = await page.QuerySelectorAsync("button[aria-label='Go to next page']");
-            if (nextButton == null)
+            var active = await page.QuerySelectorAsync(".srpPager li.page-item.active");
+            var next = await page.QuerySelectorAsync(".srpPager li.last-page.page-item");
+
+            if (active == null || next == null)
             {
                 return false;
             }
 
-            var isDisabled = await nextButton.GetAttributeAsync("disabled");
-            return isDisabled == null;
+            var activePageRaw = await active.GetAttributeAsync("data-page");
+            var nextPageRaw = await next.GetAttributeAsync("data-page");
+
+            if (!int.TryParse(activePageRaw, out var activePage))
+            {
+                return false;
+            }
+
+            if (!int.TryParse(nextPageRaw, out var nextPage))
+            {
+                return false;
+            }
+
+            return nextPage > activePage;
         }
         catch (Exception ex)
         {
@@ -204,13 +229,26 @@ public class AutotraderScraper : BaseScraper
 
     private static string ExtractExternalId(string url)
     {
-        var parts = url.Split('/');
-        for (int i = 0; i < parts.Length; i++)
+        if (string.IsNullOrWhiteSpace(url))
         {
-            if (parts[i] == "vehicledetails" && i + 1 < parts.Length)
+            return string.Empty;
+        }
+
+        try
+        {
+            var uri = new Uri(url);
+            var lastSegment = uri.Segments
+                .Select(s => s.Trim('/'))
+                .LastOrDefault(s => !string.IsNullOrWhiteSpace(s));
+
+            if (!string.IsNullOrWhiteSpace(lastSegment))
             {
-                return parts[i + 1].Split('?')[0];
+                return lastSegment;
             }
+        }
+        catch
+        {
+            // ignored
         }
 
         return url.GetHashCode().ToString();
@@ -233,8 +271,11 @@ public class AutotraderScraper : BaseScraper
     private static int? ParseMileage(string mileageText)
     {
         var cleanMileage = mileageText.Replace(",", string.Empty)
-            .Replace("mi", string.Empty)
-            .Replace("miles", string.Empty)
+            .Replace("km", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("kilometers", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("kilometres", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("mi", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("miles", string.Empty, StringComparison.OrdinalIgnoreCase)
             .Trim();
 
         if (int.TryParse(cleanMileage, out var mileage))
@@ -273,5 +314,34 @@ public class AutotraderScraper : BaseScraper
         }
 
         return (string.Empty, string.Empty, 0);
+    }
+
+    private static string EscapePathSegment(string value)
+    {
+        // Uri.EscapeDataString is more appropriate for path segments than HttpUtility.UrlEncode.
+        var trimmed = value.Trim().ToLowerInvariant();
+        return Uri.EscapeDataString(trimmed);
+    }
+
+    private static (string? City, string? Province) TryParseCityProvinceFromListingUrl(string listingUrl)
+    {
+        // Example: /a/volkswagen/tiguan/vancouver/british%20columbia/5_68508418_bs2006103195533/
+        try
+        {
+            var uri = new Uri(listingUrl);
+            var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length >= 6 && string.Equals(segments[0], "a", StringComparison.OrdinalIgnoreCase))
+            {
+                var city = Uri.UnescapeDataString(segments[3]).Replace('+', ' ').Trim();
+                var province = Uri.UnescapeDataString(segments[4]).Replace('+', ' ').Trim();
+                return (string.IsNullOrWhiteSpace(city) ? null : city, string.IsNullOrWhiteSpace(province) ? null : province);
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return (null, null);
     }
 }

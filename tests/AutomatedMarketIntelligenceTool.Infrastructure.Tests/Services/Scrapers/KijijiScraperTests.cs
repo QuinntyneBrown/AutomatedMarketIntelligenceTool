@@ -30,7 +30,7 @@ public class KijijiScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("kijiji.ca/b-cars-vehicles", url);
+        Assert.Contains("kijiji.ca/b-cars-trucks", url);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class KijijiScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("carmake=Toyota", url);
+        Assert.Contains("toyota", url.ToLower());
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class KijijiScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("carmodel=Camry", url);
+        Assert.Contains("camry", url.ToLower());
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class KijijiScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("m5v3l9", url.ToLower());
+        Assert.Contains("postalcode=m5v3l9", url.ToLower());
     }
 
     [Fact]
@@ -213,14 +213,14 @@ public class KijijiScraperTests
         var url = InvokeBuildSearchUrl(parameters, 2);
 
         // Assert
-        Assert.Contains("carmake=Honda", url);
-        Assert.Contains("carmodel=Accord", url);
+        Assert.Contains("honda", url.ToLower());
+        Assert.Contains("accord", url.ToLower());
         Assert.Contains("carypmin=2019", url);
         Assert.Contains("carypmax=2023", url);
         Assert.Contains("pricemin=15000", url);
         Assert.Contains("pricemax=35000", url);
         Assert.Contains("carod=60000", url);
-        Assert.Contains("m5v3l9", url.ToLower());
+        Assert.Contains("postalcode=m5v3l9", url.ToLower());
         Assert.Contains("radius=25", url);
         Assert.Contains("page-2", url);
     }

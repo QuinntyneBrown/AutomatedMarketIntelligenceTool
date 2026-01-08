@@ -45,7 +45,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("make=Toyota", url);
+        Assert.Contains("/cars/toyota/", url);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("model=Camry", url);
+        Assert.Contains("/cars/camry/", url);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 3);
 
         // Assert
-        Assert.Contains("rcp=20&rcs=40", url); // (3-1) * 20 = 40
+        Assert.Contains("rcp=15&rcs=30", url); // (3-1) * 15 = 30
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.DoesNotContain("firstRecord", url);
+        Assert.Contains("rcs=0", url);
     }
 
     [Fact]
@@ -197,8 +197,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 2);
 
         // Assert
-        Assert.Contains("make=Honda", url);
-        Assert.Contains("model=Accord", url);
+        Assert.Contains("/cars/honda/accord/", url);
         Assert.Contains("ymin=2019", url);
         Assert.Contains("ymax=2023", url);
         Assert.Contains("priceMin=15000", url);
@@ -206,7 +205,7 @@ public class AutotraderScraperTests
         Assert.Contains("odommax=60000", url);
         Assert.Contains("loc=M5H2N2", url);
         Assert.Contains("radius=25", url);
-        Assert.Contains("rcp=20&rcs=20", url);
+        Assert.Contains("rcp=15&rcs=15", url);
     }
 
     private string InvokeBuildSearchUrl(SearchParameters parameters, int page)
