@@ -2,6 +2,7 @@ using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutomatedMarketIntelligenceTool.Core.Tests.Services;
 
@@ -18,7 +19,7 @@ public class DuplicateDetectionServiceTests
             .Options;
 
         _context = new TestContext(options);
-        _service = new DuplicateDetectionService(_context);
+        _service = new DuplicateDetectionService(_context, NullLogger<DuplicateDetectionService>.Instance);
     }
 
     [Fact]
