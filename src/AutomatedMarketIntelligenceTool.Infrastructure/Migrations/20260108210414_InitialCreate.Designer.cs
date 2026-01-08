@@ -101,9 +101,19 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("State")
-                        .HasMaxLength(50)
+                    b.Property<string>("Province")
+                        .HasMaxLength(2)
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("CAD");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("TEXT");
@@ -124,10 +134,6 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 
                     b.Property<int>("Year")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("ZipCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT");
 
                     b.HasKey("ListingId");
 

@@ -245,7 +245,7 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         public Guid TenantId { get; set; }
 
         [CommandOption("-s|--site")]
-        [Description("Site to scrape (autotrader, cars.com, or 'all' for all sites)")]
+        [Description("Site to scrape (autotrader.ca, kijiji, or 'all' for all sites)")]
         [DefaultValue("all")]
         public string Site { get; set; } = "all";
 
@@ -266,23 +266,23 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         public int? YearMax { get; set; }
 
         [CommandOption("--price-min")]
-        [Description("Minimum price")]
+        [Description("Minimum price in CAD")]
         public decimal? PriceMin { get; set; }
 
         [CommandOption("--price-max")]
-        [Description("Maximum price")]
+        [Description("Maximum price in CAD")]
         public decimal? PriceMax { get; set; }
 
         [CommandOption("--mileage-max")]
-        [Description("Maximum mileage")]
+        [Description("Maximum mileage in kilometers")]
         public int? MileageMax { get; set; }
 
-        [CommandOption("-z|--zip")]
-        [Description("ZIP code for location search")]
+        [CommandOption("-p|--postal-code")]
+        [Description("Canadian postal code for location search (e.g., M5V 3L9)")]
         public string? ZipCode { get; set; }
 
         [CommandOption("-r|--radius")]
-        [Description("Search radius in miles")]
+        [Description("Search radius in kilometers")]
         public int? Radius { get; set; }
 
         [CommandOption("--max-pages")]

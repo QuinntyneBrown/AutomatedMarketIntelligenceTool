@@ -137,14 +137,14 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
         [Description("Maximum mileage")]
         public int? MileageMax { get; set; }
 
-        [CommandOption("-z|--zip")]
-        [Description("ZIP code for location search")]
+        [CommandOption("-p|--postal-code")]
+        [Description("Canadian postal code for location search (e.g., M5V 3L9)")]
         public string? ZipCode { get; set; }
 
         [CommandOption("-r|--radius")]
-        [Description("Search radius in miles (default: 25)")]
-        [DefaultValue(25)]
-        public double Radius { get; set; } = 25;
+        [Description("Search radius in kilometers (default: 40)")]
+        [DefaultValue(40)]
+        public double Radius { get; set; } = 40;
 
         [CommandOption("-f|--format")]
         [Description("Output format: table, json, csv (default: table)")]

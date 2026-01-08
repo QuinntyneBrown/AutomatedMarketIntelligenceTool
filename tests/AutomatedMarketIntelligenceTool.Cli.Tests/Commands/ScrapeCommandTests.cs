@@ -34,7 +34,7 @@ public class ScrapeCommandTests
         settings.PriceMin = 10000;
         settings.PriceMax = 50000;
         settings.MileageMax = 50000;
-        settings.ZipCode = "90210";
+        settings.ZipCode = "M5V 3L9";
         settings.Radius = 50;
         settings.MaxPages = 10;
 
@@ -48,7 +48,7 @@ public class ScrapeCommandTests
         settings.PriceMin.Should().Be(10000);
         settings.PriceMax.Should().Be(50000);
         settings.MileageMax.Should().Be(50000);
-        settings.ZipCode.Should().Be("90210");
+        settings.ZipCode.Should().Be("M5V 3L9");
         settings.Radius.Should().Be(50);
         settings.MaxPages.Should().Be(10);
     }

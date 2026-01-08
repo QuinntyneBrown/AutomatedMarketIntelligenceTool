@@ -194,7 +194,7 @@ public class SearchService : ISearchService
         double lat2,
         double lon2)
     {
-        const double earthRadiusMiles = 3959.0;
+        const double earthRadiusKilometers = 6371.0;
 
         var dLat = DegreesToRadians(lat2 - lat1);
         var dLon = DegreesToRadians(lon2 - lon1);
@@ -205,7 +205,7 @@ public class SearchService : ISearchService
 
         var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
 
-        return earthRadiusMiles * c;
+        return earthRadiusKilometers * c;
     }
 
     private static double DegreesToRadians(double degrees)
