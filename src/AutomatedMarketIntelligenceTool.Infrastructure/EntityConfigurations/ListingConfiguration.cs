@@ -1,0 +1,134 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace AutomatedMarketIntelligenceTool.Infrastructure.EntityConfigurations;
+
+public class ListingConfiguration : IEntityTypeConfiguration<Listing>
+{
+    public void Configure(EntityTypeBuilder<Listing> builder)
+    {
+        builder.ToTable("Listings");
+
+        builder.HasKey(l => l.ListingId);
+
+        builder.Property(l => l.ListingId)
+            .HasConversion(
+                id => id.Value,
+                value => new ListingId(value))
+            .IsRequired();
+
+        builder.Property(l => l.TenantId)
+            .IsRequired();
+
+        builder.Property(l => l.ExternalId)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(l => l.SourceSite)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(l => l.ListingUrl)
+            .HasMaxLength(500)
+            .IsRequired();
+
+        builder.Property(l => l.Make)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(l => l.Model)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(l => l.Year)
+            .IsRequired();
+
+        builder.Property(l => l.Trim)
+            .HasMaxLength(100);
+
+        builder.Property(l => l.Price)
+            .HasPrecision(12, 2)
+            .IsRequired();
+
+        builder.Property(l => l.Mileage);
+
+        builder.Property(l => l.Vin)
+            .HasMaxLength(17);
+
+        builder.Property(l => l.City)
+            .HasMaxLength(100);
+
+        builder.Property(l => l.State)
+            .HasMaxLength(50);
+
+        builder.Property(l => l.ZipCode)
+            .HasMaxLength(10);
+
+        builder.Property(l => l.Condition)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(l => l.Transmission)
+            .HasConversion<int?>();
+
+        builder.Property(l => l.FuelType)
+            .HasConversion<int?>();
+
+        builder.Property(l => l.BodyStyle)
+            .HasMaxLength(50);
+
+        builder.Property(l => l.ExteriorColor)
+            .HasMaxLength(50);
+
+        builder.Property(l => l.InteriorColor)
+            .HasMaxLength(50);
+
+        builder.Property(l => l.Description);
+
+        builder.Property(l => l.ImageUrls)
+            .HasConversion(
+                v => string.Join(',', v),
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+            .HasMaxLength(4000);
+
+        builder.Property(l => l.FirstSeenDate)
+            .IsRequired();
+
+        builder.Property(l => l.LastSeenDate)
+            .IsRequired();
+
+        builder.Property(l => l.IsNewListing)
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(l => l.CreatedAt)
+            .IsRequired();
+
+        builder.Property(l => l.UpdatedAt);
+
+        // Ignore domain events - they are not persisted
+        builder.Ignore(l => l.DomainEvents);
+
+        // Indexes
+        builder.HasIndex(l => l.TenantId)
+            .HasDatabaseName("IX_Listing_TenantId");
+
+        builder.HasIndex(l => l.Vin)
+            .HasDatabaseName("IX_Listing_Vin");
+
+        builder.HasIndex(l => new { l.Make, l.Model })
+            .HasDatabaseName("IX_Listing_MakeModel");
+
+        builder.HasIndex(l => l.Price)
+            .HasDatabaseName("IX_Listing_Price");
+
+        builder.HasIndex(l => l.Year)
+            .HasDatabaseName("IX_Listing_Year");
+
+        // Unique constraint on ExternalId + SourceSite + TenantId
+        builder.HasIndex(l => new { l.SourceSite, l.ExternalId, l.TenantId })
+            .IsUnique()
+            .HasDatabaseName("UQ_Listing_External");
+    }
+}
