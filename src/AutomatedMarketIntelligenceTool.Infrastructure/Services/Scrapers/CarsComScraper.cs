@@ -215,7 +215,6 @@ public class CarsComScraper : BaseScraper
     {
         var cleanPrice = priceText.Replace("$", string.Empty)
             .Replace(",", string.Empty)
-            .Replace(".", string.Empty)
             .Trim();
 
         if (decimal.TryParse(cleanPrice, out var price))
@@ -230,7 +229,6 @@ public class CarsComScraper : BaseScraper
     {
         var cleanMileage = mileageText.Replace(",", string.Empty)
             .Replace("mi", string.Empty)
-            .Replace(".", string.Empty)
             .Replace("miles", string.Empty)
             .Trim();
 
