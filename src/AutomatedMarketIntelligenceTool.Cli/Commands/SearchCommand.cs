@@ -94,7 +94,6 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
         catch (Exception ex)
         {
             AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-            Console.Error.WriteLine($"Error: {ex.Message}");
             return ExitCodes.GeneralError;
         }
     }

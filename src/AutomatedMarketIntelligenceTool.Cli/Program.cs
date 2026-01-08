@@ -26,7 +26,6 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
 
 // Add services
 services.AddScoped<ISearchService, SearchService>();
-services.AddScoped<IDuplicateDetectionService, DuplicateDetectionService>();
 services.AddSingleton<IScraperFactory, ScraperFactory>();
 
 // Create service provider

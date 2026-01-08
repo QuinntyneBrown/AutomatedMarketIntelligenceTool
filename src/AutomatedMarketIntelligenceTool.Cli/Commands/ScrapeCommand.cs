@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using AutomatedMarketIntelligenceTool.Core;
-using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
@@ -14,16 +13,13 @@ namespace AutomatedMarketIntelligenceTool.Cli.Commands;
 public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
 {
     private readonly IScraperFactory _scraperFactory;
-    private readonly IDuplicateDetectionService _duplicateDetectionService;
     private readonly IAutomatedMarketIntelligenceToolContext _context;
 
     public ScrapeCommand(
         IScraperFactory scraperFactory,
-        IDuplicateDetectionService duplicateDetectionService,
         IAutomatedMarketIntelligenceToolContext context)
     {
         _scraperFactory = scraperFactory ?? throw new ArgumentNullException(nameof(scraperFactory));
-        _duplicateDetectionService = duplicateDetectionService ?? throw new ArgumentNullException(nameof(duplicateDetectionService));
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
@@ -96,29 +92,49 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
 
                             progressTask.Description = $"[green]Processing {listingsList.Count} listings from {scraper.SiteName}[/]";
 
+                            // Pre-load existing listings to avoid N+1 queries
+                            var externalIds = listingsList.Select(l => l.ExternalId).ToList();
+                            var vins = listingsList.Where(l => !string.IsNullOrWhiteSpace(l.Vin)).Select(l => l.Vin!.ToUpper()).ToList();
+                            
+                            var existingListings = await _context.Listings
+                                .Where(l => l.TenantId == settings.TenantId)
+                                .Where(l => 
+                                    (externalIds.Contains(l.ExternalId) && l.SourceSite == scraper.SiteName) ||
+                                    (l.Vin != null && vins.Contains(l.Vin.ToUpper())))
+                                .ToListAsync();
+
+                            // Create lookup dictionaries for fast access
+                            var listingsByExternalId = existingListings
+                                .Where(l => l.SourceSite == scraper.SiteName)
+                                .ToDictionary(l => l.ExternalId, l => l);
+                            
+                            var listingsByVin = existingListings
+                                .Where(l => !string.IsNullOrWhiteSpace(l.Vin))
+                                .GroupBy(l => l.Vin!.ToUpper())
+                                .ToDictionary(g => g.Key, g => g.First());
+
                             // Process each listing
                             foreach (var scrapedListing in listingsList)
                             {
-                                // Convert to ScrapedListingInfo for duplicate detection
-                                var scrapedListingInfo = new ScrapedListingInfo
+                                Core.Models.ListingAggregate.Listing? existingListing = null;
+                                
+                                // Check for duplicate by VIN first
+                                if (!string.IsNullOrWhiteSpace(scrapedListing.Vin) && scrapedListing.Vin.Length == 17)
                                 {
-                                    TenantId = settings.TenantId,
-                                    ExternalId = scrapedListing.ExternalId,
-                                    SourceSite = scrapedListing.SourceSite,
-                                    Vin = scrapedListing.Vin
-                                };
+                                    listingsByVin.TryGetValue(scrapedListing.Vin.ToUpper(), out existingListing);
+                                }
+                                
+                                // Check for duplicate by ExternalId if not found by VIN
+                                if (existingListing == null)
+                                {
+                                    listingsByExternalId.TryGetValue(scrapedListing.ExternalId, out existingListing);
+                                }
 
-                                var duplicateResult = await _duplicateDetectionService.CheckForDuplicateAsync(scrapedListingInfo);
-
-                                if (duplicateResult.IsDuplicate && duplicateResult.ExistingListingId.HasValue)
+                                if (existingListing != null)
                                 {
                                     totalDuplicates++;
                                     
-                                    // Load the existing listing to update price if changed
-                                    var existingListing = await _context.Listings
-                                        .FirstOrDefaultAsync(l => l.ListingId.Value == duplicateResult.ExistingListingId.Value);
-                                    
-                                    if (existingListing != null && scrapedListing.Price != existingListing.Price)
+                                    if (scrapedListing.Price != existingListing.Price)
                                     {
                                         existingListing.UpdatePrice(scrapedListing.Price);
                                         existingListing.MarkAsSeen();
@@ -182,7 +198,6 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         catch (Exception ex)
         {
             AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-            Console.Error.WriteLine($"Error: {ex.Message}");
             return ExitCodes.ScrapingError;
         }
     }
