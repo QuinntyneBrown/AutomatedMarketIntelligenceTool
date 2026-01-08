@@ -49,8 +49,8 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
                 PriceMax = settings.PriceMax,
                 MileageMin = settings.MileageMin,
                 MileageMax = settings.MileageMax,
-                ZipCode = settings.ZipCode,
-                RadiusMiles = settings.Radius,
+                PostalCode = settings.ZipCode,
+                RadiusKilometers = settings.Radius,
                 Page = settings.Page,
                 PageSize = settings.PageSize
             };
@@ -82,8 +82,8 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
                 Year = lr.Listing.Year,
                 Price = lr.Listing.Price,
                 Mileage = lr.Listing.Mileage,
-                Location = $"{lr.Listing.City}, {lr.Listing.State}",
-                Distance = lr.DistanceMiles.HasValue ? $"{lr.DistanceMiles:F1} mi" : "N/A",
+                Location = $"{lr.Listing.City}, {lr.Listing.Province}",
+                Distance = lr.DistanceKilometers.HasValue ? $"{lr.DistanceKilometers:F1} km" : "N/A",
                 Url = lr.Listing.ListingUrl
             });
 
@@ -137,21 +137,21 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
         [Description("Maximum mileage")]
         public int? MileageMax { get; set; }
 
-        [CommandOption("-z|--zip")]
-        [Description("ZIP code for location search")]
+        [CommandOption("-p|--postal-code")]
+        [Description("Canadian postal code for location search (e.g., M5V 3L9)")]
         public string? ZipCode { get; set; }
 
         [CommandOption("-r|--radius")]
-        [Description("Search radius in miles (default: 25)")]
-        [DefaultValue(25)]
-        public double Radius { get; set; } = 25;
+        [Description("Search radius in kilometers (default: 40)")]
+        [DefaultValue(40)]
+        public double Radius { get; set; } = 40;
 
         [CommandOption("-f|--format")]
         [Description("Output format: table, json, csv (default: table)")]
         [DefaultValue("table")]
         public string Format { get; set; } = "table";
 
-        [CommandOption("-p|--page")]
+        [CommandOption("--page")]
         [Description("Page number (default: 1)")]
         [DefaultValue(1)]
         public int Page { get; set; } = 1;

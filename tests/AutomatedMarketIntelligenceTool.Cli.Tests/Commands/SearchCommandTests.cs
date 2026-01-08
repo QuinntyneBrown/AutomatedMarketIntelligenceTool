@@ -13,7 +13,7 @@ public class SearchCommandTests
         var settings = new SearchCommand.Settings();
 
         // Assert
-        settings.Radius.Should().Be(25);
+        settings.Radius.Should().Be(40);
         settings.Format.Should().Be("table");
         settings.Page.Should().Be(1);
         settings.PageSize.Should().Be(30);
@@ -36,7 +36,7 @@ public class SearchCommandTests
         settings.PriceMax = 50000;
         settings.MileageMin = 0;
         settings.MileageMax = 50000;
-        settings.ZipCode = "90210";
+        settings.ZipCode = "M5V 3L9";
         settings.Radius = 50;
         settings.Format = "json";
         settings.Page = 2;
@@ -52,7 +52,7 @@ public class SearchCommandTests
         settings.PriceMax.Should().Be(50000);
         settings.MileageMin.Should().Be(0);
         settings.MileageMax.Should().Be(50000);
-        settings.ZipCode.Should().Be("90210");
+        settings.ZipCode.Should().Be("M5V 3L9");
         settings.Radius.Should().Be(50);
         settings.Format.Should().Be("json");
         settings.Page.Should().Be(2);

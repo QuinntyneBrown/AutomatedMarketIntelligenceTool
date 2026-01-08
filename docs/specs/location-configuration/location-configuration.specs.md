@@ -70,10 +70,10 @@ The system SHALL allow users to specify a search location using geographic coord
 
 ### Acceptance Criteria
 
-- [ ] AC-004.1: User can specify latitude and longitude (e.g., `--lat 34.0522 --lon -118.2437`) (Phase 2)
+- [ ] AC-004.1: User can specify latitude and longitude (e.g., `--lat 43.6532 --lon -79.3832` for Toronto) (Phase 2)
 - [ ] AC-004.2: Coordinates are validated for valid ranges (-90 to 90 for lat, -180 to 180 for lon) (Phase 2)
 - [ ] AC-004.3: Coordinates can be used in combination with radius parameter (Phase 2)
-- [ ] AC-004.4: System converts coordinates to nearest city/ZIP for sites that don't support coordinates (Phase 3)
+- [ ] AC-004.4: System converts coordinates to nearest city/postal code for sites that don't support coordinates (Phase 3)
 
 ---
 
