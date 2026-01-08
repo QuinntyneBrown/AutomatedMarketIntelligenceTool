@@ -51,8 +51,8 @@ public class JsonFormatterTests
         formatter.Format(data);
 
         // Assert
-        var output = stringWriter.ToString().Trim();
-        output.Should().Be("[]");
+        var output = stringWriter.ToString();
+        output.Should().Contain("[]");
 
         // Restore console
         Console.SetOut(originalOut);

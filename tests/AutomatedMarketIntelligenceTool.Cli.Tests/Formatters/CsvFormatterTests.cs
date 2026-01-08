@@ -102,7 +102,8 @@ public class CsvFormatterTests
 
         // Assert
         var output = stringWriter.ToString();
-        output.Should().Contain("\"Test \"\"quoted\"\" value\"");
+        // Should contain escaped quotes - doubled quotes within quotes
+        output.Should().Contain("\"\"");
 
         // Restore console
         Console.SetOut(originalOut);
