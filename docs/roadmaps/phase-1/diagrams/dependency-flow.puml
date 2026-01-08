@@ -1,0 +1,131 @@
+@startuml dependency-flow
+!theme cerulean-outline
+
+title Phase 1 Data & Dependency Flow
+caption End-to-End Flow: User Request → Scraped Data → Displayed Results
+
+skinparam backgroundColor #FEFEFE
+skinparam roundCorner 10
+skinparam shadowing false
+skinparam actorStyle awesome
+
+' Actors
+actor "User" as user #E1BEE7
+actor "Developer" as dev #C8E6C9
+
+' User Interface Layer
+package "User Interface" #F3E5F5 {
+    rectangle "CLI Application" as cli {
+        usecase "car-search search" as searchcmd
+        usecase "car-search scrape" as scrapecmd
+        usecase "Output Formatter" as formatter
+    }
+}
+
+' Application Services
+package "Application Services" #BBDEFB {
+    rectangle "MediatR Handlers" as mediatr {
+        usecase "SearchListingsQuery" as searchquery
+        usecase "StartScrapeCommand" as scrapehandler
+    }
+}
+
+' Domain Services
+package "Domain Services" #C8E6C9 {
+    rectangle "Core Services" as coreservices {
+        usecase "SearchService" as searchsvc
+        usecase "DuplicateDetectionService" as dedupsvc
+    }
+}
+
+' Infrastructure
+package "Infrastructure" #FFE0B2 {
+    rectangle "Data Access" as dataaccess {
+        usecase "DbContext" as dbctx
+        usecase "Query Execution" as queryexec
+    }
+
+    rectangle "Web Scrapers" as scrapers {
+        usecase "AutotraderScraper" as autotrader
+        usecase "CarsComScraper" as carscom
+        usecase "Playwright Browser" as playwright
+    }
+}
+
+' External
+package "External Systems" #FFEBEE {
+    database "SQLite DB" as sqlite
+    cloud "Autotrader.com" as autotradersite
+    cloud "Cars.com" as carscomsite
+}
+
+' === SEARCH FLOW ===
+user -right-> searchcmd : "1. Execute search"
+searchcmd -down-> searchquery : "2. Dispatch query"
+searchquery -down-> searchsvc : "3. Apply filters"
+searchsvc -down-> dbctx : "4. Build query"
+dbctx -down-> queryexec : "5. Execute"
+queryexec -down-> sqlite : "6. Fetch data"
+sqlite -up-> queryexec : "7. Return listings"
+queryexec -up-> dbctx
+dbctx -up-> searchsvc : "8. Results"
+searchsvc -up-> searchquery
+searchquery -up-> searchcmd
+searchcmd -right-> formatter : "9. Format"
+formatter -right-> user : "10. Display"
+
+' === SCRAPE FLOW ===
+user -down-> scrapecmd : "A. Execute scrape"
+scrapecmd -down-> scrapehandler : "B. Dispatch command"
+scrapehandler -down-> autotrader : "C. Initialize scraper"
+autotrader -down-> playwright : "D. Launch browser"
+playwright -down-> autotradersite : "E. Navigate & extract"
+autotradersite -up-> playwright : "F. HTML content"
+playwright -up-> autotrader : "G. Parsed listings"
+autotrader -right-> dedupsvc : "H. Check duplicates"
+dedupsvc -down-> dbctx : "I. Query existing"
+dbctx -down-> sqlite
+sqlite -up-> dbctx : "J. Existing records"
+dbctx -up-> dedupsvc : "K. Match results"
+dedupsvc -right-> dbctx : "L. Insert/Update"
+dbctx -right-> sqlite : "M. Persist"
+
+' Parallel scraper
+scrapehandler -[hidden]-> carscom
+carscom -down-> playwright
+playwright -down-> carscomsite
+
+' Notes
+note top of searchcmd
+  **Search Command Options:**
+  -m, --make
+  --model
+  --year-min, --year-max
+  --price-min, --price-max
+  -z, --zip
+  -r, --radius
+  -f, --format
+end note
+
+note bottom of dedupsvc
+  **Duplicate Detection:**
+  1. VIN match (17-char, case-insensitive)
+  2. ExternalId + SourceSite match
+  3. If no match → New listing
+end note
+
+note right of formatter
+  **Output Formats:**
+  - Table (default)
+  - JSON
+  - CSV
+end note
+
+' Legend
+legend bottom
+  |= Flow |= Description |
+  | 1-10 | Search Flow: User query → Database → Formatted output |
+  | A-M | Scrape Flow: User command → Website → Database storage |
+endlegend
+
+@enduml
