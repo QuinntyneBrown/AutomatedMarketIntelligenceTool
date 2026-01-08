@@ -231,13 +231,13 @@ builder.Services.AddControllers()
 ## 6. Frontend Requirements
 
 ### 6.1 Project Identity
-**REQ-FE-001**: The frontend SHALL be named `MultiServiceAutomotiveEcosystemPlatform.WebApp` (located at `src\MultiServiceAutomotiveEcosystemPlatform.WebApp`).
+**REQ-FE-001**: The frontend SHALL be named `AutomatedMarketIntelligenceTool.WebApp` (located at `src\AutomatedMarketIntelligenceTool.WebApp`).
 
 **REQ-FE-002**: The frontend SHALL be configured as an Angular workspace with projects.
 
-**REQ-FE-003**: The frontend project SHALL be named `MultiServiceAutomotiveEcosystemPlatform` if it is not an admin frontend.
+**REQ-FE-003**: The frontend project SHALL be named `AutomatedMarketIntelligenceTool` if it is not an admin frontend.
 
-**REQ-FE-004**: The frontend project SHALL be named `MultiServiceAutomotiveEcosystemPlatform-admin` if it is an admin frontend.
+**REQ-FE-004**: The frontend project SHALL be named `AutomatedMarketIntelligenceTool-admin` if it is an admin frontend.
 
 ### 6.2 Technology Stack
 **REQ-FE-005**: The system SHALL use the latest stable version of Angular.
@@ -288,7 +288,7 @@ header.component.ts
 ```
 
 ### 6.5 Folder Structure
-**REQ-FE-014**: The e2e folder SHALL be located at `src/MultiServiceAutomotiveEcosystemPlatform.WebApp/projects/MultiServiceAutomotiveEcosystemPlatform/src/e2e`.
+**REQ-FE-014**: The e2e folder SHALL be located at `src/AutomatedMarketIntelligenceTool.WebApp/projects/AutomatedMarketIntelligenceTool/src/e2e`.
 
 **REQ-FE-015**: The frontend SHALL contain a folder named `pages` for components that can appear in the `<router-outlet>`.
 
