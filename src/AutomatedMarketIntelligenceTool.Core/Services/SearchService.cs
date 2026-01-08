@@ -157,14 +157,16 @@ public class SearchService : ISearchService
             return null;
         }
 
-        // For now, we'll return null as we don't have lat/lon stored in listings
-        // This would require a geocoding service or pre-computed coordinates
-        // In a real implementation, you would:
-        // 1. Geocode the listing's zip code to get coordinates
-        // 2. Use Haversine formula to calculate distance
+        // NOTE: This is a placeholder implementation.
+        // In a production system, you would:
+        // 1. Use a geocoding service to convert ZIP code to lat/lon
+        // 2. Call CalculateHaversineDistance with the geocoded coordinates
+        // For now, we return null to indicate distance cannot be calculated
+        // without geocoding service integration
         return null;
     }
 
+    // This method is ready for use once geocoding is integrated
     private static double CalculateHaversineDistance(
         double lat1,
         double lon1,
@@ -250,9 +252,9 @@ public class SearchService : ISearchService
             };
         }
 
-        // Sort by distance
+        // Sort by distance (handle nulls consistently)
         return direction == SortDirection.Ascending
             ? results.OrderBy(r => r.DistanceMiles ?? double.MaxValue).ToList()
-            : results.OrderByDescending(r => r.DistanceMiles ?? double.MinValue).ToList();
+            : results.OrderByDescending(r => r.DistanceMiles ?? double.MaxValue).ToList();
     }
 }
