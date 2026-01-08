@@ -151,7 +151,7 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
         [DefaultValue("table")]
         public string Format { get; set; } = "table";
 
-        [CommandOption("-p|--page")]
+        [CommandOption("--page")]
         [Description("Page number (default: 1)")]
         [DefaultValue(1)]
         public int Page { get; set; } = 1;
