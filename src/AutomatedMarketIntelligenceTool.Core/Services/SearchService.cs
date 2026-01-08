@@ -99,7 +99,7 @@ public class SearchService : ISearchService
             results = listings.Select(l => new ListingSearchResult
             {
                 Listing = l,
-                DistanceMiles = null
+                DistanceKilometers = null
             }).ToList();
         }
 
@@ -125,13 +125,13 @@ public class SearchService : ISearchService
             .Select(l => new ListingSearchResult
             {
                 Listing = l,
-                DistanceMiles = CalculateDistance(
+                DistanceKilometers = CalculateDistance(
                     criteria.SearchLatitude!.Value,
                     criteria.SearchLongitude!.Value,
                     l)
             })
-            .Where(r => !criteria.RadiusMiles.HasValue || 
-                       (r.DistanceMiles.HasValue && r.DistanceMiles.Value <= criteria.RadiusMiles.Value))
+            .Where(r => !criteria.RadiusKilometers.HasValue || 
+                       (r.DistanceKilometers.HasValue && r.DistanceKilometers.Value <= criteria.RadiusKilometers.Value))
             .ToList();
 
         // Apply sorting
@@ -152,7 +152,7 @@ public class SearchService : ISearchService
         Listing listing)
     {
         // If listing doesn't have location data, return null
-        if (string.IsNullOrWhiteSpace(listing.ZipCode))
+        if (string.IsNullOrWhiteSpace(listing.PostalCode))
         {
             return null;
         }
@@ -254,7 +254,7 @@ public class SearchService : ISearchService
 
         // Sort by distance (handle nulls consistently)
         return direction == SortDirection.Ascending
-            ? results.OrderBy(r => r.DistanceMiles ?? double.MaxValue).ToList()
-            : results.OrderByDescending(r => r.DistanceMiles ?? double.MaxValue).ToList();
+            ? results.OrderBy(r => r.DistanceKilometers ?? double.MaxValue).ToList()
+            : results.OrderByDescending(r => r.DistanceKilometers ?? double.MaxValue).ToList();
     }
 }

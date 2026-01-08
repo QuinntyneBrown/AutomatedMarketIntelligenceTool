@@ -1,3 +1,5 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
 public class SearchParameters
@@ -9,7 +11,8 @@ public class SearchParameters
     public decimal? PriceMin { get; set; }
     public decimal? PriceMax { get; set; }
     public int? MileageMax { get; set; }
-    public string? ZipCode { get; set; }
-    public int? RadiusMiles { get; set; }
+    public string? PostalCode { get; set; }
+    public int? RadiusKilometers { get; set; }
+    public CanadianProvince? Province { get; set; }
     public int? MaxPages { get; set; }
 }

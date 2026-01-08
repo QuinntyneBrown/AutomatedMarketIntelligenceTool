@@ -24,7 +24,7 @@
 ## Executive Summary
 
 Phase 1 (MVP) delivers a functional car listing search tool capable of:
-- Scraping 2-3 major automotive listing sites (Autotrader, Cars.com)
+- Scraping 2-3 major automotive listing sites (Autotrader.ca, Kijiji.ca)
 - Persisting listings to a local SQLite database
 - Detecting duplicate listings via VIN and External ID matching
 - Providing CLI-based search with configurable filters

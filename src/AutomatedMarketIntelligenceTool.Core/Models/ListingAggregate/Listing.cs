@@ -20,8 +20,9 @@ public class Listing
     public int? Mileage { get; private set; }
     public string? Vin { get; private set; }
     public string? City { get; private set; }
-    public string? State { get; private set; }
-    public string? ZipCode { get; private set; }
+    public string? Province { get; private set; }
+    public string? PostalCode { get; private set; }
+    public string Currency { get; private set; } = "CAD";
     public Condition Condition { get; private set; }
     public Transmission? Transmission { get; private set; }
     public FuelType? FuelType { get; private set; }
@@ -62,8 +63,9 @@ public class Listing
         int? mileage = null,
         string? vin = null,
         string? city = null,
-        string? state = null,
-        string? zipCode = null,
+        string? province = null,
+        string? postalCode = null,
+        string? currency = null,
         Transmission? transmission = null,
         FuelType? fuelType = null,
         string? bodyStyle = null,
@@ -87,8 +89,9 @@ public class Listing
             Mileage = mileage,
             Vin = vin,
             City = city,
-            State = state,
-            ZipCode = zipCode,
+            Province = province,
+            PostalCode = postalCode,
+            Currency = currency ?? "CAD",
             Condition = condition,
             Transmission = transmission,
             FuelType = fuelType,

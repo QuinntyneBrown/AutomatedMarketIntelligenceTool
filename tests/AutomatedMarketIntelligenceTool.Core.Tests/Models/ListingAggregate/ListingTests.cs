@@ -172,9 +172,9 @@ public class ListingTests
             trim: "M Sport",
             mileage: 15000,
             vin: "1HGBH41JXMN109186",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90001",
+            city: "Toronto",
+            province: "ON",
+            postalCode: "M5V 3L9",
             transmission: Transmission.Automatic,
             fuelType: FuelType.Gasoline,
             bodyStyle: "SUV",
@@ -187,9 +187,9 @@ public class ListingTests
         Assert.Equal("M Sport", listing.Trim);
         Assert.Equal(15000, listing.Mileage);
         Assert.Equal("1HGBH41JXMN109186", listing.Vin);
-        Assert.Equal("Los Angeles", listing.City);
-        Assert.Equal("CA", listing.State);
-        Assert.Equal("90001", listing.ZipCode);
+        Assert.Equal("Toronto", listing.City);
+        Assert.Equal("ON", listing.Province);
+        Assert.Equal("M5V 3L9", listing.PostalCode);
         Assert.Equal(Transmission.Automatic, listing.Transmission);
         Assert.Equal(FuelType.Gasoline, listing.FuelType);
         Assert.Equal("SUV", listing.BodyStyle);

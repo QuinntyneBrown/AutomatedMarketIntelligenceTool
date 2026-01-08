@@ -25,36 +25,36 @@ public class ScraperFactoryTests
         // Assert
         Assert.NotNull(scraper);
         Assert.IsType<AutotraderScraper>(scraper);
-        Assert.Equal("Autotrader", scraper.SiteName);
+        Assert.Equal("Autotrader.ca", scraper.SiteName);
     }
 
     [Fact]
-    public void CreateScraper_WithCarscom_ShouldReturnCarsComScraper()
+    public void CreateScraper_WithKijiji_ShouldReturnKijijiScraper()
     {
         // Arrange
         var factory = new ScraperFactory(_loggerFactory);
 
         // Act
-        var scraper = factory.CreateScraper("carscom");
+        var scraper = factory.CreateScraper("kijiji");
 
         // Assert
         Assert.NotNull(scraper);
-        Assert.IsType<CarsComScraper>(scraper);
-        Assert.Equal("Cars.com", scraper.SiteName);
+        Assert.IsType<KijijiScraper>(scraper);
+        Assert.Equal("Kijiji.ca", scraper.SiteName);
     }
 
     [Fact]
-    public void CreateScraper_WithCarsDotCom_ShouldReturnCarsComScraper()
+    public void CreateScraper_WithKijijiDotCa_ShouldReturnKijijiScraper()
     {
         // Arrange
         var factory = new ScraperFactory(_loggerFactory);
 
         // Act
-        var scraper = factory.CreateScraper("cars.com");
+        var scraper = factory.CreateScraper("kijiji.ca");
 
         // Assert
         Assert.NotNull(scraper);
-        Assert.IsType<CarsComScraper>(scraper);
+        Assert.IsType<KijijiScraper>(scraper);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class ScraperFactoryTests
         Assert.NotEmpty(scrapers);
         Assert.Equal(2, scrapers.Count);
         Assert.Contains(scrapers, s => s is AutotraderScraper);
-        Assert.Contains(scrapers, s => s is CarsComScraper);
+        Assert.Contains(scrapers, s => s is KijijiScraper);
     }
 
     [Fact]
@@ -113,8 +113,8 @@ public class ScraperFactoryTests
         // Assert
         Assert.NotEmpty(sites);
         Assert.Equal(2, sites.Count);
-        Assert.Contains("Autotrader", sites);
-        Assert.Contains("Cars.com", sites);
+        Assert.Contains("Autotrader.ca", sites);
+        Assert.Contains("Kijiji.ca", sites);
     }
 
     [Fact]

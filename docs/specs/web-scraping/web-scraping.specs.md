@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Web Scraping feature is responsible for extracting car listing data from multiple automotive websites using Playwright. This feature handles browser automation, page navigation, data extraction, and rate limiting to ensure reliable and ethical data collection.
+The Web Scraping feature is responsible for extracting car listing data from multiple Canadian automotive websites using Playwright. This feature handles browser automation, page navigation, data extraction, and rate limiting to ensure reliable and ethical data collection.
 
 ---
 
@@ -12,18 +12,18 @@ The Web Scraping feature is responsible for extracting car listing data from mul
 
 ### Formal Statement
 
-The system SHALL support scraping car listings from multiple automotive websites simultaneously.
+The system SHALL support scraping car listings from multiple Canadian automotive websites simultaneously.
 
 ### Acceptance Criteria
 
-- [ ] AC-001.1: System supports minimum of 10 different automotive listing websites (Phase 5)
-- [ ] AC-001.2: Supported sites include major platforms (e.g., Autotrader, Cars.com, CarGurus, Craigslist, Facebook Marketplace, eBay Motors, CarMax, Carvana, Vroom, TrueCar) (Phase 5)
+- [ ] AC-001.1: System supports minimum of 5 different Canadian automotive listing websites (Phase 5)
+- [ ] AC-001.2: Supported sites include major Canadian platforms (e.g., Autotrader.ca, Kijiji.ca, Facebook Marketplace Canada, Auto123, Craigslist.ca) (Phase 5)
 - [ ] AC-001.3: Each site has a dedicated scraper module with site-specific logic (Phase 1)
-- [ ] AC-001.4: User can enable/disable specific sites (e.g., `--sites autotrader,cargurus`) (Phase 2)
+- [ ] AC-001.4: User can enable/disable specific sites (e.g., `--sites autotrader,kijiji`) (Phase 2)
 - [ ] AC-001.5: User can exclude specific sites (e.g., `--exclude-sites craigslist`) (Phase 2)
 - [ ] AC-001.6: New sites can be added without modifying core scraping logic (Phase 2)
 
-**Note for Phase 1 (MVP):** The MVP shall support 2-3 major sites (e.g., Autotrader, Cars.com) to demonstrate core functionality.
+**Note for Phase 1 (MVP):** The MVP shall support 2 major Canadian sites (Autotrader.ca, Kijiji.ca) to demonstrate core functionality.
 
 ---
 
@@ -75,8 +75,8 @@ The system SHALL extract comprehensive listing data from each car listing page.
 
 ### Acceptance Criteria
 
-- [ ] AC-004.1: System extracts: title, price, make, model, year, mileage, VIN (when available) (Phase 1)
-- [ ] AC-004.2: System extracts: location (city, state, ZIP), seller type, condition (Phase 1)
+- [ ] AC-004.1: System extracts: title, price, make, model, year, mileage (in km), VIN (when available) (Phase 1)
+- [ ] AC-004.2: System extracts: location (city, province, postal code), seller type, condition (Phase 1)
 - [ ] AC-004.3: System extracts: transmission, fuel type, drivetrain, body style, exterior color, interior color (Phase 2)
 - [ ] AC-004.4: System extracts: listing URL, listing ID, image URLs, description (Phase 1)
 - [ ] AC-004.5: System extracts: dealer name (if applicable), phone number, listing date (Phase 2)

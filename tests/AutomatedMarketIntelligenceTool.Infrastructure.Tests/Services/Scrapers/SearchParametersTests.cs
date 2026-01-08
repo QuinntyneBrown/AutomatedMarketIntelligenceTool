@@ -1,3 +1,4 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Tests.Services.Scrapers;
@@ -28,8 +29,9 @@ public class SearchParametersTests
         Assert.Null(parameters.PriceMin);
         Assert.Null(parameters.PriceMax);
         Assert.Null(parameters.MileageMax);
-        Assert.Null(parameters.ZipCode);
-        Assert.Null(parameters.RadiusMiles);
+        Assert.Null(parameters.PostalCode);
+        Assert.Null(parameters.RadiusKilometers);
+        Assert.Null(parameters.Province);
         Assert.Null(parameters.MaxPages);
     }
 
@@ -46,8 +48,9 @@ public class SearchParametersTests
             PriceMin = 15000,
             PriceMax = 30000,
             MileageMax = 50000,
-            ZipCode = "90210",
-            RadiusMiles = 25,
+            PostalCode = "M5V 3L9",
+            RadiusKilometers = 25,
+            Province = CanadianProvince.ON,
             MaxPages = 5
         };
 
@@ -59,8 +62,9 @@ public class SearchParametersTests
         Assert.Equal(15000, parameters.PriceMin);
         Assert.Equal(30000, parameters.PriceMax);
         Assert.Equal(50000, parameters.MileageMax);
-        Assert.Equal("90210", parameters.ZipCode);
-        Assert.Equal(25, parameters.RadiusMiles);
+        Assert.Equal("M5V 3L9", parameters.PostalCode);
+        Assert.Equal(25, parameters.RadiusKilometers);
+        Assert.Equal(CanadianProvince.ON, parameters.Province);
         Assert.Equal(5, parameters.MaxPages);
     }
 }
