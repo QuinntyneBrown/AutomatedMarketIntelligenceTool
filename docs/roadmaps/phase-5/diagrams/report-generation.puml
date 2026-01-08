@@ -1,0 +1,87 @@
+@startuml Report Generation
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Report Generation Pipeline - Phase 5
+
+|#LightBlue| CLI |
+|#LightGreen| Report Service |
+|#LightYellow| Generators |
+|#LightCoral| Output |
+
+|CLI|
+start
+:User: car-search report --format html;
+
+:Parse format option;
+:Build search criteria;
+
+|Report Service|
+:Create Report entity (Pending);
+:Store in database;
+
+:Execute search query;
+:Fetch matching listings;
+
+:Calculate statistics;
+note right
+    - Total count
+    - Average price
+    - Price range
+    - Mileage stats
+    - Breakdown by make
+end note
+
+:Select generator by format;
+
+|Generators|
+switch (Format?)
+case (HTML)
+    :HtmlReportGenerator;
+    :Load HTML template;
+    :Inject data with placeholders;
+    :Apply responsive CSS;
+
+case (PDF)
+    :PdfReportGenerator;
+    :Create QuestPDF document;
+    :Add header/footer;
+    :Generate charts;
+    :Render tables;
+
+case (Excel)
+    :ExcelReportGenerator;
+    :Create workbook;
+    :Add Summary sheet;
+    :Add Listings sheet;
+    :Format cells & headers;
+
+endswitch
+
+:Generate output bytes;
+
+|Report Service|
+:Save to output path;
+:Update Report status (Complete);
+:Record file size;
+
+|Output|
+:Write file to disk;
+
+|CLI|
+:Display success message;
+:Show output path;
+
+stop
+
+note right of Generators
+    **Template Variables (HTML):**
+    - {{title}}
+    - {{date}}
+    - {{criteria}}
+    - {{total}}
+    - {{listings}}
+    - {{statistics}}
+end note
+
+@enduml

@@ -1,0 +1,115 @@
+@startuml Phase 4 Architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title Phase 4 Architecture - Image Analysis & Advanced Operations
+
+package "Presentation Layer" {
+    [CLI Application] as CLI
+
+    note right of CLI
+        **New Commands:**
+        - ReviewCommand
+        - WatchCommand
+        - CompareCommand
+        - AlertCommand
+        - ImportCommand
+        - BackupCommand
+        - CompletionCommand
+    end note
+}
+
+package "Domain Layer (Core)" {
+    package "New Aggregates" #LightGreen {
+        [ReviewQueue Aggregate] as Review
+        [WatchList Aggregate] as Watch
+        [Alert Aggregate] as Alert
+        [Dealer Aggregate] as Dealer
+    }
+
+    package "Image Analysis" #LightGreen {
+        [IImageHashingService] as ImageHash
+        [IImageDownloadService] as ImageDL
+        [PerceptualHashCalculator] as PHash
+    }
+
+    package "Enhanced Services" {
+        [DuplicateDetectionService] as DupSvc
+        [IReviewService] as ReviewSvc #LightGreen
+        [IWatchListService] as WatchSvc #LightGreen
+        [IAlertService] as AlertSvc #LightGreen
+        [IRelistedDetectionService] as RelistSvc #LightGreen
+        [IDealerTrackingService] as DealerSvc #LightGreen
+    }
+
+    ImageHash --> PHash
+    ImageHash --> ImageDL
+    DupSvc --> ImageHash
+}
+
+package "Infrastructure Layer" {
+    package "Concurrent Scraping" #LightGreen {
+        [IConcurrentScrapingEngine] as ConcEngine
+        [ScrapingResourceManager] as ResMgr
+        [ProxyRotationService] as ProxyRot
+    }
+
+    package "Health Monitoring" #LightGreen {
+        [IScraperHealthService] as HealthSvc
+        [HealthMetrics] as Metrics
+    }
+
+    package "Data Operations" #LightGreen {
+        [IDataImportService] as ImportSvc
+        [IBackupService] as BackupSvc
+        [CsvImporter] as CSV
+        [JsonImporter] as JSON
+    }
+
+    package "Notifications" #LightGreen {
+        [INotificationService] as NotifySvc
+        [EmailNotificationService] as Email
+        [WebhookNotificationService] as Webhook
+    }
+
+    package "Scrapers (10+)" {
+        [Site Scrapers] as Scrapers
+    }
+}
+
+package "CLI Features" #LightGreen {
+    [Shell Completion] as Complete
+    [Signal Handling] as Signals
+    [Confirmation Prompts] as Confirm
+}
+
+' Connections
+CLI --> ReviewSvc
+CLI --> WatchSvc
+CLI --> AlertSvc
+CLI --> ImportSvc
+CLI --> BackupSvc
+CLI --> Complete
+CLI --> Signals
+CLI --> Confirm
+
+ConcEngine --> Scrapers
+ConcEngine --> ResMgr
+ConcEngine --> ProxyRot
+ConcEngine --> HealthSvc
+
+AlertSvc --> NotifySvc
+NotifySvc --> Email
+NotifySvc --> Webhook
+
+ImportSvc --> CSV
+ImportSvc --> JSON
+
+legend right
+    |= Color |= Meaning |
+    | <#LightGreen> | New in Phase 4 |
+    | White | From Phase 1-3 |
+endlegend
+
+@enduml

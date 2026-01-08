@@ -1,0 +1,69 @@
+@startuml Vehicle Linking
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Cross-Source Vehicle Linking - Phase 3
+
+package "Source Sites" {
+    database "Autotrader" as AT {
+        card "Listing A\n2023 Toyota Camry\nVIN: ...XYZ123\n$28,500" as LA
+    }
+
+    database "Cars.com" as CC {
+        card "Listing B\n2023 Toyota Camry\nVIN: ...XYZ123\n$27,900" as LB
+    }
+
+    database "CarGurus" as CG {
+        card "Listing C\n2023 Toyota Camry\nNo VIN\n$28,200" as LC
+    }
+
+    database "CarMax" as CM {
+        card "Listing D\n2023 Toyota Camry\nVIN: ...XYZ123\n$29,100" as LD
+    }
+}
+
+package "Unified Vehicle Model" #LightGreen {
+    card "Vehicle V1\n2023 Toyota Camry\nVIN: ...XYZ123\n\nBest Price: $27,900\nAverage: $28,425\nListings: 4" as V1
+}
+
+package "Benefits" {
+    note as N1
+        **Price Comparison**
+        View prices across all sources
+        for the same physical vehicle
+    end note
+
+    note as N2
+        **Best Deal Detection**
+        Automatically identify the
+        lowest price for each vehicle
+    end note
+
+    note as N3
+        **Market Analysis**
+        Understand pricing variance
+        across different platforms
+    end note
+}
+
+LA -down-> V1 : VIN Match\n100%
+LB -down-> V1 : VIN Match\n100%
+LC -down-> V1 : Fuzzy Match\n87%
+LD -down-> V1 : VIN Match\n100%
+
+V1 .. N1
+V1 .. N2
+V1 .. N3
+
+note bottom of V1
+    **Vehicle Entity Fields:**
+    - VehicleId (GUID)
+    - PrimaryVin
+    - Make, Model, Year, Trim
+    - BestPrice (lowest current)
+    - AveragePrice
+    - ListingCount
+    - FirstSeenDate, LastSeenDate
+end note
+
+@enduml

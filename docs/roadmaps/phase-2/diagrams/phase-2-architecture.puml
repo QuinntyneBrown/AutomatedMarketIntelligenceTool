@@ -1,0 +1,130 @@
+@startuml Phase 2 Architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title Phase 2 Architecture - Enhanced Search & Multi-Site Support
+
+package "Presentation Layer" {
+    [CLI Application] as CLI
+    [Web Application] as WebApp
+    [REST API] as API
+
+    note right of CLI
+        **New in Phase 2:**
+        - ListCommand
+        - ExportCommand
+        - ConfigCommand
+        - Progress Bars
+        - Color Output
+    end note
+}
+
+package "Application Layer" {
+    [MediatR Commands] as Commands
+    [MediatR Queries] as Queries
+
+    note right of Commands
+        **New Commands:**
+        - GetListingsQuery
+        - ExportListingsQuery
+        - CreateSearchSessionCommand
+    end note
+}
+
+package "Domain Layer (Core)" {
+    package "Aggregates" {
+        [Listing Aggregate] as Listing
+        [PriceHistory Aggregate] as PriceHistory #LightGreen
+        [SearchSession Aggregate] as SearchSession #LightGreen
+    }
+
+    package "Domain Services" {
+        [DuplicateDetectionService] as DupService
+        [SearchService] as SearchSvc
+        [NewListingDetectionService] as NewListingSvc #LightGreen
+        [PriceChangeDetectionService] as PriceChangeSvc #LightGreen
+        [ListingDeactivationService] as DeactivateSvc #LightGreen
+    }
+
+    note bottom of SearchSvc
+        **Extended Filters:**
+        - Condition
+        - Transmission
+        - FuelType
+        - BodyStyle
+        - City/State
+    end note
+}
+
+package "Infrastructure Layer" {
+    package "Database" {
+        [DbContext] as DbContext
+        [SQLite Provider] as SQLite
+        [SQL Server Provider] as SQLServer #LightGreen
+    }
+
+    package "Rate Limiting" #LightGreen {
+        [IRateLimiter] as RateLimiter
+        [Domain Rate State] as RateState
+    }
+
+    package "Scrapers" {
+        [ScraperFactory] as Factory
+        [AutotraderScraper] as Autotrader
+        [CarsComScraper] as CarsCom
+        [CarGurusScraper] as CarGurus #LightGreen
+        [RateLimitingDecorator] as RateDecorator #LightGreen
+    }
+
+    package "Configuration" #LightGreen {
+        [AppSettings] as Settings
+        [ConfigurationManager] as ConfigMgr
+    }
+}
+
+' Connections
+CLI --> Commands
+CLI --> Queries
+WebApp --> API
+API --> Commands
+API --> Queries
+
+Commands --> SearchSvc
+Commands --> NewListingSvc
+Commands --> PriceChangeSvc
+Queries --> DbContext
+
+SearchSvc --> DbContext
+NewListingSvc --> DbContext
+PriceChangeSvc --> DbContext
+PriceChangeSvc --> PriceHistory
+DeactivateSvc --> DbContext
+
+DupService --> DbContext
+DupService --> Listing
+
+Factory --> Autotrader
+Factory --> CarsCom
+Factory --> CarGurus
+RateDecorator --> RateLimiter
+Autotrader ..> RateDecorator : wrapped by
+CarsCom ..> RateDecorator : wrapped by
+CarGurus ..> RateDecorator : wrapped by
+
+DbContext --> SQLite
+DbContext --> SQLServer
+DbContext --> Listing
+DbContext --> PriceHistory
+DbContext --> SearchSession
+
+CLI --> Settings
+ConfigMgr --> Settings
+
+legend right
+    |= Color |= Meaning |
+    | <#LightGreen> | New in Phase 2 |
+    | White | From Phase 1 |
+endlegend
+
+@enduml

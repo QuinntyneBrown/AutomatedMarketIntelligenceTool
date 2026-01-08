@@ -1,0 +1,140 @@
+@startuml Phase 3 Architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title Phase 3 Architecture - Advanced Features & Fuzzy Matching
+
+package "Presentation Layer" {
+    [CLI Application] as CLI
+    [Web Application] as WebApp
+    [REST API] as API
+    [Interactive Mode] as Interactive #LightGreen
+
+    note right of Interactive
+        **New in Phase 3:**
+        - ProfileCommand
+        - StatusCommand
+        - StatsCommand
+        - ShowCommand
+        - Interactive Mode
+    end note
+}
+
+package "Application Layer" {
+    [MediatR Commands] as Commands
+    [MediatR Queries] as Queries
+}
+
+package "Domain Layer (Core)" {
+    package "Aggregates" {
+        [Listing Aggregate] as Listing
+        [Vehicle Aggregate] as Vehicle #LightGreen
+        [SearchProfile Aggregate] as Profile #LightGreen
+        [SavedLocation] as Location #LightGreen
+    }
+
+    package "Fuzzy Matching" #LightGreen {
+        [IFuzzyMatchingService] as FuzzyMatch
+        [ConfidenceScoreCalculator] as Confidence
+        [LevenshteinCalculator] as Levenshtein
+        [NumericProximityCalculator] as NumericCalc
+        [GeoDistanceCalculator] as GeoCalc
+    }
+
+    package "Domain Services" {
+        [DuplicateDetectionService] as DupService
+        [SearchService] as SearchSvc
+        [VehicleLinkingService] as LinkSvc #LightGreen
+        [SearchProfileService] as ProfileSvc #LightGreen
+        [StatisticsService] as StatsSvc #LightGreen
+    }
+
+    note bottom of SearchSvc
+        **Extended Filters:**
+        - Exterior Color
+        - Interior Color
+        - Drivetrain
+        - Keywords
+        - Seller Type
+    end note
+}
+
+package "Infrastructure Layer" {
+    package "Database" {
+        [DbContext] as DbContext
+        [SQLite Provider] as SQLite
+        [SQL Server Provider] as SQLServer
+        [PostgreSQL Provider] as Postgres #LightGreen
+    }
+
+    package "Browser Services" #LightGreen {
+        [IBrowserContextFactory] as BrowserFactory
+        [IProxyService] as ProxyService
+        [IUserAgentService] as UAService
+        [ISessionManager] as SessionMgr
+    }
+
+    package "Scrapers (10+)" {
+        [Autotrader] as S1
+        [Cars.com] as S2
+        [CarGurus] as S3
+        [eBay Motors] as S4 #LightGreen
+        [CarMax] as S5 #LightGreen
+        [Carvana] as S6 #LightGreen
+        [Vroom] as S7 #LightGreen
+        [TrueCar] as S8 #LightGreen
+        [Craigslist] as S9 #LightGreen
+    }
+}
+
+' Connections
+CLI --> Commands
+CLI --> Interactive
+Interactive --> Commands
+WebApp --> API
+API --> Commands
+API --> Queries
+
+DupService --> FuzzyMatch
+FuzzyMatch --> Confidence
+Confidence --> Levenshtein
+Confidence --> NumericCalc
+Confidence --> GeoCalc
+
+FuzzyMatch --> DbContext
+LinkSvc --> Vehicle
+LinkSvc --> DbContext
+ProfileSvc --> Profile
+ProfileSvc --> DbContext
+StatsSvc --> DbContext
+
+SearchSvc --> DbContext
+
+S1 --> BrowserFactory
+S2 --> BrowserFactory
+S3 --> BrowserFactory
+S4 --> BrowserFactory
+S5 --> BrowserFactory
+S6 --> BrowserFactory
+S7 --> BrowserFactory
+S8 --> BrowserFactory
+S9 --> BrowserFactory
+
+BrowserFactory --> ProxyService
+BrowserFactory --> UAService
+BrowserFactory --> SessionMgr
+
+DbContext --> SQLite
+DbContext --> SQLServer
+DbContext --> Postgres
+
+Listing --> Vehicle : LinkedVehicleId
+
+legend right
+    |= Color |= Meaning |
+    | <#LightGreen> | New in Phase 3 |
+    | White | From Phase 1-2 |
+endlegend
+
+@enduml

@@ -1,0 +1,101 @@
+@startuml Image Matching Flow
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Image-Based Duplicate Detection Flow - Phase 4
+
+start
+
+:Receive Listing with ImageUrls;
+
+partition "Step 1: Image Download" {
+    :Select First 3 Images;
+
+    while (More images?) is (yes)
+        :Download Image;
+        if (Download Success?) then (yes)
+            :Validate Format;
+            :Add to Processing Queue;
+        else (no)
+            :Log Warning;
+            :Skip Image;
+        endif
+    endwhile (no)
+
+    if (Any Images Downloaded?) then (no)
+        :Return: NoImages Result;
+        stop
+    endif
+}
+
+partition "Step 2: Perceptual Hashing" {
+    while (More images to hash?) is (yes)
+        :Convert to Grayscale;
+        :Resize to 32x32;
+        :Apply DCT Transform;
+        note right
+            Discrete Cosine Transform
+            extracts frequency components
+        end note
+        :Extract 8x8 Low-Frequency Block;
+        :Calculate Median;
+        :Generate 64-bit Hash;
+        note right
+            Each bit = 1 if pixel > median
+            Creates position-invariant
+            fingerprint
+        end note
+        :Store Hash;
+    endwhile (no)
+}
+
+partition "Step 3: Candidate Matching" {
+    :Query Listings with Existing Hashes;
+    note right
+        Pre-filter candidates by:
+        - Same Make
+        - Year within ±2
+        - Has ImageHashes
+    end note
+
+    :Initialize: bestMatch = null;
+    :Initialize: bestMatchCount = 0;
+
+    while (More candidates?) is (yes)
+        :Load Candidate Hashes;
+        :Count Matching Images;
+        note right
+            For each input hash:
+            - Compare against all candidate hashes
+            - Hamming distance ≤ 10 = match
+        end note
+
+        if (matchCount > bestMatchCount?) then (yes)
+            :bestMatch = candidate;
+            :bestMatchCount = matchCount;
+        endif
+    endwhile (no)
+}
+
+partition "Step 4: Determine Match" {
+    :Calculate Majority Threshold;
+    note right
+        threshold = ceil(inputCount / 2)
+        e.g., 2 of 3 images must match
+    end note
+
+    if (bestMatchCount >= threshold?) then (yes)
+        :Return: ImageMatch Result;
+        note right
+            HasMatch = true
+            MatchedListing = bestMatch
+            MatchingImageCount = bestMatchCount
+        end note
+    else (no)
+        :Return: NoMatch Result;
+    endif
+}
+
+stop
+
+@enduml

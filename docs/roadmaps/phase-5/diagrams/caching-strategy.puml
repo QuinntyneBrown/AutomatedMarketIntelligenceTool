@@ -1,0 +1,79 @@
+@startuml Caching Strategy
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Response Caching Strategy - Phase 5
+
+participant "Scraper" as Scraper
+participant "CacheService" as Cache
+database "ResponseCache" as CacheDB
+participant "Website" as Web
+
+== Cache Hit Flow ==
+
+Scraper -> Cache: GetOrFetchAsync(url, fetchFunc)
+activate Cache
+
+Cache -> CacheDB: Query by CacheKey
+activate CacheDB
+CacheDB --> Cache: CacheEntry (not expired)
+deactivate CacheDB
+
+Cache -> CacheDB: Increment HitCount
+Cache --> Scraper: CacheResult.Hit(data)
+deactivate Cache
+
+note right of Scraper
+    **Benefits:**
+    - No network request
+    - Sub-millisecond response
+    - Reduced rate limit risk
+end note
+
+== Cache Miss Flow ==
+
+Scraper -> Cache: GetOrFetchAsync(url, fetchFunc)
+activate Cache
+
+Cache -> CacheDB: Query by CacheKey
+activate CacheDB
+CacheDB --> Cache: null or expired
+deactivate CacheDB
+
+Cache -> Web: Execute fetchFunc() - HTTP GET
+activate Web
+Web --> Cache: Response Data
+deactivate Web
+
+alt Response Size <= MaxEntrySize
+    Cache -> CacheDB: Store new entry
+    note right
+        Entry includes:
+        - CacheKey (URL hash)
+        - ResponseData
+        - TTL (default 1hr)
+        - CachedAt timestamp
+    end note
+end
+
+Cache --> Scraper: CacheResult.Miss(data)
+deactivate Cache
+
+== Cache Invalidation ==
+
+Scraper -> Cache: InvalidateAsync(pattern)
+activate Cache
+Cache -> CacheDB: DELETE WHERE Key LIKE pattern
+Cache --> Scraper: Success
+deactivate Cache
+
+== Automatic Cleanup ==
+
+loop Every 15 minutes
+    Cache -> CacheDB: DELETE WHERE ExpiresAt < NOW()
+    note right: Remove expired entries
+    Cache -> CacheDB: DELETE oldest WHERE TotalSize > MaxSize
+    note right: Enforce size limits
+end
+
+@enduml
