@@ -6,77 +6,86 @@ using Microsoft.Playwright;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
-public class CarsComScraper : BaseScraper
+public class KijijiScraper : BaseScraper
 {
-    public override string SiteName => "Cars.com";
+    public override string SiteName => "Kijiji.ca";
 
-    public CarsComScraper(ILogger<CarsComScraper> logger)
+    public KijijiScraper(ILogger<KijijiScraper> logger)
         : base(logger)
     {
     }
 
     protected override string BuildSearchUrl(SearchParameters parameters, int page)
     {
-        var baseUrl = "https://www.cars.com/shopping/results/";
+        var baseUrl = "https://www.kijiji.ca/b-cars-vehicles/";
+        var location = "canada";
+        
+        if (!string.IsNullOrEmpty(parameters.PostalCode))
+        {
+            location = parameters.PostalCode.Replace(" ", string.Empty);
+        }
+        else if (parameters.Province.HasValue)
+        {
+            location = parameters.Province.Value.ToString().ToLower();
+        }
+
+        baseUrl += $"{location}/";
+        
         var queryParams = new StringBuilder();
 
         if (!string.IsNullOrEmpty(parameters.Make))
         {
-            queryParams.Append($"&makes[]={HttpUtility.UrlEncode(parameters.Make.ToLower())}");
+            queryParams.Append($"&carmake={HttpUtility.UrlEncode(parameters.Make)}");
         }
 
         if (!string.IsNullOrEmpty(parameters.Model))
         {
-            queryParams.Append($"&models[]={HttpUtility.UrlEncode(parameters.Model.ToLower())}");
+            queryParams.Append($"&carmodel={HttpUtility.UrlEncode(parameters.Model)}");
         }
 
         if (parameters.YearMin.HasValue)
         {
-            queryParams.Append($"&year_min={parameters.YearMin.Value}");
+            queryParams.Append($"&carypmin={parameters.YearMin.Value}");
         }
 
         if (parameters.YearMax.HasValue)
         {
-            queryParams.Append($"&year_max={parameters.YearMax.Value}");
+            queryParams.Append($"&carypmax={parameters.YearMax.Value}");
         }
 
         if (parameters.PriceMin.HasValue)
         {
-            queryParams.Append($"&price_min={parameters.PriceMin.Value}");
+            queryParams.Append($"&pricemin={parameters.PriceMin.Value}");
         }
 
         if (parameters.PriceMax.HasValue)
         {
-            queryParams.Append($"&price_max={parameters.PriceMax.Value}");
+            queryParams.Append($"&pricemax={parameters.PriceMax.Value}");
         }
 
         if (parameters.MileageMax.HasValue)
         {
-            queryParams.Append($"&maximum_distance={parameters.MileageMax.Value}");
+            queryParams.Append($"&carod={parameters.MileageMax.Value}");
         }
 
-        if (!string.IsNullOrEmpty(parameters.ZipCode))
+        if (parameters.RadiusKilometers.HasValue)
         {
-            queryParams.Append($"&zip={parameters.ZipCode}");
-
-            if (parameters.RadiusMiles.HasValue)
-            {
-                queryParams.Append($"&radius={parameters.RadiusMiles.Value}");
-            }
+            queryParams.Append($"&radius={parameters.RadiusKilometers.Value}");
         }
 
         if (page > 1)
         {
-            queryParams.Append($"&page={page}");
+            baseUrl += $"page-{page}/";
         }
 
-        var url = baseUrl;
+        baseUrl += "c174";
+
         if (queryParams.Length > 0)
         {
-            url += "?" + queryParams.ToString().TrimStart('&');
+            baseUrl += "?" + queryParams.ToString().TrimStart('&');
         }
 
-        return url;
+        return baseUrl;
     }
 
     protected override async Task<IEnumerable<ScrapedListing>> ParseListingsAsync(
@@ -87,12 +96,12 @@ public class CarsComScraper : BaseScraper
 
         try
         {
-            await page.WaitForSelectorAsync(".vehicle-card", new PageWaitForSelectorOptions
+            await page.WaitForSelectorAsync(".search-item", new PageWaitForSelectorOptions
             {
                 Timeout = 10000
             });
 
-            var listingElements = await page.QuerySelectorAllAsync(".vehicle-card");
+            var listingElements = await page.QuerySelectorAllAsync(".search-item");
 
             _logger.LogDebug("Found {Count} listing elements on page", listingElements.Count);
 
@@ -126,26 +135,26 @@ public class CarsComScraper : BaseScraper
     {
         try
         {
-            var titleElement = await element.QuerySelectorAsync("h2.title");
+            var titleElement = await element.QuerySelectorAsync(".title");
             var title = titleElement != null ? await titleElement.InnerTextAsync() : string.Empty;
 
-            var priceElement = await element.QuerySelectorAsync(".primary-price");
+            var priceElement = await element.QuerySelectorAsync(".price");
             var priceText = priceElement != null ? await priceElement.InnerTextAsync() : "0";
             var price = ParsePrice(priceText);
 
-            var linkElement = await element.QuerySelectorAsync("a.vehicle-card-link");
+            var linkElement = await element.QuerySelectorAsync("a.title");
             var href = linkElement != null ? await linkElement.GetAttributeAsync("href") ?? string.Empty : string.Empty;
-            var listingUrl = href.StartsWith("http") ? href : $"https://www.cars.com{href}";
+            var listingUrl = href.StartsWith("http") ? href : $"https://www.kijiji.ca{href}";
 
             var externalId = ExtractExternalId(listingUrl);
 
-            var mileageElement = await element.QuerySelectorAsync(".mileage");
-            var mileageText = mileageElement != null ? await mileageElement.InnerTextAsync() : string.Empty;
-            var mileage = ParseMileage(mileageText);
+            var detailsElement = await element.QuerySelectorAsync(".details");
+            var detailsText = detailsElement != null ? await detailsElement.InnerTextAsync() : string.Empty;
+            var mileage = ParseMileage(detailsText);
 
-            var locationElement = await element.QuerySelectorAsync(".miles-from");
+            var locationElement = await element.QuerySelectorAsync(".location span");
             var locationText = locationElement != null ? await locationElement.InnerTextAsync() : string.Empty;
-            var (city, state) = ParseLocation(locationText);
+            var (city, province) = ParseLocation(locationText);
 
             var (make, model, year) = ParseTitle(title);
 
@@ -166,7 +175,7 @@ public class CarsComScraper : BaseScraper
                 Price = price,
                 Mileage = mileage,
                 City = city,
-                State = state,
+                Province = province,
                 Condition = Condition.Used
             };
         }
@@ -181,14 +190,8 @@ public class CarsComScraper : BaseScraper
     {
         try
         {
-            var nextButton = await page.QuerySelectorAsync("a[aria-label='Next Page']");
-            if (nextButton == null)
-            {
-                return false;
-            }
-
-            var isDisabled = await nextButton.GetAttributeAsync("aria-disabled");
-            return isDisabled != "true";
+            var nextButton = await page.QuerySelectorAsync("a[title='Next']");
+            return nextButton != null;
         }
         catch (Exception ex)
         {
@@ -202,9 +205,9 @@ public class CarsComScraper : BaseScraper
         var parts = url.Split('/');
         for (int i = 0; i < parts.Length; i++)
         {
-            if (parts[i] == "vehicledetail" && i + 1 < parts.Length)
+            if (parts[i].StartsWith("v-") || long.TryParse(parts[i], out _))
             {
-                return parts[i + 1].Split('?')[0];
+                return parts[i];
             }
         }
 
@@ -215,7 +218,15 @@ public class CarsComScraper : BaseScraper
     {
         var cleanPrice = priceText.Replace("$", string.Empty)
             .Replace(",", string.Empty)
+            .Replace("CAD", string.Empty)
             .Trim();
+
+        // Handle "Please Contact" or similar
+        if (cleanPrice.Contains("Contact", StringComparison.OrdinalIgnoreCase) ||
+            cleanPrice.Contains("Call", StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
 
         if (decimal.TryParse(cleanPrice, out var price))
         {
@@ -225,27 +236,39 @@ public class CarsComScraper : BaseScraper
         return 0;
     }
 
-    private static int? ParseMileage(string mileageText)
+    private static int? ParseMileage(string detailsText)
     {
-        var cleanMileage = mileageText.Replace(",", string.Empty)
-            .Replace("mi", string.Empty)
-            .Replace("miles", string.Empty)
+        // Kijiji shows mileage in km format like "100,000 km"
+        var cleanMileage = detailsText.Replace(",", string.Empty)
+            .Replace("km", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("kilometers", string.Empty, StringComparison.OrdinalIgnoreCase)
             .Trim();
 
-        if (int.TryParse(cleanMileage, out var mileage))
+        // Try to extract just the number
+        var parts = cleanMileage.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in parts)
         {
-            return mileage;
+            if (int.TryParse(part, out var mileage))
+            {
+                return mileage;
+            }
         }
 
         return null;
     }
 
-    private static (string? City, string? State) ParseLocation(string locationText)
+    private static (string? City, string? Province) ParseLocation(string locationText)
     {
         var parts = locationText.Split(',');
         if (parts.Length >= 2)
         {
             return (parts[0].Trim(), parts[1].Trim());
+        }
+
+        // Sometimes just city or province
+        if (parts.Length == 1 && !string.IsNullOrWhiteSpace(parts[0]))
+        {
+            return (parts[0].Trim(), null);
         }
 
         return (null, null);

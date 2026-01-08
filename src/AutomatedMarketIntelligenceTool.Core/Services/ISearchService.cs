@@ -20,8 +20,8 @@ public class SearchCriteria
     public decimal? PriceMax { get; init; }
     public int? MileageMin { get; init; }
     public int? MileageMax { get; init; }
-    public string? ZipCode { get; init; }
-    public double? RadiusMiles { get; init; }
+    public string? PostalCode { get; init; }
+    public double? RadiusKilometers { get; init; }
     public double? SearchLatitude { get; init; }
     public double? SearchLongitude { get; init; }
     public int Page { get; init; } = 1;
@@ -42,7 +42,7 @@ public class SearchResult
 public class ListingSearchResult
 {
     public required Listing Listing { get; init; }
-    public double? DistanceMiles { get; init; }
+    public double? DistanceKilometers { get; init; }
 }
 
 public enum SearchSortField

@@ -59,11 +59,16 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
         builder.Property(l => l.City)
             .HasMaxLength(100);
 
-        builder.Property(l => l.State)
-            .HasMaxLength(50);
+        builder.Property(l => l.Province)
+            .HasMaxLength(2);
 
-        builder.Property(l => l.ZipCode)
-            .HasMaxLength(10);
+        builder.Property(l => l.PostalCode)
+            .HasMaxLength(7);
+
+        builder.Property(l => l.Currency)
+            .HasMaxLength(3)
+            .IsRequired()
+            .HasDefaultValue("CAD");
 
         builder.Property(l => l.Condition)
             .HasConversion<int>()

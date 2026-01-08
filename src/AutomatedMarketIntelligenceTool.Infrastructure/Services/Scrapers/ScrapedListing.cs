@@ -15,8 +15,10 @@ public class ScrapedListing
     public int? Mileage { get; set; }
     public string? Vin { get; set; }
     public string? City { get; set; }
-    public string? State { get; set; }
-    public string? ZipCode { get; set; }
+    public string? Province { get; set; }
+    public string? PostalCode { get; set; }
+    public string Currency { get; set; } = "CAD";
+    public string Country { get; set; } = "CA";
     public required Condition Condition { get; set; }
     public Transmission? Transmission { get; set; }
     public FuelType? FuelType { get; set; }

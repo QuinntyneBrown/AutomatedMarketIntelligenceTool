@@ -122,7 +122,7 @@ public class AutotraderScraperTests
         // Arrange
         var parameters = new SearchParameters
         {
-            ZipCode = "90210"
+            PostalCode = "90210"
         };
 
         // Act
@@ -138,8 +138,8 @@ public class AutotraderScraperTests
         // Arrange
         var parameters = new SearchParameters
         {
-            ZipCode = "90210",
-            RadiusMiles = 50
+            PostalCode = "90210",
+            RadiusKilometers = 50
         };
 
         // Act
@@ -189,8 +189,8 @@ public class AutotraderScraperTests
             PriceMin = 15000,
             PriceMax = 35000,
             MileageMax = 60000,
-            ZipCode = "10001",
-            RadiusMiles = 25
+            PostalCode = "10001",
+            RadiusKilometers = 25
         };
 
         // Act

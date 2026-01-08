@@ -8,7 +8,7 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
 public class AutotraderScraper : BaseScraper
 {
-    public override string SiteName => "Autotrader";
+    public override string SiteName => "Autotrader.ca";
 
     public AutotraderScraper(ILogger<AutotraderScraper> logger)
         : base(logger)
@@ -17,57 +17,62 @@ public class AutotraderScraper : BaseScraper
 
     protected override string BuildSearchUrl(SearchParameters parameters, int page)
     {
-        var baseUrl = "https://www.autotrader.com/cars-for-sale/all-cars";
+        var baseUrl = "https://www.autotrader.ca/cars/";
         var queryParams = new StringBuilder();
 
         if (!string.IsNullOrEmpty(parameters.Make))
         {
-            queryParams.Append($"&makeCodeList={HttpUtility.UrlEncode(parameters.Make.ToUpper())}");
+            queryParams.Append($"&make={HttpUtility.UrlEncode(parameters.Make)}");
         }
 
         if (!string.IsNullOrEmpty(parameters.Model))
         {
-            queryParams.Append($"&modelCodeList={HttpUtility.UrlEncode(parameters.Model.ToUpper())}");
+            queryParams.Append($"&model={HttpUtility.UrlEncode(parameters.Model)}");
         }
 
         if (parameters.YearMin.HasValue)
         {
-            queryParams.Append($"&startYear={parameters.YearMin.Value}");
+            queryParams.Append($"&ymin={parameters.YearMin.Value}");
         }
 
         if (parameters.YearMax.HasValue)
         {
-            queryParams.Append($"&endYear={parameters.YearMax.Value}");
+            queryParams.Append($"&ymax={parameters.YearMax.Value}");
         }
 
         if (parameters.PriceMin.HasValue)
         {
-            queryParams.Append($"&minPrice={parameters.PriceMin.Value}");
+            queryParams.Append($"&priceMin={parameters.PriceMin.Value}");
         }
 
         if (parameters.PriceMax.HasValue)
         {
-            queryParams.Append($"&maxPrice={parameters.PriceMax.Value}");
+            queryParams.Append($"&priceMax={parameters.PriceMax.Value}");
         }
 
         if (parameters.MileageMax.HasValue)
         {
-            queryParams.Append($"&maxMileage={parameters.MileageMax.Value}");
+            queryParams.Append($"&odommax={parameters.MileageMax.Value}");
         }
 
-        if (!string.IsNullOrEmpty(parameters.ZipCode))
+        if (!string.IsNullOrEmpty(parameters.PostalCode))
         {
-            queryParams.Append($"&zip={parameters.ZipCode}");
+            queryParams.Append($"&loc={HttpUtility.UrlEncode(parameters.PostalCode)}");
 
-            if (parameters.RadiusMiles.HasValue)
+            if (parameters.RadiusKilometers.HasValue)
             {
-                queryParams.Append($"&searchRadius={parameters.RadiusMiles.Value}");
+                queryParams.Append($"&radius={parameters.RadiusKilometers.Value}");
             }
+        }
+
+        if (parameters.Province.HasValue)
+        {
+            queryParams.Append($"&prv={parameters.Province.Value}");
         }
 
         if (page > 1)
         {
-            queryParams.Append($"&firstRecord={((page - 1) * 25)}");
+            queryParams.Append($"&rcp={20}&rcs={((page - 1) * 20)}");
         }
 
         var url = baseUrl;
@@ -145,7 +150,7 @@ public class AutotraderScraper : BaseScraper
 
             var locationElement = await element.QuerySelectorAsync("[data-cmp='location']");
             var locationText = locationElement != null ? await locationElement.InnerTextAsync() : string.Empty;
-            var (city, state) = ParseLocation(locationText);
+            var (city, province) = ParseLocation(locationText);
 
             var (make, model, year) = ParseTitle(title);
 
@@ -166,7 +171,7 @@ public class AutotraderScraper : BaseScraper
                 Price = price,
                 Mileage = mileage,
                 City = city,
-                State = state,
+                Province = province,
                 Condition = Condition.Used
             };
         }
@@ -240,7 +245,7 @@ public class AutotraderScraper : BaseScraper
         return null;
     }
 
-    private static (string? City, string? State) ParseLocation(string locationText)
+    private static (string? City, string? Province) ParseLocation(string locationText)
     {
         var parts = locationText.Split(',');
         if (parts.Length >= 2)

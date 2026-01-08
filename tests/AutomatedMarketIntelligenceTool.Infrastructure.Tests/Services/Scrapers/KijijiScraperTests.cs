@@ -1,22 +1,23 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Tests.Services.Scrapers;
 
-public class CarsComScraperTests
+public class KijijiScraperTests
 {
-    private readonly CarsComScraper _scraper;
+    private readonly KijijiScraper _scraper;
 
-    public CarsComScraperTests()
+    public KijijiScraperTests()
     {
-        _scraper = new CarsComScraper(new NullLogger<CarsComScraper>());
+        _scraper = new KijijiScraper(new NullLogger<KijijiScraper>());
     }
 
     [Fact]
-    public void SiteName_ShouldReturnCarsDotCom()
+    public void SiteName_ShouldReturnKijijiDotCa()
     {
         // Assert
-        Assert.Equal("Cars.com", _scraper.SiteName);
+        Assert.Equal("Kijiji.ca", _scraper.SiteName);
     }
 
     [Fact]
@@ -29,7 +30,7 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("cars.com/shopping/results", url);
+        Assert.Contains("kijiji.ca/b-cars-vehicles", url);
     }
 
     [Fact]
@@ -45,7 +46,7 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("makes[]=toyota", url);
+        Assert.Contains("carmake=Toyota", url);
     }
 
     [Fact]
@@ -61,7 +62,7 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("models[]=camry", url);
+        Assert.Contains("carmodel=Camry", url);
     }
 
     [Fact]
@@ -78,8 +79,8 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("year_min=2018", url);
-        Assert.Contains("year_max=2022", url);
+        Assert.Contains("carypmin=2018", url);
+        Assert.Contains("carypmax=2022", url);
     }
 
     [Fact]
@@ -96,12 +97,12 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("price_min=10000", url);
-        Assert.Contains("price_max=30000", url);
+        Assert.Contains("pricemin=10000", url);
+        Assert.Contains("pricemax=30000", url);
     }
 
     [Fact]
-    public void BuildSearchUrl_WithMaxMileage_ShouldIncludeMaximumDistanceParameter()
+    public void BuildSearchUrl_WithMaxMileage_ShouldIncludeMileageParameter()
     {
         // Arrange
         var parameters = new SearchParameters
@@ -113,45 +114,60 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("maximum_distance=50000", url);
+        Assert.Contains("carod=50000", url);
     }
 
     [Fact]
-    public void BuildSearchUrl_WithZipCode_ShouldIncludeZipParameter()
+    public void BuildSearchUrl_WithPostalCode_ShouldIncludePostalCodeInPath()
     {
         // Arrange
         var parameters = new SearchParameters
         {
-            ZipCode = "90210"
+            PostalCode = "M5V 3L9"
         };
 
         // Act
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("zip=90210", url);
+        Assert.Contains("m5v3l9", url.ToLower());
     }
 
     [Fact]
-    public void BuildSearchUrl_WithZipCodeAndRadius_ShouldIncludeBothParameters()
+    public void BuildSearchUrl_WithPostalCodeAndRadius_ShouldIncludeRadiusParameter()
     {
         // Arrange
         var parameters = new SearchParameters
         {
-            ZipCode = "90210",
-            RadiusMiles = 50
+            PostalCode = "M5V 3L9",
+            RadiusKilometers = 50
         };
 
         // Act
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("zip=90210", url);
         Assert.Contains("radius=50", url);
     }
 
     [Fact]
-    public void BuildSearchUrl_WithPageGreaterThanOne_ShouldIncludePageParameter()
+    public void BuildSearchUrl_WithProvince_ShouldIncludeProvinceInPath()
+    {
+        // Arrange
+        var parameters = new SearchParameters
+        {
+            Province = CanadianProvince.ON
+        };
+
+        // Act
+        var url = InvokeBuildSearchUrl(parameters, 1);
+
+        // Assert
+        Assert.Contains("/on/", url.ToLower());
+    }
+
+    [Fact]
+    public void BuildSearchUrl_WithPageGreaterThanOne_ShouldIncludePageInPath()
     {
         // Arrange
         var parameters = new SearchParameters();
@@ -160,11 +176,11 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 3);
 
         // Assert
-        Assert.Contains("page=3", url);
+        Assert.Contains("page-3", url);
     }
 
     [Fact]
-    public void BuildSearchUrl_WithPageOne_ShouldNotIncludePageParameter()
+    public void BuildSearchUrl_WithPageOne_ShouldNotIncludePageInPath()
     {
         // Arrange
         var parameters = new SearchParameters();
@@ -173,7 +189,7 @@ public class CarsComScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.DoesNotContain("page=", url);
+        Assert.DoesNotContain("page-", url);
     }
 
     [Fact]
@@ -189,29 +205,29 @@ public class CarsComScraperTests
             PriceMin = 15000,
             PriceMax = 35000,
             MileageMax = 60000,
-            ZipCode = "10001",
-            RadiusMiles = 25
+            PostalCode = "M5V 3L9",
+            RadiusKilometers = 25
         };
 
         // Act
         var url = InvokeBuildSearchUrl(parameters, 2);
 
         // Assert
-        Assert.Contains("makes[]=honda", url);
-        Assert.Contains("models[]=accord", url);
-        Assert.Contains("year_min=2019", url);
-        Assert.Contains("year_max=2023", url);
-        Assert.Contains("price_min=15000", url);
-        Assert.Contains("price_max=35000", url);
-        Assert.Contains("maximum_distance=60000", url);
-        Assert.Contains("zip=10001", url);
+        Assert.Contains("carmake=Honda", url);
+        Assert.Contains("carmodel=Accord", url);
+        Assert.Contains("carypmin=2019", url);
+        Assert.Contains("carypmax=2023", url);
+        Assert.Contains("pricemin=15000", url);
+        Assert.Contains("pricemax=35000", url);
+        Assert.Contains("carod=60000", url);
+        Assert.Contains("m5v3l9", url.ToLower());
         Assert.Contains("radius=25", url);
-        Assert.Contains("page=2", url);
+        Assert.Contains("page-2", url);
     }
 
     private string InvokeBuildSearchUrl(SearchParameters parameters, int page)
     {
-        var method = typeof(CarsComScraper).GetMethod(
+        var method = typeof(KijijiScraper).GetMethod(
             "BuildSearchUrl",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 

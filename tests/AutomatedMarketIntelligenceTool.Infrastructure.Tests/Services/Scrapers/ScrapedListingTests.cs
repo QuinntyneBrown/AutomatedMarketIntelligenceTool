@@ -53,8 +53,8 @@ public class ScrapedListingTests
         Assert.Null(listing.Mileage);
         Assert.Null(listing.Vin);
         Assert.Null(listing.City);
-        Assert.Null(listing.State);
-        Assert.Null(listing.ZipCode);
+        Assert.Null(listing.Province);
+        Assert.Null(listing.PostalCode);
         Assert.Null(listing.Transmission);
         Assert.Null(listing.FuelType);
         Assert.Null(listing.BodyStyle);
@@ -91,8 +91,8 @@ public class ScrapedListingTests
         var listing = new ScrapedListing
         {
             ExternalId = "EXT-004",
-            SourceSite = "Autotrader",
-            ListingUrl = "https://autotrader.com/listing/004",
+            SourceSite = "Autotrader.ca",
+            ListingUrl = "https://autotrader.ca/listing/004",
             Make = "BMW",
             Model = "X5",
             Year = 2022,
@@ -100,9 +100,11 @@ public class ScrapedListingTests
             Price = 55000m,
             Mileage = 12000,
             Vin = "5UXCR6C08N9L12345",
-            City = "Los Angeles",
-            State = "CA",
-            ZipCode = "90001",
+            City = "Toronto",
+            Province = "ON",
+            PostalCode = "M5V 3L9",
+            Currency = "CAD",
+            Country = "CA",
             Condition = Condition.Certified,
             Transmission = Transmission.Automatic,
             FuelType = FuelType.Gasoline,
@@ -119,8 +121,8 @@ public class ScrapedListingTests
 
         // Assert
         Assert.Equal("EXT-004", listing.ExternalId);
-        Assert.Equal("Autotrader", listing.SourceSite);
-        Assert.Equal("https://autotrader.com/listing/004", listing.ListingUrl);
+        Assert.Equal("Autotrader.ca", listing.SourceSite);
+        Assert.Equal("https://autotrader.ca/listing/004", listing.ListingUrl);
         Assert.Equal("BMW", listing.Make);
         Assert.Equal("X5", listing.Model);
         Assert.Equal(2022, listing.Year);
@@ -128,9 +130,11 @@ public class ScrapedListingTests
         Assert.Equal(55000m, listing.Price);
         Assert.Equal(12000, listing.Mileage);
         Assert.Equal("5UXCR6C08N9L12345", listing.Vin);
-        Assert.Equal("Los Angeles", listing.City);
-        Assert.Equal("CA", listing.State);
-        Assert.Equal("90001", listing.ZipCode);
+        Assert.Equal("Toronto", listing.City);
+        Assert.Equal("ON", listing.Province);
+        Assert.Equal("M5V 3L9", listing.PostalCode);
+        Assert.Equal("CAD", listing.Currency);
+        Assert.Equal("CA", listing.Country);
         Assert.Equal(Condition.Certified, listing.Condition);
         Assert.Equal(Transmission.Automatic, listing.Transmission);
         Assert.Equal(FuelType.Gasoline, listing.FuelType);
