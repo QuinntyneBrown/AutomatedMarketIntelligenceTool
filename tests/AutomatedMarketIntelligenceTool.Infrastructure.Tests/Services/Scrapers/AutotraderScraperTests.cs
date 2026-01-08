@@ -16,7 +16,7 @@ public class AutotraderScraperTests
     public void SiteName_ShouldReturnAutotrader()
     {
         // Assert
-        Assert.Equal("Autotrader", _scraper.SiteName);
+        Assert.Equal("Autotrader.ca", _scraper.SiteName);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("autotrader.com/cars-for-sale/all-cars", url);
+        Assert.Contains("autotrader.ca/cars", url);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("makeCodeList=TOYOTA", url);
+        Assert.Contains("make=Toyota", url);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("modelCodeList=CAMRY", url);
+        Assert.Contains("model=Camry", url);
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("startYear=2018", url);
-        Assert.Contains("endYear=2022", url);
+        Assert.Contains("ymin=2018", url);
+        Assert.Contains("ymax=2022", url);
     }
 
     [Fact]
@@ -96,8 +96,8 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("minPrice=10000", url);
-        Assert.Contains("maxPrice=30000", url);
+        Assert.Contains("priceMin=10000", url);
+        Assert.Contains("priceMax=30000", url);
     }
 
     [Fact]
@@ -113,32 +113,32 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("maxMileage=50000", url);
+        Assert.Contains("odommax=50000", url);
     }
 
     [Fact]
-    public void BuildSearchUrl_WithZipCode_ShouldIncludeZipParameter()
+    public void BuildSearchUrl_WithPostalCode_ShouldIncludeZipParameter()
     {
         // Arrange
         var parameters = new SearchParameters
         {
-            PostalCode = "90210"
+            PostalCode = "M5V3L9"
         };
 
         // Act
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("zip=90210", url);
+        Assert.Contains("loc=M5V3L9", url);
     }
 
     [Fact]
-    public void BuildSearchUrl_WithZipCodeAndRadius_ShouldIncludeBothParameters()
+    public void BuildSearchUrl_WithPostalCodeAndRadius_ShouldIncludeBothParameters()
     {
         // Arrange
         var parameters = new SearchParameters
         {
-            PostalCode = "90210",
+            PostalCode = "M5V3L9",
             RadiusKilometers = 50
         };
 
@@ -146,8 +146,8 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 1);
 
         // Assert
-        Assert.Contains("zip=90210", url);
-        Assert.Contains("searchRadius=50", url);
+        Assert.Contains("loc=M5V3L9", url);
+        Assert.Contains("radius=50", url);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 3);
 
         // Assert
-        Assert.Contains("firstRecord=50", url); // (3-1) * 25 = 50
+        Assert.Contains("rcp=20&rcs=40", url); // (3-1) * 25 = 50
     }
 
     [Fact]
@@ -189,7 +189,7 @@ public class AutotraderScraperTests
             PriceMin = 15000,
             PriceMax = 35000,
             MileageMax = 60000,
-            PostalCode = "10001",
+            PostalCode = "M5H2N2",
             RadiusKilometers = 25
         };
 
@@ -197,16 +197,16 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 2);
 
         // Assert
-        Assert.Contains("makeCodeList=HONDA", url);
-        Assert.Contains("modelCodeList=ACCORD", url);
-        Assert.Contains("startYear=2019", url);
-        Assert.Contains("endYear=2023", url);
-        Assert.Contains("minPrice=15000", url);
-        Assert.Contains("maxPrice=35000", url);
-        Assert.Contains("maxMileage=60000", url);
-        Assert.Contains("zip=10001", url);
-        Assert.Contains("searchRadius=25", url);
-        Assert.Contains("firstRecord=25", url);
+        Assert.Contains("make=Honda", url);
+        Assert.Contains("model=Accord", url);
+        Assert.Contains("ymin=2019", url);
+        Assert.Contains("ymax=2023", url);
+        Assert.Contains("priceMin=15000", url);
+        Assert.Contains("priceMax=35000", url);
+        Assert.Contains("odommax=60000", url);
+        Assert.Contains("loc=M5H2N2", url);
+        Assert.Contains("radius=25", url);
+        Assert.Contains("rcp=20&rcs=20", url);
     }
 
     private string InvokeBuildSearchUrl(SearchParameters parameters, int page)

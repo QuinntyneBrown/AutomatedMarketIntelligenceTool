@@ -25,7 +25,7 @@ public class ScraperFactoryTests
         // Assert
         Assert.NotNull(scraper);
         Assert.IsType<AutotraderScraper>(scraper);
-        Assert.Equal("Autotrader", scraper.SiteName);
+        Assert.Equal("Autotrader.ca", scraper.SiteName);
     }
 
     [Fact]
@@ -113,8 +113,8 @@ public class ScraperFactoryTests
         // Assert
         Assert.NotEmpty(sites);
         Assert.Equal(2, sites.Count);
-        Assert.Contains("Autotrader", sites);
-        Assert.Contains("Cars.com", sites);
+        Assert.Contains("Autotrader.ca", sites);
+        Assert.Contains("Kijiji.ca", sites);
     }
 
     [Fact]
