@@ -1,15 +1,20 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AutomatedMarketIntelligenceTool.Core.Services;
 
 public class SearchService : ISearchService
 {
     private readonly IAutomatedMarketIntelligenceToolContext _context;
+    private readonly ILogger<SearchService> _logger;
 
-    public SearchService(IAutomatedMarketIntelligenceToolContext context)
+    public SearchService(
+        IAutomatedMarketIntelligenceToolContext context,
+        ILogger<SearchService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<SearchResult> SearchListingsAsync(
@@ -20,6 +25,15 @@ public class SearchService : ISearchService
         {
             throw new ArgumentNullException(nameof(criteria));
         }
+
+        _logger.LogInformation(
+            "Searching listings for TenantId: {TenantId}, Makes: {Makes}, Models: {Models}, PriceRange: {PriceMin}-{PriceMax}, Page: {Page}",
+            criteria.TenantId,
+            criteria.Makes != null ? string.Join(",", criteria.Makes) : "ALL",
+            criteria.Models != null ? string.Join(",", criteria.Models) : "ALL",
+            criteria.PriceMin,
+            criteria.PriceMax,
+            criteria.Page);
 
         var query = _context.Listings.AsQueryable();
 
@@ -76,6 +90,8 @@ public class SearchService : ISearchService
         // Get total count before pagination
         var totalCount = await query.CountAsync(cancellationToken);
 
+        _logger.LogDebug("Found {TotalCount} listings matching criteria", totalCount);
+
         // Apply location filtering if coordinates are provided
         List<ListingSearchResult> results;
         if (criteria.SearchLatitude.HasValue && criteria.SearchLongitude.HasValue)
@@ -102,6 +118,11 @@ public class SearchService : ISearchService
                 DistanceKilometers = null
             }).ToList();
         }
+
+        _logger.LogInformation(
+            "Search completed. Returned {ResultCount} listings out of {TotalCount} total",
+            results.Count,
+            totalCount);
 
         return new SearchResult
         {

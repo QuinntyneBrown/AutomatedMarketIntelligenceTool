@@ -2,6 +2,7 @@ using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AutomatedMarketIntelligenceTool.Core.Tests.Services;
 
@@ -18,7 +19,7 @@ public class SearchServiceTests
             .Options;
 
         _context = new TestContext(options);
-        _service = new SearchService(_context);
+        _service = new SearchService(_context, NullLogger<SearchService>.Instance);
     }
 
     [Fact]

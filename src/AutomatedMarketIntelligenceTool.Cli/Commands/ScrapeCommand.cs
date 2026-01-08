@@ -3,6 +3,7 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -16,21 +17,36 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
     private readonly IScraperFactory _scraperFactory;
     private readonly IDuplicateDetectionService _duplicateDetectionService;
     private readonly IAutomatedMarketIntelligenceToolContext _context;
+    private readonly ICorrelationIdProvider _correlationIdProvider;
+    private readonly ILogger<ScrapeCommand> _logger;
 
     public ScrapeCommand(
         IScraperFactory scraperFactory,
         IDuplicateDetectionService duplicateDetectionService,
-        IAutomatedMarketIntelligenceToolContext context)
+        IAutomatedMarketIntelligenceToolContext context,
+        ICorrelationIdProvider correlationIdProvider,
+        ILogger<ScrapeCommand> logger)
     {
         _scraperFactory = scraperFactory ?? throw new ArgumentNullException(nameof(scraperFactory));
         _duplicateDetectionService = duplicateDetectionService ?? throw new ArgumentNullException(nameof(duplicateDetectionService));
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _correlationIdProvider = correlationIdProvider ?? throw new ArgumentNullException(nameof(correlationIdProvider));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
+        var correlationId = Guid.NewGuid().ToString();
+        _correlationIdProvider.SetCorrelationId(correlationId);
+        
         try
         {
+            _logger.LogInformation(
+                "Starting scrape operation with CorrelationId: {CorrelationId}, TenantId: {TenantId}, Sites: {Site}",
+                correlationId,
+                settings.TenantId,
+                settings.Site);
+
             // Validate site
             var supportedSites = _scraperFactory.GetSupportedSites().ToList();
             
@@ -38,6 +54,11 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 settings.Site.ToLowerInvariant() != "all" &&
                 !supportedSites.Any(s => s.Equals(settings.Site, StringComparison.OrdinalIgnoreCase)))
             {
+                _logger.LogWarning(
+                    "Invalid site specified: {Site}. Valid sites: {ValidSites}",
+                    settings.Site,
+                    string.Join(", ", supportedSites));
+                
                 AnsiConsole.MarkupLine($"[red]Error: Invalid site '{settings.Site}'. Valid sites are: {string.Join(", ", supportedSites)}, or 'all'[/]");
                 return ExitCodes.ValidationError;
             }
@@ -62,6 +83,7 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 ? _scraperFactory.CreateAllScrapers().ToList()
                 : new List<ISiteScraper> { _scraperFactory.CreateScraper(settings.Site) };
 
+            _logger.LogInformation("Executing scraping with {ScraperCount} scraper(s)", scrapers.Count);
             AnsiConsole.MarkupLine($"[green]Starting scrape with {scrapers.Count} scraper(s)...[/]");
 
             int totalScraped = 0;
@@ -90,9 +112,16 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
 
                         try
                         {
+                            _logger.LogInformation("Starting scrape for site: {SiteName}", scraper.SiteName);
+                            
                             var listings = await scraper.ScrapeAsync(searchParams, progress);
                             var listingsList = listings.ToList();
                             totalScraped += listingsList.Count;
+
+                            _logger.LogInformation(
+                                "Scraped {Count} listings from {SiteName}",
+                                listingsList.Count,
+                                scraper.SiteName);
 
                             progressTask.Description = $"[green]Processing {listingsList.Count} listings from {scraper.SiteName}[/]";
 
@@ -156,10 +185,23 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                             }
 
                             await _context.SaveChangesAsync();
+                            
+                            _logger.LogInformation(
+                                "Saved {NewCount} new listings and updated {DuplicateCount} duplicates from {SiteName}",
+                                totalSaved,
+                                totalDuplicates,
+                                scraper.SiteName);
+                            
                             progressTask.StopTask();
                         }
                         catch (Exception ex)
                         {
+                            _logger.LogError(
+                                ex,
+                                "Error scraping {SiteName}: {ErrorMessage}",
+                                scraper.SiteName,
+                                ex.Message);
+                            
                             progressTask.StopTask();
                             AnsiConsole.MarkupLine($"[red]Error scraping {scraper.SiteName}: {ex.Message}[/]");
                         }
@@ -177,10 +219,18 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
 
             AnsiConsole.Write(summaryTable);
 
+            _logger.LogInformation(
+                "Scrape operation completed. Total: {TotalScraped}, New: {TotalSaved}, Duplicates: {TotalDuplicates}",
+                totalScraped,
+                totalSaved,
+                totalDuplicates);
+
             return ExitCodes.Success;
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Scrape operation failed: {ErrorMessage}", ex.Message);
+            
             AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
             Console.Error.WriteLine($"Error: {ex.Message}");
             return ExitCodes.ScrapingError;
