@@ -7,4 +7,13 @@
     <Nullable>enable</Nullable>
     <NoWarn>1998,4014,,SA1101,SA1600,,SA1200,SA1633,1591,SA1309</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AutomatedMarketIntelligenceTool.Core\AutomatedMarketIntelligenceTool.Core.csproj" />
+    <ProjectReference Include="..\AutomatedMarketIntelligenceTool.Infrastructure\AutomatedMarketIntelligenceTool.Infrastructure.csproj" />
+  </ItemGroup>
 </Project>
