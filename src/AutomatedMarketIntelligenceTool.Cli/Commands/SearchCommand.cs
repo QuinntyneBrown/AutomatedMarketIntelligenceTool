@@ -49,8 +49,8 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
                 PriceMax = settings.PriceMax,
                 MileageMin = settings.MileageMin,
                 MileageMax = settings.MileageMax,
-                ZipCode = settings.ZipCode,
-                RadiusMiles = settings.Radius,
+                PostalCode = settings.ZipCode,
+                RadiusKilometers = settings.Radius,
                 Page = settings.Page,
                 PageSize = settings.PageSize
             };
@@ -82,8 +82,8 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
                 Year = lr.Listing.Year,
                 Price = lr.Listing.Price,
                 Mileage = lr.Listing.Mileage,
-                Location = $"{lr.Listing.City}, {lr.Listing.State}",
-                Distance = lr.DistanceMiles.HasValue ? $"{lr.DistanceMiles:F1} mi" : "N/A",
+                Location = $"{lr.Listing.City}, {lr.Listing.Province}",
+                Distance = lr.DistanceKilometers.HasValue ? $"{lr.DistanceKilometers:F1} km" : "N/A",
                 Url = lr.Listing.ListingUrl
             });
 

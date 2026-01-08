@@ -73,8 +73,8 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 PriceMin = settings.PriceMin,
                 PriceMax = settings.PriceMax,
                 MileageMax = settings.MileageMax,
-                ZipCode = settings.ZipCode,
-                RadiusMiles = settings.Radius,
+                PostalCode = settings.ZipCode,
+                RadiusKilometers = settings.Radius,
                 MaxPages = settings.MaxPages
             };
 
@@ -169,8 +169,9 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                                         mileage: scrapedListing.Mileage,
                                         vin: scrapedListing.Vin,
                                         city: scrapedListing.City,
-                                        state: scrapedListing.State,
-                                        zipCode: scrapedListing.ZipCode,
+                                        province: scrapedListing.Province,
+                                        postalCode: scrapedListing.PostalCode,
+                                        currency: scrapedListing.Currency,
                                         transmission: scrapedListing.Transmission,
                                         fuelType: scrapedListing.FuelType,
                                         bodyStyle: scrapedListing.BodyStyle,

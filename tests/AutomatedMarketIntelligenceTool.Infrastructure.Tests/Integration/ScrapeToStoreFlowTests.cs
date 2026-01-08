@@ -42,9 +42,9 @@ public class ScrapeToStoreFlowTests
             Condition = Condition.Used,
             Mileage = 30000,
             Vin = "1HGBH41JXMN109186",
-            City = "Los Angeles",
-            State = "CA",
-            ZipCode = "90001"
+            City = "Toronto",
+            Province = "ON",
+            PostalCode = "M5V 3L9"
         };
 
         var scrapedListingInfo = new ScrapedListingInfo
@@ -75,8 +75,8 @@ public class ScrapeToStoreFlowTests
             mileage: scrapedListing.Mileage,
             vin: scrapedListing.Vin,
             city: scrapedListing.City,
-            state: scrapedListing.State,
-            zipCode: scrapedListing.ZipCode);
+            province: scrapedListing.Province,
+            postalCode: scrapedListing.PostalCode);
 
         context.Listings.Add(listing);
         await context.SaveChangesAsync();
