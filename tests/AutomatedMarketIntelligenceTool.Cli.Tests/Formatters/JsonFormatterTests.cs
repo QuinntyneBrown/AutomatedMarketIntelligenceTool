@@ -17,23 +17,30 @@ public class JsonFormatterTests
             new { Name = "Test2", Value = 200 }
         };
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        output.Should().NotBeNullOrEmpty();
-        
-        // Verify it's valid JSON
-        var deserializedAction = () => JsonSerializer.Deserialize<object[]>(output);
-        deserializedAction.Should().NotThrow();
+                // Assert
+                var output = stringWriter.ToString();
+                output.Should().NotBeNullOrEmpty();
 
-        // Restore console
-        Console.SetOut(originalOut);
+                // Verify it's valid JSON
+                var deserializedAction = () => JsonSerializer.Deserialize<object[]>(output);
+                deserializedAction.Should().NotThrow();
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     [Fact]
@@ -43,19 +50,26 @@ public class JsonFormatterTests
         var formatter = new JsonFormatter();
         var data = Array.Empty<TestObject>();
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        output.Should().Contain("[]");
-
-        // Restore console
-        Console.SetOut(originalOut);
+                // Assert
+                var output = stringWriter.ToString();
+                output.Should().Contain("[]");
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     [Fact]
@@ -74,22 +88,29 @@ public class JsonFormatterTests
             }
         };
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        output.Should().Contain("stringProp"); // CamelCase naming
-        output.Should().Contain("Test");
-        output.Should().Contain("42");
-        output.Should().Contain("99.99");
-
-        // Restore console
-        Console.SetOut(originalOut);
+                // Assert
+                var output = stringWriter.ToString();
+                output.Should().Contain("stringProp"); // CamelCase naming
+                output.Should().Contain("Test");
+                output.Should().Contain("42");
+                output.Should().Contain("99.99");
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     private class TestObject

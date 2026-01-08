@@ -16,24 +16,31 @@ public class CsvFormatterTests
             new TestObject { Name = "Test2", Value = 200 }
         };
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        
-        lines.Should().HaveCount(3); // Header + 2 data rows
-        lines[0].Should().Be("Name,Value"); // Header
-        lines[1].Should().Be("Test1,100"); // First row
-        lines[2].Should().Be("Test2,200"); // Second row
+                // Assert
+                var output = stringWriter.ToString();
+                var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
-        // Restore console
-        Console.SetOut(originalOut);
+                lines.Should().HaveCount(3); // Header + 2 data rows
+                lines[0].Should().Be("Name,Value"); // Header
+                lines[1].Should().Be("Test1,100"); // First row
+                lines[2].Should().Be("Test2,200"); // Second row
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     [Fact]
@@ -43,19 +50,26 @@ public class CsvFormatterTests
         var formatter = new CsvFormatter();
         var data = Array.Empty<TestObject>();
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        output.Should().BeEmpty();
-
-        // Restore console
-        Console.SetOut(originalOut);
+                // Assert
+                var output = stringWriter.ToString();
+                output.Should().BeEmpty();
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     [Fact]
@@ -68,19 +82,26 @@ public class CsvFormatterTests
             new TestObject { Name = "Test, with comma", Value = 100 }
         };
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        output.Should().Contain("\"Test, with comma\"");
-
-        // Restore console
-        Console.SetOut(originalOut);
+                // Assert
+                var output = stringWriter.ToString();
+                output.Should().Contain("\"Test, with comma\"");
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     [Fact]
@@ -93,20 +114,27 @@ public class CsvFormatterTests
             new TestObject { Name = "Test \"quoted\" value", Value = 100 }
         };
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        // Should contain escaped quotes - doubled quotes within quotes
-        output.Should().Contain("\"\"");
-
-        // Restore console
-        Console.SetOut(originalOut);
+                // Assert
+                var output = stringWriter.ToString();
+                // Should contain escaped quotes - doubled quotes within quotes
+                output.Should().Contain("\"\"");
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     [Fact]
@@ -124,22 +152,29 @@ public class CsvFormatterTests
             }
         };
 
-        var originalOut = Console.Out;
-        using var stringWriter = new StringWriter();
-        Console.SetOut(stringWriter);
+        lock (ConsoleTestLock.Lock)
+        {
+            var originalOut = Console.Out;
+            using var stringWriter = new StringWriter();
+            try
+            {
+                Console.SetOut(stringWriter);
 
-        // Act
-        formatter.Format(data);
+                // Act
+                formatter.Format(data);
 
-        // Assert
-        var output = stringWriter.ToString();
-        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        
-        lines[0].Should().Be("StringProp,IntProp,DecimalProp");
-        lines[1].Should().Be("Test,42,99.99");
+                // Assert
+                var output = stringWriter.ToString();
+                var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
-        // Restore console
-        Console.SetOut(originalOut);
+                lines[0].Should().Be("StringProp,IntProp,DecimalProp");
+                lines[1].Should().Be("Test,42,99.99");
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+            }
+        }
     }
 
     private class TestObject

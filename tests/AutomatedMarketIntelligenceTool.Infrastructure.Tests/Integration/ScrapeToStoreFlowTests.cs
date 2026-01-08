@@ -14,7 +14,8 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Tests.Integration;
 /// </summary>
 public class ScrapeToStoreFlowTests
 {
-    private readonly Guid _testTenantId = Guid.NewGuid();
+    // Using Guid.Empty to match the DbContext tenant filter.
+    private readonly Guid _testTenantId = Guid.Empty;
 
     [Fact]
     public async Task ScrapeToStoreFlow_NewListing_ShouldPersistSuccessfully()
