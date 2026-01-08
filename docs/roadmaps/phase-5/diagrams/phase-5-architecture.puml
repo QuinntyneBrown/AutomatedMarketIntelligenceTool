@@ -1,0 +1,101 @@
+@startuml Phase 5 Architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title Phase 5 Architecture - Mature System
+
+package "Presentation Layer" {
+    [CLI Application] as CLI
+    [Dashboard View] as Dashboard #LightGreen
+    [Web Application] as WebApp
+    [REST API] as API
+}
+
+package "Domain Layer (Core)" {
+    package "New Aggregates" #LightGreen {
+        [DeduplicationAudit] as Audit
+        [MarketRegion] as Market
+        [Report] as Report
+    }
+
+    package "Analytics Services" #LightGreen {
+        [IDealerAnalyticsService] as DealerAnalytics
+        [IRelistingPatternService] as RelistPattern
+    }
+
+    package "Reporting Services" #LightGreen {
+        [IReportGenerationService] as ReportSvc
+        [HtmlReportGenerator] as HTML
+        [PdfReportGenerator] as PDF
+        [ExcelReportGenerator] as Excel
+    }
+
+    package "Deduplication" {
+        [IDuplicateDetectionService] as DupSvc
+        [IDeduplicationConfigService] as DedupConfig #LightGreen
+        [IBatchDeduplicationService] as BatchDedup #LightGreen
+    }
+
+    package "Dashboard" #LightGreen {
+        [IDashboardService] as DashSvc
+    }
+}
+
+package "Infrastructure Layer" {
+    package "Caching" #LightGreen {
+        [IResponseCacheService] as CacheSvc
+        [CacheCleanupService] as CacheClean
+    }
+
+    package "Headers" #LightGreen {
+        [IHeaderConfigurationService] as HeaderSvc
+    }
+
+    package "Scheduling" #LightGreen {
+        [ISchedulingService] as SchedSvc
+    }
+
+    package "Scrapers (10+ Mature)" {
+        [All Site Scrapers] as Scrapers
+    }
+
+    database "Database" {
+        [ResponseCache] as CacheDB #LightGreen
+        [DeduplicationAudit] as AuditDB #LightGreen
+        [MarketRegions] as MarketDB #LightGreen
+        [Reports] as ReportDB #LightGreen
+    }
+}
+
+' Connections
+CLI --> Dashboard
+CLI --> ReportSvc
+CLI --> DedupConfig
+CLI --> DashSvc
+
+Dashboard --> DashSvc
+DashSvc --> DealerAnalytics
+DashSvc --> RelistPattern
+
+ReportSvc --> HTML
+ReportSvc --> PDF
+ReportSvc --> Excel
+
+DupSvc --> BatchDedup
+DupSvc --> DedupConfig
+BatchDedup --> CacheSvc
+
+Scrapers --> CacheSvc
+Scrapers --> HeaderSvc
+
+CacheSvc --> CacheDB
+DupSvc --> AuditDB
+
+legend right
+    |= Color |= Meaning |
+    | <#LightGreen> | New/Enhanced in Phase 5 |
+    | White | From Phase 1-4 |
+endlegend
+
+@enduml

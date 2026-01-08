@@ -1,0 +1,81 @@
+@startuml Rate Limiting Flow
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Rate Limiting & Scraper Flow - Phase 2
+
+participant "CLI/API" as Client
+participant "ScraperFactory" as Factory
+participant "RateLimitingDecorator" as Decorator
+participant "IRateLimiter" as RateLimiter
+participant "ISiteScraper" as Scraper
+participant "Target Website" as Website
+database "DomainRateState" as State
+
+Client -> Factory: CreateScrapers(options)
+activate Factory
+
+Factory -> Factory: Filter by --sites/--exclude-sites
+Factory -> Decorator: Wrap each scraper
+activate Decorator
+
+Factory --> Client: IEnumerable<ISiteScraper>
+deactivate Factory
+
+loop For each page
+    Client -> Decorator: ScrapeAsync(parameters)
+    activate Decorator
+
+    Decorator -> RateLimiter: WaitAsync(domain)
+    activate RateLimiter
+
+    RateLimiter -> State: GetRequiredDelay()
+    activate State
+    State --> RateLimiter: delay (2-5s default)
+    deactivate State
+
+    alt Delay Required
+        RateLimiter -> RateLimiter: await Task.Delay(delay)
+    end
+
+    RateLimiter -> State: RecordRequest()
+    RateLimiter --> Decorator: continue
+    deactivate RateLimiter
+
+    Decorator -> Scraper: ScrapeAsync(parameters)
+    activate Scraper
+
+    Scraper -> Website: HTTP GET (search page)
+    activate Website
+
+    alt Success (200)
+        Website --> Scraper: HTML response
+        Scraper -> Scraper: Parse listings
+        Scraper --> Decorator: IEnumerable<ScrapedListing>
+
+    else Rate Limited (429)
+        Website --> Scraper: 429 Too Many Requests
+        deactivate Website
+
+        Scraper -> Decorator: throw RateLimitException
+        deactivate Scraper
+
+        Decorator -> RateLimiter: ReportRateLimitHit(domain)
+        activate RateLimiter
+        RateLimiter -> State: IncreaseBackoff()
+        note right
+            Exponential backoff:
+            2s -> 4s -> 8s -> 16s
+        end note
+        RateLimiter --> Decorator: ok
+        deactivate RateLimiter
+
+        Decorator -> Decorator: Retry with increased delay
+    end
+
+    deactivate Website
+    Decorator --> Client: ScrapedListings
+    deactivate Decorator
+end
+
+@enduml

@@ -1,0 +1,123 @@
+@startuml Fuzzy Matching Flow
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Fuzzy Matching & Duplicate Detection Flow - Phase 3
+
+start
+
+:Receive Scraped Listing;
+
+partition "Step 1: VIN Check" {
+    if (VIN Available?) then (yes)
+        if (VIN Length = 17?) then (yes)
+            :Query: Full VIN Match;
+            if (Exact Match Found?) then (yes)
+                :Confidence = 100%;
+                :Method = EXACT_VIN;
+                goto ReturnMatch
+            endif
+        endif
+
+        :Query: Partial VIN Match (last 8);
+        if (Partial Match Found?) then (yes)
+            :Confidence = 95%;
+            :Method = PARTIAL_VIN;
+            goto ReturnMatch
+        endif
+    endif
+}
+
+partition "Step 2: ExternalId Check" {
+    :Query: ExternalId + SourceSite;
+    if (Match Found?) then (yes)
+        :Confidence = 100%;
+        :Method = EXTERNAL_ID;
+        goto ReturnMatch
+    endif
+}
+
+partition "Step 3: Fuzzy Attribute Matching" {
+    :Get Candidate Listings;
+    note right
+        Candidates filtered by:
+        - Same Make (case-insensitive)
+        - Year within ±2
+        - Price within ±30%
+    end note
+
+    if (Candidates Found?) then (yes)
+        :Calculate Field Similarities;
+
+        partition "Field Scoring" {
+            :Make Score = Levenshtein(make1, make2);
+            note right: Weight: 15%
+
+            :Model Score = Levenshtein(model1, model2);
+            note right: Weight: 20%
+
+            :Year Score = |year1 - year2| <= 1 ? 1.0 : scaled;
+            note right: Weight: 15%
+
+            :Mileage Score = |m1 - m2| <= 500 ? 1.0 : scaled;
+            note right: Weight: 15%
+
+            :Price Score = |p1 - p2| <= 500 ? 1.0 : scaled;
+            note right: Weight: 20%
+
+            :Location Score = distance <= 10mi ? 1.0 : scaled;
+            note right: Weight: 15%
+        }
+
+        :Composite Score = Σ(score × weight) × 100;
+
+        :Select Best Match;
+        note right: Highest score among candidates
+
+        if (Best Score >= 85?) then (yes)
+            :Confidence = Best Score;
+            :Method = FUZZY_MATCH;
+            :Auto-Deduplicate;
+            goto ReturnMatch
+
+        elseif (Best Score >= 60?) then (yes)
+            :Confidence = Best Score;
+            :Method = FUZZY_MATCH;
+            :Flag for Review (Phase 4);
+            goto ReturnNew
+
+        else (no)
+            :Confidence = Best Score;
+            :Method = NONE;
+            goto ReturnNew
+        endif
+    else (no)
+        :Confidence = 0;
+        :Method = NONE;
+    endif
+}
+
+label ReturnNew
+:Return: NEW_LISTING;
+:Create New Listing Record;
+stop
+
+label ReturnMatch
+:Return: DUPLICATE_FOUND;
+
+partition "Step 4: Update Existing" {
+    :Update LastSeenDate;
+
+    if (Price Changed?) then (yes)
+        :Create PriceHistory Record;
+        :Update Listing Price;
+    endif
+
+    if (LinkedVehicleId Null?) then (yes)
+        :Link to Vehicle Entity;
+    endif
+}
+
+stop
+
+@enduml

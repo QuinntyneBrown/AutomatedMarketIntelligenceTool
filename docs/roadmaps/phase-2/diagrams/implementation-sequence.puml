@@ -1,0 +1,167 @@
+@startuml Phase 2 Implementation Sequence
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Phase 2 Implementation Sequence
+
+|#LightBlue| Sprint 1: Infrastructure |
+|#LightGreen| Sprint 2: Scrapers |
+|#LightYellow| Sprint 3: Services |
+|#LightCoral| Sprint 4: CLI |
+|#Lavender| Sprint 5: Reporting |
+
+|Sprint 1: Infrastructure|
+start
+:SQL Server Provider;
+note right
+  - Connection string config
+  - Provider factory
+  - Integration tests
+end note
+
+:Rate Limiting Service;
+note right
+  - IRateLimiter interface
+  - Domain-based tracking
+  - Configurable delays
+end note
+
+:Data Model Extensions;
+note right
+  - BodyStyle enum
+  - Drivetrain enum
+  - SellerType enum
+  - PriceHistory entity
+  - SearchSession entity
+end note
+
+:Phase 2 Migration;
+note right
+  - New tables
+  - New columns
+  - New indexes
+end note
+
+|Sprint 2: Scrapers|
+:Site Selection Logic;
+note right
+  - --sites option
+  - --exclude-sites option
+  - ScraperFactory updates
+end note
+
+:Rate Limiting Integration;
+note right
+  - Decorator pattern
+  - Exponential backoff
+  - 429 handling
+end note
+
+:Extended Field Extraction;
+note right
+  - Transmission
+  - FuelType
+  - Drivetrain
+  - Dealer info
+end note
+
+:CarGurus Scraper;
+note right
+  - URL builder
+  - DOM parser
+  - Pagination
+end note
+
+|Sprint 3: Services|
+:Extended Search Filters;
+note right
+  - Condition filter
+  - Transmission filter
+  - FuelType filter
+  - BodyStyle filter
+  - City/State filter
+end note
+
+:New Listing Detection;
+note right
+  - Detection logic
+  - Flag setting
+  - Count tracking
+end note
+
+:Price Change Detection;
+note right
+  - Change detection
+  - History recording
+  - Event notification
+end note
+
+:Listing Deactivation;
+note right
+  - Staleness check
+  - IsActive management
+  - Reactivation
+end note
+
+|Sprint 4: CLI|
+:List Command;
+note right
+  - Database queries
+  - All filters
+  - Pagination
+end note
+
+:Export Command;
+note right
+  - JSON export
+  - CSV export
+  - File handling
+end note
+
+:Config Command;
+note right
+  - Get/Set operations
+  - File management
+  - Env var support
+end note
+
+:Help & Progress;
+note right
+  - Global --help
+  - Command --help
+  - Progress bars
+  - Color output
+end note
+
+|Sprint 5: Reporting|
+:New Listing Highlighting;
+note right
+  - [NEW] indicator
+  - Green color
+  - --new-only filter
+end note
+
+:Price Change Display;
+note right
+  - Delta display
+  - Color coding
+  - Percentage calc
+end note
+
+:Sorting & Filtering;
+note right
+  - --sort option
+  - Multi-field sort
+  - --filter option
+end note
+
+:Integration Testing;
+note right
+  - E2E scrape flow
+  - E2E search flow
+  - E2E export flow
+end note
+
+stop
+
+@enduml

@@ -1,0 +1,113 @@
+@startuml Concurrent Scraping
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Concurrent Multi-Site Scraping Engine - Phase 4
+
+participant "CLI" as CLI
+participant "ConcurrentScrapingEngine" as Engine
+participant "ResourceManager" as ResMgr
+participant "ScraperFactory" as Factory
+collections "Site Scrapers" as Scrapers
+participant "HealthService" as Health
+database "Database" as DB
+
+CLI -> Engine: StartScrapingAsync(parameters, concurrency=3)
+activate Engine
+
+Engine -> Factory: CreateScrapers(options)
+activate Factory
+Factory --> Engine: [Autotrader, Cars.com, CarGurus, eBay, CarMax, ...]
+deactivate Factory
+
+Engine -> ResMgr: CheckResources()
+activate ResMgr
+ResMgr --> Engine: ResourcesOK
+deactivate ResMgr
+
+Engine -> Engine: Create SemaphoreSlim(3)
+note right
+    Limits concurrent
+    execution to 3 sites
+end note
+
+group Parallel.ForEachAsync (MaxDegreeOfParallelism = 3)
+
+    par Site 1: Autotrader
+        Engine -> Scrapers: ScrapeAsync(autotrader)
+        activate Scrapers
+        Scrapers -> Health: RecordStart(autotrader)
+        note right: Track metrics
+        Scrapers --> Engine: listings[]
+        Scrapers -> Health: RecordSuccess(autotrader, count, time)
+        deactivate Scrapers
+    also Site 2: Cars.com
+        Engine -> Scrapers: ScrapeAsync(carscom)
+        activate Scrapers
+        Scrapers -> Health: RecordStart(carscom)
+        Scrapers --> Engine: listings[]
+        Scrapers -> Health: RecordSuccess(carscom, count, time)
+        deactivate Scrapers
+    also Site 3: CarGurus
+        Engine -> Scrapers: ScrapeAsync(cargurus)
+        activate Scrapers
+        Scrapers -> Health: RecordStart(cargurus)
+        Scrapers --> Engine: listings[]
+        Scrapers -> Health: RecordSuccess(cargurus, count, time)
+        deactivate Scrapers
+    end
+
+    note over Engine
+        As sites complete, next sites
+        (eBay, CarMax, etc.) start
+        maintaining max 3 concurrent
+    end note
+
+    par Site 4: eBay (after slot frees)
+        Engine -> Scrapers: ScrapeAsync(ebay)
+        activate Scrapers
+        Scrapers --> Engine: listings[]
+        deactivate Scrapers
+    also Site 5: CarMax
+        Engine -> Scrapers: ScrapeAsync(carmax)
+        activate Scrapers
+        Scrapers --> Engine: listings[]
+        deactivate Scrapers
+    also Site 6: Carvana
+        Engine -> Scrapers: ScrapeAsync(carvana)
+        activate Scrapers
+        Scrapers --> Engine: listings[]
+        deactivate Scrapers
+    end
+end
+
+Engine -> Engine: AggregateResults()
+note right
+    Combine all listings
+    from all sites
+end note
+
+Engine -> DB: ProcessListingsAsync(aggregated)
+note right
+    Duplicate detection
+    Price change tracking
+    Image matching
+end note
+
+Engine -> Health: GetHealthSummary()
+activate Health
+Health --> Engine: HealthReport
+deactivate Health
+
+Engine --> CLI: ScrapeResult
+note right
+    TotalListings: 847
+    NewListings: 156
+    PriceChanges: 23
+    Duration: 45s
+    SiteBreakdown: {...}
+end note
+
+deactivate Engine
+
+@enduml
