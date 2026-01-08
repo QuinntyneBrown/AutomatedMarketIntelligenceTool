@@ -1,0 +1,144 @@
+@startuml implementation-sequence
+!theme cerulean-outline
+
+title Phase 1 Implementation Sequence
+caption Build Order: Foundation → Storage → Collection → Interface → Display
+
+skinparam backgroundColor #FEFEFE
+skinparam roundCorner 10
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+' Colors
+skinparam package {
+    BackgroundColor<<foundation>> #E3F2FD
+    BackgroundColor<<storage>> #E8F5E9
+    BackgroundColor<<collection>> #FFF3E0
+    BackgroundColor<<interface>> #F3E5F5
+    BackgroundColor<<integration>> #FFEBEE
+    BorderColor #666666
+}
+
+' Sprint 1 - Foundation
+package "Sprint 1: Foundation" <<foundation>> {
+    rectangle "1.1 Core Domain Models" as S1_1 {
+        card "Listing Aggregate" as listing
+        card "Value Objects" as vo
+        card "Domain Enums" as enums
+        card "Domain Events" as events
+    }
+
+    rectangle "1.2 Infrastructure Setup" as S1_2 {
+        card "IContext Interface" as icontext
+        card "DbContext Impl" as dbcontext
+        card "Entity Configs" as configs
+        card "Initial Migration" as migration
+    }
+}
+
+' Sprint 2 - Data Collection
+package "Sprint 2: Data Collection" <<collection>> {
+    rectangle "2.1 Scraper Foundation" as S2_1 {
+        card "ISiteScraper" as iscraper
+        card "BaseScraper" as basescraper
+        card "ScraperFactory" as factory
+    }
+
+    rectangle "2.2 Site Scrapers" as S2_2 {
+        card "AutotraderScraper" as autotrader
+        card "CarsComScraper" as carscom
+        card "Pagination Handler" as pagination
+    }
+}
+
+' Sprint 3 - Business Logic
+package "Sprint 3: Business Logic" <<storage>> {
+    rectangle "3.1 Duplicate Detection" as S3_1 {
+        card "VIN Detection" as vin
+        card "ExternalId Detection" as extid
+        card "New Listing Flag" as newlisting
+    }
+
+    rectangle "3.2 Search Service" as S3_2 {
+        card "Filter Specs" as filters
+        card "Query Builder" as query
+        card "Pagination" as paging
+    }
+}
+
+' Sprint 4 - User Interface
+package "Sprint 4: User Interface" <<interface>> {
+    rectangle "4.1 CLI Framework" as S4_1 {
+        card "SearchCommand" as searchcmd
+        card "ScrapeCommand" as scrapecmd
+        card "Arg Parsing" as args
+    }
+
+    rectangle "4.2 Output" as S4_2 {
+        card "TableFormatter" as table
+        card "JsonFormatter" as json
+        card "CsvFormatter" as csv
+    }
+}
+
+' Sprint 5 - Integration
+package "Sprint 5: Integration" <<integration>> {
+    rectangle "5.1 E2E Testing" as S5_1 {
+        card "Scrape→Store" as e2e1
+        card "Search→Display" as e2e2
+        card "Dedup Flow" as e2e3
+    }
+
+    rectangle "5.2 Polish" as S5_2 {
+        card "Logging" as logging
+        card "Documentation" as docs
+        card "Performance" as perf
+    }
+}
+
+' Dependencies (vertical flow)
+S1_1 -[hidden]down-> S1_2
+
+listing -down-> icontext
+vo -down-> dbcontext
+enums -down-> configs
+icontext -down-> dbcontext
+dbcontext -down-> migration
+
+S1_2 -down-> S2_1 : "Models ready"
+S2_1 -down-> S2_2
+
+iscraper -down-> basescraper
+basescraper -down-> factory
+factory -down-> autotrader
+autotrader -right-> carscom
+
+S2_2 -down-> S3_1 : "Data to persist"
+S3_1 -down-> S3_2
+
+vin -down-> extid
+extid -down-> newlisting
+filters -down-> query
+query -down-> paging
+
+S3_2 -down-> S4_1 : "Logic ready"
+S4_1 -down-> S4_2
+
+searchcmd -right-> scrapecmd
+table -right-> json
+json -right-> csv
+
+S4_2 -down-> S5_1 : "CLI complete"
+S5_1 -down-> S5_2
+
+' Legend
+legend right
+  |= Color |= Sprint |
+  |<#E3F2FD> | Foundation Layer |
+  |<#FFF3E0> | Collection Layer |
+  |<#E8F5E9> | Business Logic |
+  |<#F3E5F5> | User Interface |
+  |<#FFEBEE> | Integration |
+endlegend
+
+@enduml

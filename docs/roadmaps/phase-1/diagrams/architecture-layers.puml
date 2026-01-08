@@ -1,0 +1,168 @@
+@startuml architecture-layers
+!theme cerulean-outline
+
+title Phase 1 Architecture Layers
+caption Clean Architecture with CQRS Pattern
+
+skinparam backgroundColor #FEFEFE
+skinparam roundCorner 15
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+' Colors
+skinparam package {
+    BackgroundColor<<presentation>> #E1BEE7
+    BackgroundColor<<application>> #BBDEFB
+    BackgroundColor<<domain>> #C8E6C9
+    BackgroundColor<<infrastructure>> #FFE0B2
+    BorderColor #555555
+}
+
+skinparam component {
+    BackgroundColor #FFFFFF
+    BorderColor #888888
+}
+
+' Presentation Layer
+package "Presentation Layer" <<presentation>> {
+    component "CLI\n(Spectre.Console)" as cli {
+        [SearchCommand]
+        [ScrapeCommand]
+        [Formatters]
+    }
+
+    component "API\n(ASP.NET Core)" as api {
+        [ListingsController]
+        [ScrapingController]
+    }
+
+    component "WebApp\n(Angular 21)" as webapp {
+        [SearchPage]
+        [ResultsComponent]
+    }
+}
+
+' Application Layer
+package "Application Layer" <<application>> {
+    component "MediatR CQRS" as cqrs {
+        [SearchListingsQuery]
+        [GetListingByIdQuery]
+        [StartScrapeCommand]
+    }
+
+    component "DTOs" as dtos {
+        [ListingDto]
+        [SearchResultDto]
+        [ScrapeStatusDto]
+    }
+}
+
+' Domain Layer
+package "Domain Layer (Core)" <<domain>> {
+    component "Aggregates" as aggregates {
+        [Listing]
+        [SearchConfig]
+    }
+
+    component "Value Objects" as valueobjects {
+        [ListingId]
+        [SearchConfigId]
+    }
+
+    component "Domain Services" as domainservices {
+        [IDuplicateDetectionService]
+        [ISearchService]
+    }
+
+    component "Enums" as enums {
+        [Condition]
+        [FuelType]
+        [Transmission]
+    }
+
+    interface "IAutomatedMarketIntelligenceToolContext" as icontext
+}
+
+' Infrastructure Layer
+package "Infrastructure Layer" <<infrastructure>> {
+    component "Persistence" as persistence {
+        [DbContext Implementation]
+        [Entity Configurations]
+        [Migrations]
+    }
+
+    component "Web Scraping" as scraping {
+        [ISiteScraper]
+        [BaseScraper]
+        [AutotraderScraper]
+        [CarsComScraper]
+    }
+
+    component "External Services" as external {
+        [Playwright Browser]
+        [HTTP Client]
+    }
+}
+
+' External Systems
+cloud "External Systems" as externalsystems {
+    database "SQLite\nDatabase" as sqlite
+
+    rectangle "Automotive Sites" as sites {
+        [Autotrader.com]
+        [Cars.com]
+    }
+}
+
+' Dependencies (arrows point to dependencies)
+cli -down-> cqrs : "dispatches"
+api -down-> cqrs : "dispatches"
+webapp -down-> api : "HTTP"
+
+cqrs -down-> domainservices : "uses"
+cqrs -down-> icontext : "queries"
+cqrs -down-> aggregates : "creates/updates"
+
+domainservices -down-> icontext : "uses"
+aggregates -down-> valueobjects : "contains"
+aggregates -down-> enums : "uses"
+
+persistence -up-|> icontext : "implements"
+scraping -up-> domainservices : "uses"
+
+persistence -down-> sqlite : "persists to"
+scraping -down-> external : "uses"
+external -down-> sites : "scrapes"
+
+' Notes
+note right of domainservices
+  **Per REQ-SYS-005/006:**
+  Services access DbContext
+  directly via IContext.
+  NO Repository Pattern.
+end note
+
+note left of cqrs
+  **CQRS Pattern:**
+  Commands mutate state
+  Queries read state
+  Separated concerns
+end note
+
+note bottom of aggregates
+  **Per REQ-SYS-007:**
+  Identity: ListingId, not Id
+  Per REQ-SYS-023-030:
+  TenantId on all aggregates
+end note
+
+' Legend
+legend right
+  |= Layer |= Responsibility |
+  |<#E1BEE7> Presentation | User interaction |
+  |<#BBDEFB> Application | Use cases, orchestration |
+  |<#C8E6C9> Domain | Business logic, entities |
+  |<#FFE0B2> Infrastructure | External concerns |
+endlegend
+
+@enduml
