@@ -205,12 +205,14 @@ public class KijijiScraper : BaseScraper
         var parts = url.Split('/');
         for (int i = 0; i < parts.Length; i++)
         {
-            if (parts[i].StartsWith("v-") || long.TryParse(parts[i], out _))
+            // Kijiji URLs often have IDs starting with "v-" or numeric IDs
+            if (i < parts.Length && (parts[i].StartsWith("v-") || (long.TryParse(parts[i], out _) && parts[i].Length > 5)))
             {
                 return parts[i];
             }
         }
 
+        // Fallback to hash if no valid ID found
         return url.GetHashCode().ToString();
     }
 
@@ -221,9 +223,12 @@ public class KijijiScraper : BaseScraper
             .Replace("CAD", string.Empty)
             .Trim();
 
-        // Handle "Please Contact" or similar
+        // Handle various "contact for price" phrases (English and French)
         if (cleanPrice.Contains("Contact", StringComparison.OrdinalIgnoreCase) ||
-            cleanPrice.Contains("Call", StringComparison.OrdinalIgnoreCase))
+            cleanPrice.Contains("Call", StringComparison.OrdinalIgnoreCase) ||
+            cleanPrice.Contains("Please", StringComparison.OrdinalIgnoreCase) ||
+            cleanPrice.Contains("demande", StringComparison.OrdinalIgnoreCase) ||
+            cleanPrice.Contains("Contactez", StringComparison.OrdinalIgnoreCase))
         {
             return 0;
         }

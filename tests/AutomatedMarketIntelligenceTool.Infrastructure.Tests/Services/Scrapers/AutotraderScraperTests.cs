@@ -160,7 +160,7 @@ public class AutotraderScraperTests
         var url = InvokeBuildSearchUrl(parameters, 3);
 
         // Assert
-        Assert.Contains("rcp=20&rcs=40", url); // (3-1) * 25 = 50
+        Assert.Contains("rcp=20&rcs=40", url); // (3-1) * 20 = 40
     }
 
     [Fact]
