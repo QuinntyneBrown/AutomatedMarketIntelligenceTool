@@ -363,6 +363,7 @@ public class DuplicateDetectionServiceTests
         public DbSet<Listing> Listings => Set<Listing>();
         public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
         public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
+        public DbSet<Core.Models.SearchProfileAggregate.SearchProfile> SearchProfiles => Set<Core.Models.SearchProfileAggregate.SearchProfile>();
         public DbSet<Core.Models.VehicleAggregate.Vehicle> Vehicles => Set<Core.Models.VehicleAggregate.Vehicle>();
         public DbSet<Core.Models.ReviewQueueAggregate.ReviewItem> ReviewItems => Set<Core.Models.ReviewQueueAggregate.ReviewItem>();
 
@@ -408,6 +409,17 @@ public class DuplicateDetectionServiceTests
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
+            // Configure SearchProfile entity
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                
+                entity.Property(sp => sp.SearchProfileId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
             });
 
             // Configure Vehicle entity

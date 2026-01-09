@@ -227,6 +227,7 @@ public class PriceChangeDetectionServiceTests
         public DbSet<Listing> Listings => Set<Listing>();
         public DbSet<PriceHistory> PriceHistory => Set<PriceHistory>();
         public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
+        public DbSet<Core.Models.SearchProfileAggregate.SearchProfile> SearchProfiles => Set<Core.Models.SearchProfileAggregate.SearchProfile>();
         public DbSet<Core.Models.VehicleAggregate.Vehicle> Vehicles => Set<Core.Models.VehicleAggregate.Vehicle>();
         public DbSet<Core.Models.ReviewQueueAggregate.ReviewItem> ReviewItems => Set<Core.Models.ReviewQueueAggregate.ReviewItem>();
 
@@ -269,6 +270,17 @@ public class PriceChangeDetectionServiceTests
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                
+                entity.Property(sp => sp.SearchProfileId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
+            });
 
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
             {
@@ -279,7 +291,6 @@ public class PriceChangeDetectionServiceTests
                         id => id.Value,
                         value => new Core.Models.VehicleAggregate.VehicleId(value));
             });
-            });
 
             modelBuilder.Entity<Core.Models.ReviewQueueAggregate.ReviewItem>(entity =>
             {
@@ -288,10 +299,13 @@ public class PriceChangeDetectionServiceTests
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.ReviewQueueAggregate.ReviewItemId(value));
+
                 entity.Property(r => r.Listing1Id)
                     .HasConversion(id => id.Value, value => new ListingId(value));
+
                 entity.Property(r => r.Listing2Id)
                     .HasConversion(id => id.Value, value => new ListingId(value));
+
                 entity.Ignore(r => r.DomainEvents);
             });
         }

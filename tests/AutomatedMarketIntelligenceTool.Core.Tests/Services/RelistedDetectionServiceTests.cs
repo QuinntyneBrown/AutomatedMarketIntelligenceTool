@@ -252,6 +252,7 @@ public class RelistedDetectionServiceTests
         public DbSet<Listing> Listings => Set<Listing>();
         public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
         public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
+        public DbSet<Core.Models.SearchProfileAggregate.SearchProfile> SearchProfiles => Set<Core.Models.SearchProfileAggregate.SearchProfile>();
         public DbSet<Core.Models.VehicleAggregate.Vehicle> Vehicles => Set<Core.Models.VehicleAggregate.Vehicle>();
         public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
 
@@ -293,6 +294,15 @@ public class RelistedDetectionServiceTests
                 entity.HasKey(ss => ss.SearchSessionId);
                 entity.Property(ss => ss.SearchSessionId)
                     .HasConversion(id => id.Value, value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                entity.Property(sp => sp.SearchProfileId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
             });
 
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
