@@ -3,6 +3,7 @@ using AutomatedMarketIntelligenceTool.Cli.Commands;
 using AutomatedMarketIntelligenceTool.Cli.Configuration;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
+using AutomatedMarketIntelligenceTool.Core.Services.Dashboard;
 using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
 using AutomatedMarketIntelligenceTool.Infrastructure;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Backup;
@@ -123,6 +124,9 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IDataImportService, DataImportService>();
     services.AddScoped<IBackupService, BackupService>();
 
+    // Phase 5: Dashboard Services
+    services.AddScoped<IDashboardService, DashboardService>();
+
     // Add configuration
     var configuration = new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
@@ -219,6 +223,13 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("completion", "--shell", "bash")
             .WithExample("completion", "--shell", "zsh", "--output", "~/.zsh/completions/_car-search")
             .WithExample("completion", "-s", "powershell", "-o", "car-search-completion.ps1");
+
+        config.AddCommand<DashboardCommand>("dashboard")
+            .WithDescription("Display real-time dashboard with market insights and tracking summary")
+            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012", "--watch")
+            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012", "--compact")
+            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012", "--watch", "--refresh", "10");
 
         config.PropagateExceptions();
         config.ValidateExamples();
