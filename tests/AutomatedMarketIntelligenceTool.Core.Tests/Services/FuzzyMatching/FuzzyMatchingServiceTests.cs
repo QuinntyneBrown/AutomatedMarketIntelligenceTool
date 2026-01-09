@@ -368,6 +368,15 @@ public class FuzzyMatchingServiceTests
                         value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
             });
 
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                entity.Property(sp => sp.SearchProfileId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
+            });
+
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
             {
                 entity.HasKey(v => v.VehicleId);

@@ -39,4 +39,9 @@ public static class ExitCodes
     /// Not found - requested resource was not found.
     /// </summary>
     public const int NotFound = 6;
+
+    /// <summary>
+    /// Unexpected error - an unexpected exception occurred.
+    /// </summary>
+    public const int UnexpectedError = 99;
 }

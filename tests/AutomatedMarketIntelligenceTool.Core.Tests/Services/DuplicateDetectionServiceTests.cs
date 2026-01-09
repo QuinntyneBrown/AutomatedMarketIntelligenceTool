@@ -411,6 +411,17 @@ public class DuplicateDetectionServiceTests
                         value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
             });
 
+            // Configure SearchProfile entity
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                
+                entity.Property(sp => sp.SearchProfileId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
+            });
+
             // Configure Vehicle entity
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
             {

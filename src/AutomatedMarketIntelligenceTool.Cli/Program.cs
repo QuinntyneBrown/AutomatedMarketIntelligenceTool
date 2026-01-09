@@ -85,7 +85,8 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     // Add core services
     services.AddScoped<ISearchService, SearchService>();
     services.AddScoped<IDuplicateDetectionService, DuplicateDetectionService>();
-    services.AddScoped<IAutoCompleteService, AutoCompleteService>();
+    services.AddScoped<ISearchProfileService, SearchProfileService>();
+    services.AddScoped<IStatisticsService, StatisticsService>();
     services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
 
     // Add rate limiting with configuration
@@ -146,12 +147,26 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("config", "get", "Database:Provider")
             .WithExample("config", "set", "Scraping:DefaultDelayMs", "5000");
 
-        config.AddCommand<ReviewCommand>("review")
-            .WithDescription("Manage the review queue for near-match duplicates")
-            .WithExample("review", "list", "-t", "12345678-1234-1234-1234-123456789012")
-            .WithExample("review", "list", "-t", "12345678-1234-1234-1234-123456789012", "--status", "Pending")
-            .WithExample("review", "resolve", "abc12345", "-t", "12345678-1234-1234-1234-123456789012", "--same-vehicle")
-            .WithExample("review", "dismiss", "abc12345", "-t", "12345678-1234-1234-1234-123456789012");
+        config.AddCommand<ProfileCommand>("profile")
+            .WithDescription("Manage search profiles (save, load, list, delete)")
+            .WithExample("profile", "save", "family-suv", "-t", "12345678-1234-1234-1234-123456789012", "-m", "Toyota,Honda", "--body-style", "suv")
+            .WithExample("profile", "load", "family-suv", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("profile", "list", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("profile", "delete", "family-suv", "-t", "12345678-1234-1234-1234-123456789012");
+
+        config.AddCommand<StatusCommand>("status")
+            .WithDescription("Display system status and statistics summary")
+            .WithExample("status", "-t", "12345678-1234-1234-1234-123456789012");
+
+        config.AddCommand<StatsCommand>("stats")
+            .WithDescription("Display market statistics and analysis")
+            .WithExample("stats", "-t", "12345678-1234-1234-1234-123456789012", "-m", "Toyota")
+            .WithExample("stats", "-t", "12345678-1234-1234-1234-123456789012", "--year-min", "2020", "--condition", "Used");
+
+        config.AddCommand<ShowCommand>("show")
+            .WithDescription("Display detailed information about a specific listing")
+            .WithExample("show", "<listing-id>", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("show", "<listing-id>", "-t", "12345678-1234-1234-1234-123456789012", "--with-history");
 
         config.PropagateExceptions();
         config.ValidateExamples();
