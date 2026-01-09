@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using AutomatedMarketIntelligenceTool.Cli.Formatters;
+using AutomatedMarketIntelligenceTool.Cli.Interactive;
 using AutomatedMarketIntelligenceTool.Core.Services;
+using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -12,12 +14,19 @@ namespace AutomatedMarketIntelligenceTool.Cli.Commands;
 public class SearchCommand : AsyncCommand<SearchCommand.Settings>
 {
     private readonly ISearchService _searchService;
+    private readonly IAutoCompleteService? _autoCompleteService;
+    private readonly ILogger<SearchCommand>? _logger;
     private readonly Dictionary<string, IOutputFormatter> _formatters;
 
-    public SearchCommand(ISearchService searchService)
+    public SearchCommand(
+        ISearchService searchService,
+        IAutoCompleteService? autoCompleteService = null,
+        ILogger<SearchCommand>? logger = null)
     {
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
-        
+        _autoCompleteService = autoCompleteService;
+        _logger = logger;
+
         _formatters = new Dictionary<string, IOutputFormatter>(StringComparer.OrdinalIgnoreCase)
         {
             ["table"] = new TableFormatter(),
@@ -30,6 +39,30 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
     {
         try
         {
+            // Handle interactive mode
+            if (settings.Interactive)
+            {
+                if (_autoCompleteService == null)
+                {
+                    AnsiConsole.MarkupLine("[red]Error: Interactive mode requires auto-complete service to be registered.[/]");
+                    return ExitCodes.GeneralError;
+                }
+
+                var interactiveMode = new InteractiveMode(
+                    _autoCompleteService,
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger<InteractiveMode>.Instance);
+
+                try
+                {
+                    settings = await interactiveMode.BuildSearchSettingsAsync(settings);
+                }
+                catch (OperationCanceledException)
+                {
+                    AnsiConsole.MarkupLine("[yellow]Search cancelled.[/]");
+                    return ExitCodes.Success;
+                }
+            }
+
             // Validate format
             if (!_formatters.ContainsKey(settings.Format))
             {
@@ -151,6 +184,11 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
         [CommandOption("-t|--tenant")]
         [Description("Tenant ID (required)")]
         public Guid TenantId { get; set; }
+
+        [CommandOption("-i|--interactive")]
+        [Description("Enable interactive mode for guided search parameter selection")]
+        [DefaultValue(false)]
+        public bool Interactive { get; set; }
 
         [CommandOption("-m|--make")]
         [Description("Vehicle make (e.g., Toyota, Honda)")]

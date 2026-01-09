@@ -1,4 +1,6 @@
-﻿using AutomatedMarketIntelligenceTool.Cli.Commands;
+﻿using AutomatedMarketIntelligenceTool.Cli;
+using AutomatedMarketIntelligenceTool.Cli.Commands;
+using AutomatedMarketIntelligenceTool.Cli.Configuration;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
@@ -12,22 +14,55 @@ using Serilog;
 using Serilog.Events;
 using Spectre.Console.Cli;
 
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+// Parse verbosity level from command line args
+var verbosityLevel = VerbosityHelper.ParseFromArgs(args);
+var logLevel = VerbosityHelper.ToLogEventLevel(verbosityLevel);
+
+// Load configuration for log directory
+var configManager = new ConfigurationManager();
+var appSettings = configManager.LoadSettings();
+var logDirectory = appSettings.Verbosity.LogDirectory;
+var retainDays = appSettings.Verbosity.RetainDays;
+
+// Configure console output template based on verbosity
+var consoleTemplate = verbosityLevel switch
+{
+    VerbosityLevel.Quiet => "{Message:lj}{NewLine}{Exception}",
+    VerbosityLevel.Normal => "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+    VerbosityLevel.Verbose => "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}",
+    VerbosityLevel.Debug => "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{SourceContext}] {Message:lj} {Properties:j}{NewLine}{Exception}",
+    VerbosityLevel.Trace => "[{Timestamp:HH:mm:ss.fff zzz} {Level:u3}] [{SourceContext}] {Message:lj} {Properties:j}{NewLine}{Exception}",
+    _ => "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+};
+
+// Configure Serilog with dynamic verbosity
+var logConfig = new LoggerConfiguration()
+    .MinimumLevel.Is(logLevel)
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .Enrich.WithMachineName()
     .Enrich.WithThreadId()
     .Enrich.WithProperty("Application", "AutomatedMarketIntelligenceTool.Cli")
-    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-    .WriteTo.File(
-        path: "logs/cli-.log",
+    .Enrich.WithProperty("VerbosityLevel", verbosityLevel.ToString());
+
+// Only show console output if not in quiet mode
+if (verbosityLevel != VerbosityLevel.Quiet)
+{
+    logConfig = logConfig.WriteTo.Console(outputTemplate: consoleTemplate);
+}
+
+// Add file logging if enabled
+if (appSettings.Verbosity.EnableFileLogging)
+{
+    logConfig = logConfig.WriteTo.File(
+        path: Path.Combine(logDirectory, "cli-.log"),
         rollingInterval: RollingInterval.Day,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}",
-        retainedFileCountLimit: 7)
-    .CreateLogger();
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj} {Properties:j}{NewLine}{Exception}",
+        retainedFileCountLimit: retainDays);
+}
+
+Log.Logger = logConfig.CreateLogger();
 
 try
 {
@@ -47,9 +82,10 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     options.UseSqlite("Data Source=car-search.db");
 });
 
-    // Add services
+    // Add core services
     services.AddScoped<ISearchService, SearchService>();
     services.AddScoped<IDuplicateDetectionService, DuplicateDetectionService>();
+    services.AddScoped<IAutoCompleteService, AutoCompleteService>();
     services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
 
     // Add rate limiting with configuration
@@ -70,6 +106,9 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IReviewService, ReviewService>();
     services.AddScoped<IRelistedDetectionService, RelistedDetectionService>();
 
+    // Store verbosity level for services to access
+    services.AddSingleton(typeof(VerbosityLevel), verbosityLevel);
+
     // Create service provider
     var registrar = new TypeRegistrar(services);
     var app = new CommandApp(registrar);
@@ -77,12 +116,13 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     app.Configure(config =>
     {
         config.SetApplicationName("car-search");
-        config.SetApplicationVersion("2.0.0");
+        config.SetApplicationVersion("3.0.0");
         
         config.AddCommand<SearchCommand>("search")
             .WithDescription("Search for car listings in the database")
             .WithExample("search", "-t", "12345678-1234-1234-1234-123456789012", "-m", "Toyota", "--model", "Camry")
-            .WithExample("search", "-t", "12345678-1234-1234-1234-123456789012", "--price-max", "30000", "--format", "json");
+            .WithExample("search", "-t", "12345678-1234-1234-1234-123456789012", "--price-max", "30000", "--format", "json")
+            .WithExample("search", "-i", "-t", "12345678-1234-1234-1234-123456789012");
         
         config.AddCommand<ScrapeCommand>("scrape")
             .WithDescription("Scrape car listings from automotive websites")

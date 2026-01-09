@@ -17,6 +17,8 @@ public class AppSettingsTests
         settings.Search.Should().NotBeNull();
         settings.Deactivation.Should().NotBeNull();
         settings.Output.Should().NotBeNull();
+        settings.Verbosity.Should().NotBeNull();
+        settings.Interactive.Should().NotBeNull();
     }
 
     [Fact]
