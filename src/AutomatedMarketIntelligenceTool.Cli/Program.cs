@@ -2,6 +2,7 @@
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.RateLimiting;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,8 +49,16 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     // Add services
     services.AddScoped<ISearchService, SearchService>();
     services.AddScoped<IDuplicateDetectionService, DuplicateDetectionService>();
-    services.AddSingleton<IScraperFactory, ScraperFactory>();
     services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
+    
+    // Add rate limiting with configuration
+    services.AddSingleton(_ => new RateLimitConfiguration
+    {
+        DefaultDelayMs = 3000, // 3 seconds between requests
+        MaxBackoffMs = 30000   // Max 30 seconds backoff
+    });
+    services.AddSingleton<IRateLimiter, RateLimiter>();
+    services.AddSingleton<IScraperFactory, ScraperFactory>();
 
     // Create service provider
     var registrar = new TypeRegistrar(services);

@@ -22,9 +22,13 @@ public class ScrapedListing
     public required Condition Condition { get; set; }
     public Transmission? Transmission { get; set; }
     public FuelType? FuelType { get; set; }
-    public string? BodyStyle { get; set; }
+    public BodyStyle? BodyStyle { get; set; }
+    public Drivetrain? Drivetrain { get; set; }
     public string? ExteriorColor { get; set; }
     public string? InteriorColor { get; set; }
+    public SellerType? SellerType { get; set; }
+    public string? SellerName { get; set; }
+    public string? SellerPhone { get; set; }
     public string? Description { get; set; }
     public List<string> ImageUrls { get; set; } = new();
 }

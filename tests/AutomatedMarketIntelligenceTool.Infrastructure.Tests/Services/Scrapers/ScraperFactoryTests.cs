@@ -44,6 +44,21 @@ public class ScraperFactoryTests
     }
 
     [Fact]
+    public void CreateScraper_WithCarGurus_ShouldReturnCarGurusScraper()
+    {
+        // Arrange
+        var factory = new ScraperFactory(_loggerFactory);
+
+        // Act
+        var scraper = factory.CreateScraper("cargurus");
+
+        // Assert
+        Assert.NotNull(scraper);
+        Assert.IsType<CarGurusScraper>(scraper);
+        Assert.Equal("CarGurus", scraper.SiteName);
+    }
+
+    [Fact]
     public void CreateScraper_WithKijijiDotCa_ShouldReturnKijijiScraper()
     {
         // Arrange
@@ -96,9 +111,10 @@ public class ScraperFactoryTests
 
         // Assert
         Assert.NotEmpty(scrapers);
-        Assert.Equal(2, scrapers.Count);
+        Assert.Equal(3, scrapers.Count);
         Assert.Contains(scrapers, s => s is AutotraderScraper);
         Assert.Contains(scrapers, s => s is KijijiScraper);
+        Assert.Contains(scrapers, s => s is CarGurusScraper);
     }
 
     [Fact]
@@ -112,9 +128,10 @@ public class ScraperFactoryTests
 
         // Assert
         Assert.NotEmpty(sites);
-        Assert.Equal(2, sites.Count);
+        Assert.Equal(3, sites.Count);
         Assert.Contains("Autotrader.ca", sites);
         Assert.Contains("Kijiji.ca", sites);
+        Assert.Contains("CarGurus.ca", sites);
     }
 
     [Fact]

@@ -38,7 +38,7 @@ public abstract class BaseScraper : ISiteScraper
         {
             browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
-                Headless = true,
+                Headless = !parameters.HeadedMode,
                 Args = new[] { "--disable-blink-features=AutomationControlled" }
             });
 

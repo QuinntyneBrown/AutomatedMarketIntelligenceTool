@@ -47,9 +47,10 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 settings.TenantId,
                 settings.Site);
 
-            // Validate site
+            // Validate site options
             var supportedSites = _scraperFactory.GetSupportedSites().ToList();
             
+            // Validate individual site option
             if (!string.IsNullOrEmpty(settings.Site) && 
                 settings.Site.ToLowerInvariant() != "all" &&
                 !supportedSites.Any(s => s.Equals(settings.Site, StringComparison.OrdinalIgnoreCase)))
@@ -61,6 +62,42 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 
                 AnsiConsole.MarkupLine($"[red]Error: Invalid site '{settings.Site}'. Valid sites are: {string.Join(", ", supportedSites)}, or 'all'[/]");
                 return ExitCodes.ValidationError;
+            }
+
+            // Validate --sites option
+            if (!string.IsNullOrEmpty(settings.Sites))
+            {
+                var requestedSites = settings.Sites.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var invalidSites = requestedSites.Where(s => !supportedSites.Any(ss => ss.Equals(s, StringComparison.OrdinalIgnoreCase))).ToList();
+                
+                if (invalidSites.Any())
+                {
+                    _logger.LogWarning(
+                        "Invalid sites specified: {InvalidSites}. Valid sites: {ValidSites}",
+                        string.Join(", ", invalidSites),
+                        string.Join(", ", supportedSites));
+                    
+                    AnsiConsole.MarkupLine($"[red]Error: Invalid sites '{string.Join(", ", invalidSites)}'. Valid sites are: {string.Join(", ", supportedSites)}[/]");
+                    return ExitCodes.ValidationError;
+                }
+            }
+
+            // Validate --exclude-sites option
+            if (!string.IsNullOrEmpty(settings.ExcludeSites))
+            {
+                var excludedSites = settings.ExcludeSites.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var invalidSites = excludedSites.Where(s => !supportedSites.Any(ss => ss.Equals(s, StringComparison.OrdinalIgnoreCase))).ToList();
+                
+                if (invalidSites.Any())
+                {
+                    _logger.LogWarning(
+                        "Invalid exclude sites specified: {InvalidSites}. Valid sites: {ValidSites}",
+                        string.Join(", ", invalidSites),
+                        string.Join(", ", supportedSites));
+                    
+                    AnsiConsole.MarkupLine($"[red]Error: Invalid exclude sites '{string.Join(", ", invalidSites)}'. Valid sites are: {string.Join(", ", supportedSites)}[/]");
+                    return ExitCodes.ValidationError;
+                }
             }
 
             // Build search parameters
@@ -75,13 +112,37 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 MileageMax = settings.MileageMax,
                 PostalCode = settings.ZipCode,
                 RadiusKilometers = settings.Radius,
-                MaxPages = settings.MaxPages
+                MaxPages = settings.MaxPages,
+                HeadedMode = settings.HeadedMode
             };
 
             // Determine which scrapers to use
-            var scrapers = string.IsNullOrEmpty(settings.Site) || settings.Site.ToLowerInvariant() == "all"
-                ? _scraperFactory.CreateAllScrapers().ToList()
-                : new List<ISiteScraper> { _scraperFactory.CreateScraper(settings.Site) };
+            List<ISiteScraper> scrapers;
+            
+            if (!string.IsNullOrEmpty(settings.Sites))
+            {
+                // Use --sites option (comma-separated list)
+                var requestedSites = settings.Sites.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                scrapers = requestedSites.Select(site => _scraperFactory.CreateScraper(site)).ToList();
+            }
+            else if (!string.IsNullOrEmpty(settings.Site) && settings.Site.ToLowerInvariant() != "all")
+            {
+                // Use single -s/--site option
+                scrapers = new List<ISiteScraper> { _scraperFactory.CreateScraper(settings.Site) };
+            }
+            else
+            {
+                // Use all scrapers by default
+                scrapers = _scraperFactory.CreateAllScrapers().ToList();
+            }
+            
+            // Apply exclusions if specified
+            if (!string.IsNullOrEmpty(settings.ExcludeSites))
+            {
+                var excludedSites = settings.ExcludeSites.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var excludeSet = new HashSet<string>(excludedSites, StringComparer.OrdinalIgnoreCase);
+                scrapers = scrapers.Where(s => !excludeSet.Contains(s.SiteName)).ToList();
+            }
 
             _logger.LogInformation("Executing scraping with {ScraperCount} scraper(s)", scrapers.Count);
             AnsiConsole.MarkupLine($"[green]Starting scrape with {scrapers.Count} scraper(s)...[/]");
@@ -155,8 +216,7 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                                 }
                                 else
                                 {
-                                    // Phase 2: New fields (bodyStyle, drivetrain, sellerType, etc.) 
-                                    // are not yet extracted by scrapers - will be implemented in Sprint 2
+                                    // Create new listing with all available fields
                                     var listing = Core.Models.ListingAggregate.Listing.Create(
                                         tenantId: settings.TenantId,
                                         externalId: scrapedListing.ExternalId,
@@ -176,13 +236,13 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                                         currency: scrapedListing.Currency,
                                         transmission: scrapedListing.Transmission,
                                         fuelType: scrapedListing.FuelType,
-                                        bodyStyle: null, // TODO Sprint 2: Extract from scrapers
-                                        drivetrain: null, // TODO Sprint 2: Extract from scrapers
+                                        bodyStyle: scrapedListing.BodyStyle,
+                                        drivetrain: scrapedListing.Drivetrain,
                                         exteriorColor: scrapedListing.ExteriorColor,
                                         interiorColor: scrapedListing.InteriorColor,
-                                        sellerType: null, // TODO Sprint 2: Extract from scrapers
-                                        sellerName: null, // TODO Sprint 2: Extract from scrapers
-                                        sellerPhone: null, // TODO Sprint 2: Extract from scrapers
+                                        sellerType: scrapedListing.SellerType,
+                                        sellerName: scrapedListing.SellerName,
+                                        sellerPhone: scrapedListing.SellerPhone,
                                         description: scrapedListing.Description,
                                         imageUrls: scrapedListing.ImageUrls);
 
@@ -254,6 +314,19 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         [Description("Site to scrape (autotrader.ca, kijiji, or 'all' for all sites)")]
         [DefaultValue("all")]
         public string Site { get; set; } = "all";
+
+        [CommandOption("--sites")]
+        [Description("Comma-separated list of sites to scrape (e.g., 'autotrader,kijiji')")]
+        public string? Sites { get; set; }
+
+        [CommandOption("--exclude-sites")]
+        [Description("Comma-separated list of sites to exclude (e.g., 'kijiji')")]
+        public string? ExcludeSites { get; set; }
+
+        [CommandOption("--headed")]
+        [Description("Run browser in headed mode for debugging")]
+        [DefaultValue(false)]
+        public bool HeadedMode { get; set; }
 
         [CommandOption("-m|--make")]
         [Description("Vehicle make to search for")]
