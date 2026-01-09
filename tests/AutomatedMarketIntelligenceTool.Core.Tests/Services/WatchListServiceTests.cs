@@ -176,6 +176,7 @@ public class WatchListServiceTests
         public DbSet<Core.Models.DealerAggregate.Dealer> Dealers => Set<Core.Models.DealerAggregate.Dealer>();
         public DbSet<Core.Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>();
         public DbSet<Core.Models.CacheAggregate.ResponseCacheEntry> ResponseCacheEntries => Set<Core.Models.CacheAggregate.ResponseCacheEntry>();
+        public DbSet<Core.Models.ReportAggregate.Report> Reports => Set<Core.Models.ReportAggregate.Report>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -192,6 +193,8 @@ public class WatchListServiceTests
             modelBuilder.Ignore<Core.Models.SearchSessionAggregate.SearchSessionId>();
             modelBuilder.Ignore<Core.Models.SearchProfileAggregate.SearchProfileId>();
             modelBuilder.Ignore<Core.Models.ReviewQueueAggregate.ReviewItemId>();
+            modelBuilder.Ignore<Core.Models.ReportAggregate.ReportId>();
+            modelBuilder.Ignore<Core.Models.CacheAggregate.ResponseCacheEntryId>();
 
             modelBuilder.Entity<Listing>(entity =>
             {
