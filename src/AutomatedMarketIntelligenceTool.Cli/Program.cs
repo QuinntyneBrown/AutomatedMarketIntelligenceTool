@@ -107,7 +107,7 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IRelistedDetectionService, RelistedDetectionService>();
 
     // Store verbosity level for services to access
-    services.AddSingleton(verbosityLevel);
+    services.AddSingleton(typeof(VerbosityLevel), verbosityLevel);
 
     // Create service provider
     var registrar = new TypeRegistrar(services);
