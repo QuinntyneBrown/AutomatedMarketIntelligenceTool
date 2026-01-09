@@ -23,4 +23,8 @@ public class SearchParameters
     public SellerType? SellerType { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+    public bool ScreenshotOnError { get; set; } = false;
+    public bool ScreenshotAll { get; set; } = false;
+    public bool SaveHtml { get; set; } = false;
+    public string? DebugArtifactsPath { get; set; }
 }
