@@ -28,6 +28,7 @@ public class ScraperFactory : IScraperFactory
         {
             "autotrader" or "autotrader.ca" => new AutotraderScraper(_loggerFactory.CreateLogger<AutotraderScraper>()),
             "kijiji" or "kijiji.ca" => new KijijiScraper(_loggerFactory.CreateLogger<KijijiScraper>()),
+            "cargurus" or "cargurus.ca" => new CarGurusScraper(_loggerFactory.CreateLogger<CarGurusScraper>()),
             _ => throw new ArgumentException($"Unsupported site: {siteName}", nameof(siteName))
         };
 
@@ -41,10 +42,11 @@ public class ScraperFactory : IScraperFactory
         
         yield return new AutotraderScraper(_loggerFactory.CreateLogger<AutotraderScraper>());
         yield return new KijijiScraper(_loggerFactory.CreateLogger<KijijiScraper>());
+        yield return new CarGurusScraper(_loggerFactory.CreateLogger<CarGurusScraper>());
     }
 
     public IEnumerable<string> GetSupportedSites()
     {
-        return new[] { "Autotrader.ca", "Kijiji.ca" };
+        return new[] { "Autotrader.ca", "Kijiji.ca", "CarGurus.ca" };
     }
 }

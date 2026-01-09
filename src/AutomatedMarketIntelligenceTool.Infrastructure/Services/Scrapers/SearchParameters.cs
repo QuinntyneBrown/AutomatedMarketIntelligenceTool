@@ -15,4 +15,5 @@ public class SearchParameters
     public int? RadiusKilometers { get; set; }
     public CanadianProvince? Province { get; set; }
     public int? MaxPages { get; set; }
+    public bool HeadedMode { get; set; } = false;
 }
