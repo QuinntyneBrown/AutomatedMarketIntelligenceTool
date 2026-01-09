@@ -17,6 +17,162 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
 
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate.Alert", b =>
+                {
+                    b.Property<Guid>("AlertId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CriteriaJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Criteria");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("LastTriggeredAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NotificationMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NotificationTarget")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TriggerCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("AlertId");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_Alert_IsActive");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Alert_TenantId");
+
+                    b.HasIndex("TenantId", "Name")
+                        .HasDatabaseName("IX_Alert_TenantName");
+
+                    b.ToTable("Alerts", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate.AlertNotification", b =>
+                {
+                    b.Property<Guid>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AlertId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("AlertId")
+                        .HasDatabaseName("IX_AlertNotification_AlertId");
+
+                    b.HasIndex("ListingId");
+
+                    b.HasIndex("SentAt")
+                        .HasDatabaseName("IX_AlertNotification_SentAt");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_AlertNotification_TenantId");
+
+                    b.ToTable("AlertNotifications", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.Dealer", b =>
+                {
+                    b.Property<Guid>("DealerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FirstSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ListingCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("State")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("DealerId");
+
+                    b.HasIndex("NormalizedName")
+                        .HasDatabaseName("IX_Dealer_NormalizedName");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Dealer_TenantId");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .HasDatabaseName("IX_Dealer_TenantNormalizedName");
+
+                    b.ToTable("Dealers", (string)null);
+                });
+
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Listing", b =>
                 {
                     b.Property<Guid>("ListingId")
@@ -46,6 +202,9 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("DealerId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -195,6 +354,8 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                     b.HasIndex("Condition")
                         .HasDatabaseName("IX_Listing_Condition");
 
+                    b.HasIndex("DealerId");
+
                     b.HasIndex("FirstSeenDate")
                         .HasDatabaseName("IX_Listing_FirstSeenDate");
 
@@ -334,6 +495,59 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                         .HasDatabaseName("IX_Review_Listings");
 
                     b.ToTable("ReviewQueue", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate.ScraperHealthRecord", b =>
+                {
+                    b.Property<Guid>("ScraperHealthRecordId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AverageResponseTime")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ErrorCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ListingsFound")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MissingElementCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MissingElementsJson")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SiteName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("SuccessRate")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ScraperHealthRecordId");
+
+                    b.HasIndex("RecordedAt")
+                        .HasDatabaseName("IX_Health_RecordedAt");
+
+                    b.HasIndex("SiteName")
+                        .HasDatabaseName("IX_Health_Site");
+
+                    b.ToTable("ScraperHealth", (string)null);
                 });
 
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.SearchProfileAggregate.SearchProfile", b =>
@@ -488,6 +702,89 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                     b.HasIndex("Make", "Model", "Year");
 
                     b.ToTable("Vehicles", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.WatchListAggregate.WatchedListing", b =>
+                {
+                    b.Property<Guid>("WatchedListingId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("NotifyOnPriceChange")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NotifyOnRemoval")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("WatchedListingId");
+
+                    b.HasIndex("ListingId")
+                        .HasDatabaseName("IX_WatchedListing_ListingId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_WatchedListing_TenantId");
+
+                    b.HasIndex("TenantId", "ListingId")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_WatchedListing_TenantListing");
+
+                    b.ToTable("WatchedListings", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate.AlertNotification", b =>
+                {
+                    b.HasOne("AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate.Alert", "Alert")
+                        .WithMany()
+                        .HasForeignKey("AlertId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Listing", "Listing")
+                        .WithMany()
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Alert");
+
+                    b.Navigation("Listing");
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Listing", b =>
+                {
+                    b.HasOne("AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.Dealer", "DealerEntity")
+                        .WithMany()
+                        .HasForeignKey("DealerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DealerEntity");
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.WatchListAggregate.WatchedListing", b =>
+                {
+                    b.HasOne("AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Listing", "Listing")
+                        .WithMany()
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Listing");
                 });
 #pragma warning restore 612, 618
         }

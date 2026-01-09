@@ -122,6 +122,19 @@ public class AlertServiceTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Ignore strongly-typed ID value objects
+            modelBuilder.Ignore<ListingId>();
+            modelBuilder.Ignore<Core.Models.WatchListAggregate.WatchedListingId>();
+            modelBuilder.Ignore<AlertId>();
+            modelBuilder.Ignore<Core.Models.DealerAggregate.DealerId>();
+            modelBuilder.Ignore<Core.Models.ScraperHealthAggregate.ScraperHealthRecordId>();
+            modelBuilder.Ignore<Core.Models.VehicleAggregate.VehicleId>();
+            modelBuilder.Ignore<Core.Models.PriceHistoryAggregate.PriceHistoryId>();
+            modelBuilder.Ignore<Core.Models.SearchSessionAggregate.SearchSessionId>();
+            modelBuilder.Ignore<Core.Models.SearchProfileAggregate.SearchProfileId>();
+            modelBuilder.Ignore<Core.Models.ReviewQueueAggregate.ReviewItemId>();
+
             modelBuilder.Entity<Listing>(entity =>
             {
                 entity.HasKey(l => l.ListingId);
@@ -179,6 +192,34 @@ public class AlertServiceTests
             {
                 entity.HasKey(v => v.VehicleId);
                 entity.Property(v => v.VehicleId).HasConversion(id => id.Value, value => new Core.Models.VehicleAggregate.VehicleId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            {
+                entity.HasKey(ph => ph.PriceHistoryId);
+                entity.Property(ph => ph.PriceHistoryId).HasConversion(id => id.Value, value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
+                entity.Property(ph => ph.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
+            {
+                entity.HasKey(ss => ss.SearchSessionId);
+                entity.Property(ss => ss.SearchSessionId).HasConversion(id => id.Value, value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                entity.Property(sp => sp.SearchProfileId).HasConversion(id => id.Value, value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ReviewQueueAggregate.ReviewItem>(entity =>
+            {
+                entity.HasKey(ri => ri.ReviewItemId);
+                entity.Property(ri => ri.ReviewItemId).HasConversion(id => id.Value, value => new Core.Models.ReviewQueueAggregate.ReviewItemId(value));
+                entity.Property(ri => ri.Listing1Id).HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Property(ri => ri.Listing2Id).HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Ignore(ri => ri.DomainEvents);
             });
         }
     }
