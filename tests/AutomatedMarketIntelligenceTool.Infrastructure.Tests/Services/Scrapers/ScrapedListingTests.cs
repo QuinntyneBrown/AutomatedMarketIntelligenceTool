@@ -108,7 +108,7 @@ public class ScrapedListingTests
             Condition = Condition.Certified,
             Transmission = Transmission.Automatic,
             FuelType = FuelType.Gasoline,
-            BodyStyle = "SUV",
+            BodyStyle = BodyStyle.SUV,
             ExteriorColor = "Black",
             InteriorColor = "Tan",
             Description = "Excellent condition, low miles",
@@ -138,7 +138,7 @@ public class ScrapedListingTests
         Assert.Equal(Condition.Certified, listing.Condition);
         Assert.Equal(Transmission.Automatic, listing.Transmission);
         Assert.Equal(FuelType.Gasoline, listing.FuelType);
-        Assert.Equal("SUV", listing.BodyStyle);
+        Assert.Equal(BodyStyle.SUV, listing.BodyStyle);
         Assert.Equal("Black", listing.ExteriorColor);
         Assert.Equal("Tan", listing.InteriorColor);
         Assert.Equal("Excellent condition, low miles", listing.Description);
