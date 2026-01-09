@@ -283,3 +283,4 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
         }
     }
 }
+

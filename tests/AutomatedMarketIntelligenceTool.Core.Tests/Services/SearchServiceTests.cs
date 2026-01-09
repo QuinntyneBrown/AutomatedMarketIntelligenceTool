@@ -1092,6 +1092,23 @@ public class SearchServiceTests
                         id => id.Value,
                         value => new Core.Models.VehicleAggregate.VehicleId(value));
             });
+
+            modelBuilder.Entity<Core.Models.ReviewQueueAggregate.ReviewItem>(entity =>
+            {
+                entity.HasKey(r => r.ReviewItemId);
+                entity.Property(r => r.ReviewItemId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.ReviewQueueAggregate.ReviewItemId(value));
+
+                entity.Property(r => r.Listing1Id)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+
+                entity.Property(r => r.Listing2Id)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+
+                entity.Ignore(r => r.DomainEvents);
+            });
         }
     }
 }

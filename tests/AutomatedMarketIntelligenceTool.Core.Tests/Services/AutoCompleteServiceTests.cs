@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -286,14 +287,24 @@ public class AutoCompleteServiceTests
             make: make,
             model: model,
             year: 2020,
-            price: 25000m);
+            price: 25000m,
+            condition: Condition.Used);
     }
 
     private static Listing CreateListingWithCity(Guid tenantId, string city)
     {
-        var listing = CreateListing(tenantId, "Toyota", "Camry");
-        listing.UpdateLocation(city, "ON", null, null, null);
-        return listing;
+        return Listing.Create(
+            tenantId: tenantId,
+            externalId: Guid.NewGuid().ToString(),
+            sourceSite: "test",
+            listingUrl: "http://test.com",
+            make: "Toyota",
+            model: "Camry",
+            year: 2020,
+            price: 25000m,
+            condition: Condition.Used,
+            city: city,
+            province: "ON");
     }
 
     private static Listing CreateListingWithYear(Guid tenantId, int year)
@@ -306,7 +317,8 @@ public class AutoCompleteServiceTests
             make: "Toyota",
             model: "Camry",
             year: year,
-            price: 25000m);
+            price: 25000m,
+            condition: Condition.Used);
     }
 
     private static Listing CreateListingWithPrice(Guid tenantId, decimal price)
@@ -319,7 +331,8 @@ public class AutoCompleteServiceTests
             make: "Toyota",
             model: "Camry",
             year: 2020,
-            price: price);
+            price: price,
+            condition: Condition.Used);
     }
 
     private static Mock<DbSet<T>> CreateMockDbSet<T>(IQueryable<T> data) where T : class
