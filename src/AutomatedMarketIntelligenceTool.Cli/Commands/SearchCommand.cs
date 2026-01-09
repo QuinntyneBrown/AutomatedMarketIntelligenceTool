@@ -71,17 +71,24 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
                 return ExitCodes.GeneralError;
             }
 
+            // Display search summary
+            if (settings.Format.Equals("table", StringComparison.OrdinalIgnoreCase))
+            {
+                DisplaySearchSummary(result);
+            }
+
             // Format and display results
             var formatter = _formatters[settings.Format];
             
             // Create simplified output objects for display
             var displayResults = result.Listings.Select(lr => new
             {
+                Status = lr.Listing.IsNewListing ? "[green][NEW][/]" : "",
                 Make = lr.Listing.Make,
                 Model = lr.Listing.Model,
                 Year = lr.Listing.Year,
-                Price = lr.Listing.Price,
-                Mileage = lr.Listing.Mileage,
+                Price = FormatPriceWithChange(lr),
+                Mileage = lr.Listing.Mileage.HasValue ? $"{lr.Listing.Mileage:N0} km" : "N/A",
                 Location = $"{lr.Listing.City}, {lr.Listing.Province}",
                 Distance = lr.DistanceKilometers.HasValue ? $"{lr.DistanceKilometers:F1} km" : "N/A",
                 Url = lr.Listing.ListingUrl
@@ -97,6 +104,46 @@ public class SearchCommand : AsyncCommand<SearchCommand.Settings>
             Console.Error.WriteLine($"Error: {ex.Message}");
             return ExitCodes.GeneralError;
         }
+    }
+
+    private void DisplaySearchSummary(SearchResult result)
+    {
+        var panel = new Panel(
+            new Markup($"[bold]Total:[/] {result.TotalCount} listings  " +
+                      $"[bold green]New:[/] {result.NewListingsCount}  " +
+                      $"[bold yellow]Price Changes:[/] {result.PriceChangesCount}"))
+        {
+            Header = new PanelHeader("[bold]Search Results Summary[/]"),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Blue)
+        };
+        
+        AnsiConsole.Write(panel);
+        AnsiConsole.WriteLine();
+    }
+
+    private string FormatPriceWithChange(ListingSearchResult lr)
+    {
+        var priceStr = $"${lr.Listing.Price:N0}";
+        
+        if (lr.PriceChange != null)
+        {
+            var change = lr.PriceChange.PriceChange;
+            var percentage = lr.PriceChange.ChangePercentage;
+            
+            if (change < 0)
+            {
+                // Price decreased - show in green
+                return $"{priceStr} [green]↓${Math.Abs(change):N0} ({percentage:+0.0;-0.0}%)[/]";
+            }
+            else if (change > 0)
+            {
+                // Price increased - show in red
+                return $"{priceStr} [red]↑${change:N0} ({percentage:+0.0;-0.0}%)[/]";
+            }
+        }
+        
+        return priceStr;
     }
 
     public class Settings : CommandSettings
