@@ -5,6 +5,7 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.Dashboard;
 using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
+using AutomatedMarketIntelligenceTool.Core.Services.Deduplication;
 using AutomatedMarketIntelligenceTool.Infrastructure;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Backup;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Import;
@@ -125,14 +126,19 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IBackupService, BackupService>();
 
     // Phase 5: Reporting Services
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerationService, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerationService,
         AutomatedMarketIntelligenceTool.Core.Services.Reporting.ReportGenerationService>();
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator,
         AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.HtmlReportGenerator>();
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator,
         AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.PdfReportGenerator>();
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator,
         AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.ExcelReportGenerator>();
+
+    // Phase 5: Deduplication Optimization Services
+    services.AddScoped<IDeduplicationConfigService, DeduplicationConfigService>();
+    services.AddScoped<IDeduplicationAuditService, DeduplicationAuditService>();
+    services.AddScoped<IAccuracyMetricsService, AccuracyMetricsService>();
 
     // Add configuration
     var configuration = new ConfigurationBuilder()
@@ -236,6 +242,14 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("report", "-t", "12345678-1234-1234-1234-123456789012", "-f", "html", "-o", "report.html", "-m", "Toyota")
             .WithExample("report", "-t", "12345678-1234-1234-1234-123456789012", "-f", "pdf", "--price-max", "30000")
             .WithExample("report", "-t", "12345678-1234-1234-1234-123456789012", "-f", "excel", "-o", "market-report.xlsx");
+
+        config.AddCommand<AuditCommand>("audit")
+            .WithDescription("View and manage deduplication audit trail and accuracy metrics")
+            .WithExample("audit", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("audit", "metrics", "-t", "12345678-1234-1234-1234-123456789012", "-v")
+            .WithExample("audit", "-t", "12345678-1234-1234-1234-123456789012", "--decision", "Duplicate")
+            .WithExample("audit", "false-positives", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("audit", "mark-fp", "-t", "12345678-1234-1234-1234-123456789012", "--entry-id", "<guid>");
 
         config.PropagateExceptions();
         config.ValidateExamples();
