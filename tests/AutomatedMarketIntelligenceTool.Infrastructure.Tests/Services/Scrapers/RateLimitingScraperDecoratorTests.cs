@@ -1,3 +1,4 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.RateLimiting;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.Extensions.Logging.Abstractions;

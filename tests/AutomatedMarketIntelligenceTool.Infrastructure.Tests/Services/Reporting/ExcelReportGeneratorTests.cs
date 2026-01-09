@@ -111,13 +111,13 @@ public class ExcelReportGeneratorTests
         var tenantId = Guid.NewGuid();
         
         var listing1 = Listing.Create(tenantId, "EXT-001", "autotrader",
-            "https://example.com/1", "Toyota", "Camry", 2022, 25000m, Condition.Used);
-        listing1.UpdateMileage(15000);
-        listing1.UpdateLocation("Los Angeles, CA", 34.0522m, -118.2437m);
+            "https://example.com/1", "Toyota", "Camry", 2022, 25000m, Condition.Used,
+            mileage: 15000, city: "Los Angeles", province: "CA");
+        listing1.SetLocation(34.0522m, -118.2437m);
 
         var listing2 = Listing.Create(tenantId, "EXT-002", "cargurus",
-            "https://example.com/2", "Honda", "Civic", 2023, 22000m, Condition.New);
-        listing2.UpdateMileage(100);
+            "https://example.com/2", "Honda", "Civic", 2023, 22000m, Condition.New,
+            mileage: 100);
 
         var reportData = new ReportData
         {

@@ -182,19 +182,7 @@ public class WatchListServiceTests
         {
             base.OnModelCreating(modelBuilder);
 
-            // Ignore strongly-typed ID value objects
-            modelBuilder.Ignore<ListingId>();
-            modelBuilder.Ignore<Core.Models.WatchListAggregate.WatchedListingId>();
-            modelBuilder.Ignore<Core.Models.AlertAggregate.AlertId>();
-            modelBuilder.Ignore<Core.Models.DealerAggregate.DealerId>();
-            modelBuilder.Ignore<Core.Models.ScraperHealthAggregate.ScraperHealthRecordId>();
-            modelBuilder.Ignore<Core.Models.VehicleAggregate.VehicleId>();
-            modelBuilder.Ignore<Core.Models.PriceHistoryAggregate.PriceHistoryId>();
-            modelBuilder.Ignore<Core.Models.SearchSessionAggregate.SearchSessionId>();
-            modelBuilder.Ignore<Core.Models.SearchProfileAggregate.SearchProfileId>();
-            modelBuilder.Ignore<Core.Models.ReviewQueueAggregate.ReviewItemId>();
-            modelBuilder.Ignore<Core.Models.ReportAggregate.ReportId>();
-            modelBuilder.Ignore<Core.Models.CacheAggregate.ResponseCacheEntryId>();
+            // Note: Cannot ignore value types (structs) like *Id types - they are not entities
 
             modelBuilder.Entity<Listing>(entity =>
             {

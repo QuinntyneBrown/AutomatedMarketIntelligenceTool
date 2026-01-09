@@ -1,6 +1,7 @@
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scraping;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;

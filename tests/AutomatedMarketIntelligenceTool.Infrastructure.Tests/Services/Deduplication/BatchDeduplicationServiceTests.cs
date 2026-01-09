@@ -3,7 +3,7 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services;
-using AutomatedMarketIntelligenceTool.Core.Services.Deduplication;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Deduplication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;

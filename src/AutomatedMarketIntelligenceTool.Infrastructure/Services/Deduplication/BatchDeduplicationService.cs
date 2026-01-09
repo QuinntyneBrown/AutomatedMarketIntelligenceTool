@@ -2,6 +2,7 @@ using System.Diagnostics;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

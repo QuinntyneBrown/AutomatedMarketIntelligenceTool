@@ -116,8 +116,8 @@ public class ReportCommand : AsyncCommand<ReportCommand.Settings>
         // Get listings
         var searchCriteria = BuildSearchCriteria(settings);
         var searchResult = await _searchService.SearchListingsAsync(searchCriteria);
-        
-        reportData.Listings = searchResult.Listings.ToList();
+
+        reportData.Listings = searchResult.Listings.Select(x => x.Listing).ToList();
 
         // Get statistics
         if (settings.IncludeStatistics)
@@ -258,7 +258,7 @@ public class ReportCommand : AsyncCommand<ReportCommand.Settings>
 
         // Default path with timestamp
         var defaultFileName = $"report_{DateTime.UtcNow:yyyyMMdd_HHmmss}";
-        var extension = format switch
+        var fileExtension = format switch
         {
             ReportFormat.Html => ".html",
             ReportFormat.Pdf => ".pdf",
@@ -274,7 +274,7 @@ public class ReportCommand : AsyncCommand<ReportCommand.Settings>
         if (!Directory.Exists(defaultDir))
             Directory.CreateDirectory(defaultDir);
 
-        return Path.Combine(defaultDir, defaultFileName + extension);
+        return Path.Combine(defaultDir, defaultFileName + fileExtension);
     }
 
     private string FormatFileSize(long bytes)

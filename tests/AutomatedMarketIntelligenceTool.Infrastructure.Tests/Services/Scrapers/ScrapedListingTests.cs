@@ -1,4 +1,5 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Tests.Services.Scrapers;

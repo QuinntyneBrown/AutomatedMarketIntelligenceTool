@@ -247,7 +247,7 @@ public class DashboardCommand : AsyncCommand<DashboardCommand.Settings>
                 .Width(60)
                 .Label("[bold]Sources[/]");
 
-            var colors = new[] { Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan };
+            var colors = new[] { Color.Green, Color.Blue, Color.Yellow, Color.Purple, Color.Aqua };
             var colorIndex = 0;
 
             foreach (var source in summary.BySource.OrderByDescending(x => x.Value).Take(8))

@@ -154,10 +154,10 @@ public class ExcelReportGenerator : IReportGenerator
                 ws.Cell(row, 7).Value = listing.Vin;
                 ws.Cell(row, 8).Value = listing.Location;
                 ws.Cell(row, 9).Value = listing.Dealer;
-                ws.Cell(row, 10).Value = listing.Source;
-                ws.Cell(row, 11).Value = listing.Condition;
-                ws.Cell(row, 12).Value = listing.BodyStyle;
-                ws.Cell(row, 13).Value = listing.Url;
+                ws.Cell(row, 10).Value = listing.SourceSite;
+                ws.Cell(row, 11).Value = listing.Condition.ToString();
+                ws.Cell(row, 12).Value = listing.BodyStyle?.ToString();
+                ws.Cell(row, 13).Value = listing.ListingUrl;
 
                 // Alternate row colors
                 if (row % 2 == 0)
@@ -259,13 +259,26 @@ public class ExcelReportGenerator : IReportGenerator
 
         ws.Cell(row, 1).Value = label;
         ws.Cell(row, 1).Style.Font.Bold = true;
-        ws.Cell(row, 2).Value = value;
-        
+
+        // Handle different value types explicitly for ClosedXML
+        if (value is string str)
+            ws.Cell(row, 2).Value = str;
+        else if (value is int intVal)
+            ws.Cell(row, 2).Value = intVal;
+        else if (value is decimal decVal)
+            ws.Cell(row, 2).Value = decVal;
+        else if (value is double dblVal)
+            ws.Cell(row, 2).Value = dblVal;
+        else if (value is DateTime dtVal)
+            ws.Cell(row, 2).Value = dtVal;
+        else
+            ws.Cell(row, 2).Value = value.ToString();
+
         if (!string.IsNullOrEmpty(format))
         {
             ws.Cell(row, 2).Style.NumberFormat.Format = format;
         }
-        
+
         row++;
     }
 }

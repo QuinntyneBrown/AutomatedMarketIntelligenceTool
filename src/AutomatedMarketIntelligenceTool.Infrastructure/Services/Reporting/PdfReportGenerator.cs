@@ -149,7 +149,7 @@ public class PdfReportGenerator : IReportGenerator
                                         foreach (var listing in data.Listings.Take(100)) // Limit to first 100 for PDF
                                         {
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                                                .Padding(5).Text(listing.Year?.ToString() ?? "N/A");
+                                                .Padding(5).Text(listing.Year.ToString());
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
                                                 .Padding(5).Text(listing.Make ?? "N/A");
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
@@ -161,7 +161,7 @@ public class PdfReportGenerator : IReportGenerator
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
                                                 .Padding(5).Text(listing.Location ?? "N/A");
                                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                                                .Padding(5).Text(listing.Source ?? "N/A");
+                                                .Padding(5).Text(listing.SourceSite ?? "N/A");
                                         }
                                     });
 
