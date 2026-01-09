@@ -82,11 +82,13 @@ public class RelistedDetectionServiceTests
             "Toyota", "Camry", 2020, 25000m, Condition.Used, vin: vin);
         existingListing.Deactivate();
 
+        // Ensure it's been off market long enough to be considered a relisting
+        typeof(Listing)
+            .GetProperty(nameof(Listing.DeactivatedAt))!
+            .SetValue(existingListing, DateTime.UtcNow.AddDays(-2));
+
         _context.Listings.Add(existingListing);
         await _context.SaveChangesAsync();
-
-        // Wait to simulate time off market
-        await Task.Delay(100);
 
         var scrapedInfo = new ScrapedListingInfo
         {
@@ -118,6 +120,11 @@ public class RelistedDetectionServiceTests
             _testTenantId, externalId, sourceSite, "https://test.com/1",
             "Toyota", "Camry", 2020, 25000m, Condition.Used);
         existingListing.Deactivate();
+
+        // Ensure it's been off market long enough to be considered a relisting
+        typeof(Listing)
+            .GetProperty(nameof(Listing.DeactivatedAt))!
+            .SetValue(existingListing, DateTime.UtcNow.AddDays(-2));
 
         _context.Listings.Add(existingListing);
         await _context.SaveChangesAsync();

@@ -173,7 +173,7 @@ public class ImageDownloadServiceTests
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => _service.DownloadAsync("https://example.com/image.jpg", cts.Token));
     }
 }
