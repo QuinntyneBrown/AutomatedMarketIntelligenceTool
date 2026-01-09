@@ -4,6 +4,9 @@ using AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Sprint7;
@@ -28,10 +31,10 @@ public class Sprint7TestContext : DbContext, IAutomatedMarketIntelligenceToolCon
     public DbSet<Models.AlertAggregate.AlertNotification> AlertNotifications => Set<Models.AlertAggregate.AlertNotification>();
     public DbSet<Models.DealerAggregate.Dealer> Dealers => Set<Models.DealerAggregate.Dealer>();
     public DbSet<Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Models.ScraperHealthAggregate.ScraperHealthRecord>();
-    public DbSet<Models.CacheAggregate.ResponseCacheEntry> ResponseCacheEntries => Set<Models.CacheAggregate.ResponseCacheEntry>();
+    public DbSet<ResponseCacheEntry> ResponseCacheEntries => Set<ResponseCacheEntry>();
     public DbSet<Report> Reports => Set<Report>();
-    public DbSet<Models.DeduplicationAuditAggregate.AuditEntry> AuditEntries => Set<Models.DeduplicationAuditAggregate.AuditEntry>();
-    public DbSet<Models.DeduplicationConfigAggregate.DeduplicationConfig> DeduplicationConfigs => Set<Models.DeduplicationConfigAggregate.DeduplicationConfig>();
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+    public DbSet<DeduplicationConfig> DeduplicationConfigs => Set<DeduplicationConfig>();
     public DbSet<CustomMarket> CustomMarkets => Set<CustomMarket>();
     public DbSet<ScheduledReport> ScheduledReports => Set<ScheduledReport>();
     public DbSet<ResourceThrottle> ResourceThrottles => Set<ResourceThrottle>();
@@ -166,24 +169,24 @@ public class Sprint7TestContext : DbContext, IAutomatedMarketIntelligenceToolCon
             entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(id => id.Value, value => new Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
         });
 
-        modelBuilder.Entity<Models.CacheAggregate.ResponseCacheEntry>(entity =>
+        modelBuilder.Entity<ResponseCacheEntry>(entity =>
         {
             entity.HasKey(c => c.CacheEntryId);
-            entity.Property(c => c.CacheEntryId).HasConversion(id => id.Value, value => Models.CacheAggregate.ResponseCacheEntryId.FromGuid(value));
+            entity.Property(c => c.CacheEntryId).HasConversion(id => id.Value, value => ResponseCacheEntryId.FromGuid(value));
         });
 
-        modelBuilder.Entity<Models.DeduplicationAuditAggregate.AuditEntry>(entity =>
+        modelBuilder.Entity<AuditEntry>(entity =>
         {
             entity.HasKey(a => a.AuditEntryId);
             entity.Property(a => a.AuditEntryId)
-                .HasConversion(id => id.Value, value => new Models.DeduplicationAuditAggregate.AuditEntryId(value));
+                .HasConversion(id => id.Value, value => new AuditEntryId(value));
         });
 
-        modelBuilder.Entity<Models.DeduplicationConfigAggregate.DeduplicationConfig>(entity =>
+        modelBuilder.Entity<DeduplicationConfig>(entity =>
         {
             entity.HasKey(c => c.ConfigId);
             entity.Property(c => c.ConfigId)
-                .HasConversion(id => id.Value, value => new Models.DeduplicationConfigAggregate.DeduplicationConfigId(value));
+                .HasConversion(id => id.Value, value => new DeduplicationConfigId(value));
         });
     }
 }
