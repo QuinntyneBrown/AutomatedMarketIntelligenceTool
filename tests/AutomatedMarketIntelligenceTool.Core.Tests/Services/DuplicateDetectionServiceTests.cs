@@ -371,6 +371,7 @@ public class DuplicateDetectionServiceTests
         public DbSet<Core.Models.AlertAggregate.AlertNotification> AlertNotifications => Set<Core.Models.AlertAggregate.AlertNotification>();
         public DbSet<Core.Models.DealerAggregate.Dealer> Dealers => Set<Core.Models.DealerAggregate.Dealer>();
         public DbSet<Core.Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>();
+        public DbSet<Core.Models.CacheAggregate.ResponseCacheEntry> ResponseCacheEntries => Set<Core.Models.CacheAggregate.ResponseCacheEntry>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -486,6 +487,12 @@ public class DuplicateDetectionServiceTests
             {
                 entity.HasKey(sh => sh.ScraperHealthRecordId);
                 entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(id => id.Value, value => new Core.Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.CacheAggregate.ResponseCacheEntry>(entity =>
+            {
+                entity.HasKey(c => c.CacheEntryId);
+                entity.Property(c => c.CacheEntryId).HasConversion(id => id.Value, value => Core.Models.CacheAggregate.ResponseCacheEntryId.FromGuid(value));
             });
         }
     }

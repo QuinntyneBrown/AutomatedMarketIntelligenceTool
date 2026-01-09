@@ -1,6 +1,7 @@
+using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
-namespace AutomatedMarketIntelligenceTool.Core.Services.Deduplication;
+namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Deduplication;
 
 /// <summary>
 /// Service for processing batch deduplication operations with optimized
