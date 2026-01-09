@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 {
     [DbContext(typeof(AutomatedMarketIntelligenceToolContext))]
-    [Migration("20260109193247_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20260109212645_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -119,6 +119,58 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                         .HasDatabaseName("IX_AlertNotification_TenantId");
 
                     b.ToTable("AlertNotifications", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate.ResponseCacheEntry", b =>
+                {
+                    b.Property<Guid>("CacheEntryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CacheKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CachedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HitCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<byte[]>("ResponseData")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<long>("ResponseSizeBytes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("CacheEntryId");
+
+                    b.HasIndex("CacheKey")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_ResponseCache_CacheKey");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("IX_ResponseCache_ExpiresAt");
+
+                    b.HasIndex("Url")
+                        .HasDatabaseName("IX_ResponseCache_Url");
+
+                    b.ToTable("ResponseCache", (string)null);
                 });
 
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.Dealer", b =>
@@ -387,12 +439,27 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                     b.HasIndex("Year")
                         .HasDatabaseName("IX_Listing_Year");
 
+                    b.HasIndex("CreatedAt", "TenantId")
+                        .HasDatabaseName("IX_Listing_CreatedAt_TenantId");
+
                     b.HasIndex("Make", "Model")
                         .HasDatabaseName("IX_Listing_MakeModel");
+
+                    b.HasIndex("Vin", "TenantId")
+                        .HasDatabaseName("IX_Listing_Vin_TenantId");
 
                     b.HasIndex("SourceSite", "ExternalId", "TenantId")
                         .IsUnique()
                         .HasDatabaseName("UQ_Listing_External");
+
+                    b.HasIndex("Make", "Model", "Year", "TenantId")
+                        .HasDatabaseName("IX_Listing_Make_Model_Year_TenantId");
+
+                    b.HasIndex("TenantId", "IsActive", "Make", "Year")
+                        .HasDatabaseName("IX_Listing_BatchDedup");
+
+                    b.HasIndex("Make", "Year", "Price", "TenantId", "IsActive")
+                        .HasDatabaseName("IX_Listing_FuzzyCandidate");
 
                     b.ToTable("Listings", (string)null);
                 });

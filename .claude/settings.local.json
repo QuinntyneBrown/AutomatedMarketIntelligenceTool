@@ -1,12 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet ef migrations remove:*)",
-      "Bash(dotnet ef database:*)",
-      "Bash(dotnet ef migrations:*)",
-      "Bash(dotnet test:*)",
-      "Bash(dir:*)",
-      "Bash(del \"src\\AutomatedMarketIntelligenceTool.Infrastructure\\Migrations\\*.cs\")"
+      "Bash(dotnet ef:*)",
+      "Bash(del \"src\\AutomatedMarketIntelligenceTool.Infrastructure\\Migrations\\20260109210948_Phase5_CacheAndPerformanceIndexes.cs\")",
+      "Bash(Remove-Item \"src\\AutomatedMarketIntelligenceTool.Infrastructure\\Migrations\\20260109210948_Phase5_CacheAndPerformanceIndexes.cs\" -Force)",
+      "Bash(rm:*)",
+      "Bash(dotnet test:*)"
     ],
     "deny": [],
     "ask": []

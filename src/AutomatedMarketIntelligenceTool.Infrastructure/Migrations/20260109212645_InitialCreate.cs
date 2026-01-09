@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,6 +67,25 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PriceHistory", x => x.PriceHistoryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ResponseCache",
+                columns: table => new
+                {
+                    CacheEntryId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CacheKey = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    ResponseData = table.Column<byte[]>(type: "BLOB", nullable: false),
+                    ContentType = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    CachedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    HitCount = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    ResponseSizeBytes = table.Column<long>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ResponseCache", x => x.CacheEntryId);
                 });
 
             migrationBuilder.CreateTable(
@@ -341,6 +360,11 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 columns: new[] { "TenantId", "NormalizedName" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Listing_BatchDedup",
+                table: "Listings",
+                columns: new[] { "TenantId", "IsActive", "Make", "Year" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Listing_BodyStyle",
                 table: "Listings",
                 column: "BodyStyle");
@@ -349,6 +373,11 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 name: "IX_Listing_Condition",
                 table: "Listings",
                 column: "Condition");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Listing_CreatedAt_TenantId",
+                table: "Listings",
+                columns: new[] { "CreatedAt", "TenantId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Listing_FirstSeenDate",
@@ -361,9 +390,19 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 column: "FuelType");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Listing_FuzzyCandidate",
+                table: "Listings",
+                columns: new[] { "Make", "Year", "Price", "TenantId", "IsActive" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Listing_IsActive",
                 table: "Listings",
                 column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Listing_Make_Model_Year_TenantId",
+                table: "Listings",
+                columns: new[] { "Make", "Model", "Year", "TenantId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Listing_MakeModel",
@@ -397,6 +436,11 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 column: "Vin");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Listing_Vin_TenantId",
+                table: "Listings",
+                columns: new[] { "Vin", "TenantId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Listing_Year",
                 table: "Listings",
                 column: "Year");
@@ -421,6 +465,22 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 name: "IX_PriceHistory_TenantId",
                 table: "PriceHistory",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ResponseCache_ExpiresAt",
+                table: "ResponseCache",
+                column: "ExpiresAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ResponseCache_Url",
+                table: "ResponseCache",
+                column: "Url");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_ResponseCache_CacheKey",
+                table: "ResponseCache",
+                column: "CacheKey",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Review_Listings",
@@ -508,6 +568,9 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "PriceHistory");
+
+            migrationBuilder.DropTable(
+                name: "ResponseCache");
 
             migrationBuilder.DropTable(
                 name: "ReviewQueue");
