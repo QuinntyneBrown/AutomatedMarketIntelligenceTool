@@ -114,15 +114,13 @@ public class SearchService : ISearchService
         // Apply city filter (case-insensitive)
         if (!string.IsNullOrWhiteSpace(criteria.City))
         {
-            var cityUpper = criteria.City.ToUpper();
-            query = query.Where(l => l.City != null && l.City.ToUpper().Contains(cityUpper));
+            query = query.Where(l => l.City != null && EF.Functions.Like(l.City, $"%{criteria.City}%"));
         }
 
         // Apply province filter (case-insensitive)
         if (!string.IsNullOrWhiteSpace(criteria.Province))
         {
-            var provinceUpper = criteria.Province.ToUpper();
-            query = query.Where(l => l.Province != null && l.Province.ToUpper() == provinceUpper);
+            query = query.Where(l => l.Province != null && EF.Functions.Like(l.Province, criteria.Province));
         }
 
         // Get total count before pagination
