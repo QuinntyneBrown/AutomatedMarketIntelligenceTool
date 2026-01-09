@@ -174,9 +174,13 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                                         currency: scrapedListing.Currency,
                                         transmission: scrapedListing.Transmission,
                                         fuelType: scrapedListing.FuelType,
-                                        bodyStyle: scrapedListing.BodyStyle,
+                                        bodyStyle: null,
+                                        drivetrain: null,
                                         exteriorColor: scrapedListing.ExteriorColor,
                                         interiorColor: scrapedListing.InteriorColor,
+                                        sellerType: null,
+                                        sellerName: null,
+                                        sellerPhone: null,
                                         description: scrapedListing.Description,
                                         imageUrls: scrapedListing.ImageUrls);
 

@@ -361,6 +361,8 @@ public class DuplicateDetectionServiceTests
         }
 
         public DbSet<Listing> Listings => Set<Listing>();
+        public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
+        public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

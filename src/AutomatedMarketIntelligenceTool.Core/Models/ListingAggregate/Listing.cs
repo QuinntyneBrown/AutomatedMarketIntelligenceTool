@@ -26,14 +26,22 @@ public class Listing
     public Condition Condition { get; private set; }
     public Transmission? Transmission { get; private set; }
     public FuelType? FuelType { get; private set; }
-    public string? BodyStyle { get; private set; }
+    public BodyStyle? BodyStyle { get; private set; }
+    public Drivetrain? Drivetrain { get; private set; }
     public string? ExteriorColor { get; private set; }
     public string? InteriorColor { get; private set; }
+    public SellerType? SellerType { get; private set; }
+    public string? SellerName { get; private set; }
+    public string? SellerPhone { get; private set; }
     public string? Description { get; private set; }
     public List<string> ImageUrls { get; private set; } = new();
+    public DateTime? ListingDate { get; private set; }
+    public int? DaysOnMarket { get; private set; }
     public DateTime FirstSeenDate { get; private set; }
     public DateTime LastSeenDate { get; private set; }
     public bool IsNewListing { get; private set; }
+    public bool IsActive { get; private set; }
+    public DateTime? DeactivatedAt { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
@@ -68,11 +76,17 @@ public class Listing
         string? currency = null,
         Transmission? transmission = null,
         FuelType? fuelType = null,
-        string? bodyStyle = null,
+        BodyStyle? bodyStyle = null,
+        Drivetrain? drivetrain = null,
         string? exteriorColor = null,
         string? interiorColor = null,
+        SellerType? sellerType = null,
+        string? sellerName = null,
+        string? sellerPhone = null,
         string? description = null,
-        List<string>? imageUrls = null)
+        List<string>? imageUrls = null,
+        DateTime? listingDate = null,
+        int? daysOnMarket = null)
     {
         var listing = new Listing
         {
@@ -96,13 +110,20 @@ public class Listing
             Transmission = transmission,
             FuelType = fuelType,
             BodyStyle = bodyStyle,
+            Drivetrain = drivetrain,
             ExteriorColor = exteriorColor,
             InteriorColor = interiorColor,
+            SellerType = sellerType,
+            SellerName = sellerName,
+            SellerPhone = sellerPhone,
             Description = description,
             ImageUrls = imageUrls ?? new List<string>(),
+            ListingDate = listingDate,
+            DaysOnMarket = daysOnMarket,
             FirstSeenDate = DateTime.UtcNow,
             LastSeenDate = DateTime.UtcNow,
             IsNewListing = true,
+            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -141,6 +162,30 @@ public class Listing
         if (IsNewListing)
         {
             IsNewListing = false;
+        }
+        if (!IsActive)
+        {
+            Reactivate();
+        }
+    }
+
+    public void Deactivate()
+    {
+        if (IsActive)
+        {
+            IsActive = false;
+            DeactivatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
+        }
+    }
+
+    public void Reactivate()
+    {
+        if (!IsActive)
+        {
+            IsActive = true;
+            DeactivatedAt = null;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 
