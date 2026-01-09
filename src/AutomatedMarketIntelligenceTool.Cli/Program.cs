@@ -6,6 +6,9 @@ using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.Dashboard;
 using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
 using AutomatedMarketIntelligenceTool.Core.Services.Deduplication;
+using AutomatedMarketIntelligenceTool.Core.Services.CustomMarkets;
+using AutomatedMarketIntelligenceTool.Core.Services.Scheduling;
+using AutomatedMarketIntelligenceTool.Core.Services.Throttling;
 using AutomatedMarketIntelligenceTool.Infrastructure;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Backup;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Import;
@@ -140,6 +143,12 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IDeduplicationAuditService, DeduplicationAuditService>();
     services.AddScoped<IAccuracyMetricsService, AccuracyMetricsService>();
 
+    // Phase 5 Sprint 7: Enterprise Features
+    services.AddScoped<ICustomMarketService, CustomMarketService>();
+    services.AddScoped<IScheduledReportService, ScheduledReportService>();
+    services.AddScoped<IReportSchedulerService, ReportSchedulerService>();
+    services.AddScoped<IResourceThrottleService, ResourceThrottleService>();
+
     // Add configuration
     var configuration = new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
@@ -250,6 +259,24 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("audit", "-t", "12345678-1234-1234-1234-123456789012", "--decision", "Duplicate")
             .WithExample("audit", "false-positives", "-t", "12345678-1234-1234-1234-123456789012")
             .WithExample("audit", "mark-fp", "-t", "12345678-1234-1234-1234-123456789012", "--entry-id", "<guid>");
+
+        config.AddCommand<MarketCommand>("market")
+            .WithDescription("Manage custom market regions")
+            .WithExample("market", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("market", "create", "-t", "12345678-1234-1234-1234-123456789012", "-n", "GTA", "-p", "M5V,M5S,M4T")
+            .WithExample("market", "show", "-t", "12345678-1234-1234-1234-123456789012", "-n", "GTA");
+
+        config.AddCommand<ScheduleCommand>("schedule")
+            .WithDescription("Manage scheduled report generation")
+            .WithExample("schedule", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("schedule", "create", "-t", "12345678-1234-1234-1234-123456789012", "-n", "Daily Report", "-f", "pdf", "-s", "daily", "-o", "./reports")
+            .WithExample("schedule", "run", "-t", "12345678-1234-1234-1234-123456789012", "-n", "Daily Report");
+
+        config.AddCommand<ThrottleCommand>("throttle")
+            .WithDescription("Manage resource throttling and rate limits")
+            .WithExample("throttle", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("throttle", "init", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("throttle", "status", "-t", "12345678-1234-1234-1234-123456789012");
 
         config.PropagateExceptions();
         config.ValidateExamples();
