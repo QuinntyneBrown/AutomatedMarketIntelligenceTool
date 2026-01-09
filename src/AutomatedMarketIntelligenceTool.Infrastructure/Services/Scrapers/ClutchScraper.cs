@@ -79,12 +79,30 @@ public class ClutchScraper : BaseScraper
 
         try
         {
-            await page.WaitForSelectorAsync(".listing-card, [data-testid='listing-card']", new PageWaitForSelectorOptions
+            // Clutch.ca is a SPA; DOMContentLoaded is often just the shell.
+            // Give the client app time to fetch/render results.
+            try
             {
-                Timeout = 10000
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new PageWaitForLoadStateOptions
+                {
+                    Timeout = 30000
+                });
+            }
+            catch
+            {
+                // NetworkIdle is best-effort for SPAs.
+            }
+
+            const string listingSelector =
+                "[data-testid='listing-card'], [data-testid='vehicle-card'], .listing-card, " +
+                "article:has(a[href^='/vehicle/']), li:has(a[href^='/vehicle/']), a[href^='/vehicle/']";
+
+            await page.WaitForSelectorAsync(listingSelector, new PageWaitForSelectorOptions
+            {
+                Timeout = 30000
             });
 
-            var listingElements = await page.QuerySelectorAllAsync(".listing-card, [data-testid='listing-card']");
+            var listingElements = await page.QuerySelectorAllAsync(listingSelector);
 
             _logger.LogDebug("Found {Count} listing elements on page", listingElements.Count);
 
@@ -107,9 +125,54 @@ public class ClutchScraper : BaseScraper
         catch (TimeoutException)
         {
             _logger.LogWarning("Timeout waiting for listing elements, page may be empty");
+
+            if (IsDebugEnabled())
+            {
+                await DumpTimeoutArtifactsAsync(page);
+            }
         }
 
         return listings;
+    }
+
+    private static bool IsDebugEnabled()
+    {
+        var value = Environment.GetEnvironmentVariable("AMIT_SCRAPER_DEBUG");
+        return string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task DumpTimeoutArtifactsAsync(IPage page)
+    {
+        try
+        {
+            var dumpDir = Environment.GetEnvironmentVariable("AMIT_SCRAPER_DEBUG_DIR");
+            if (string.IsNullOrWhiteSpace(dumpDir))
+            {
+                dumpDir = Path.Combine(Path.GetTempPath(), "amit-scraper-dumps");
+            }
+
+            Directory.CreateDirectory(dumpDir);
+
+            var safeName = SiteName.Replace(".", "_");
+            var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss");
+            var htmlPath = Path.Combine(dumpDir, $"{safeName}-timeout-{stamp}.html");
+            var pngPath = Path.Combine(dumpDir, $"{safeName}-timeout-{stamp}.png");
+
+            await File.WriteAllTextAsync(htmlPath, await page.ContentAsync());
+            await page.ScreenshotAsync(new PageScreenshotOptions { Path = pngPath, FullPage = true });
+
+            _logger.LogInformation(
+                "[DebugDump] Clutch timeout dump wrote {HtmlPath} and {PngPath} (URL: {Url})",
+                htmlPath,
+                pngPath,
+                page.Url);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to write Clutch timeout debug artifacts");
+        }
     }
 
     private async Task<ScrapedListing?> ParseListingElementAsync(
@@ -118,26 +181,48 @@ public class ClutchScraper : BaseScraper
     {
         try
         {
-            var titleElement = await element.QuerySelectorAsync(".listing-title, h3, h2");
+            var tagName = await element.EvaluateAsync<string>("el => el.tagName.toLowerCase()")
+                ?? string.Empty;
+
+            // If the selector matched an <a>, climb to a sensible container.
+            var container = element;
+            if (tagName == "a")
+            {
+                var handle = await element.EvaluateHandleAsync(
+                    "el => el.closest('[data-testid], article, li, div') || el");
+                container = handle.AsElement() ?? element;
+            }
+
+            var titleElement = await container.QuerySelectorAsync(
+                "[data-testid='listing-title'], .listing-title, h3, h2");
             var title = titleElement != null ? await titleElement.InnerTextAsync() : string.Empty;
 
-            var priceElement = await element.QuerySelectorAsync(".price, [data-testid='price']");
+            var priceElement = await container.QuerySelectorAsync(
+                "[data-testid='price'], [data-testid='vehicle-price'], .price");
             var priceText = priceElement != null ? await priceElement.InnerTextAsync() : "0";
             var price = ParsePrice(priceText);
 
-            var linkElement = await element.QuerySelectorAsync("a[href*='/vehicle/'], a[href*='/listing/']");
-            var href = linkElement != null ? await linkElement.GetAttributeAsync("href") ?? string.Empty : string.Empty;
+            var linkElement = tagName == "a"
+                ? element
+                : await container.QuerySelectorAsync("a[href^='/vehicle/'], a[href*='/vehicle/'], a[href*='/listing/']");
+
+            var href = linkElement != null
+                ? await linkElement.GetAttributeAsync("href") ?? string.Empty
+                : string.Empty;
+
             var listingUrl = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                 ? href
                 : $"https://www.clutch.ca{href}";
 
             var externalId = ExtractExternalId(listingUrl);
 
-            var mileageElement = await element.QuerySelectorAsync(".mileage, [data-testid='mileage']");
+            var mileageElement = await container.QuerySelectorAsync(
+                "[data-testid='mileage'], [data-testid='vehicle-mileage'], .mileage");
             var mileageText = mileageElement != null ? await mileageElement.InnerTextAsync() : string.Empty;
             var mileage = ParseMileage(mileageText);
 
-            var locationElement = await element.QuerySelectorAsync(".location, [data-testid='location']");
+            var locationElement = await container.QuerySelectorAsync(
+                "[data-testid='location'], [data-testid='vehicle-location'], .location");
             var locationText = locationElement != null ? await locationElement.InnerTextAsync() : string.Empty;
             var (city, province) = ParseLocation(locationText);
 
@@ -177,7 +262,8 @@ public class ClutchScraper : BaseScraper
     {
         try
         {
-            var nextButton = await page.QuerySelectorAsync(".pagination .next:not(.disabled), [aria-label='Next page']:not([disabled])");
+            var nextButton = await page.QuerySelectorAsync(
+                "a[rel='next'], .pagination .next:not(.disabled), [aria-label='Next page']:not([disabled]), [aria-label='Next']:not([disabled])");
             return nextButton != null;
         }
         catch (Exception ex)

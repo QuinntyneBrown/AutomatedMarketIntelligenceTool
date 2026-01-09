@@ -39,16 +39,19 @@ public abstract class BaseScraper : ISiteScraper
         var storageStatePath = Environment.GetEnvironmentVariable("AMIT_SCRAPER_STORAGE_STATE");
         var saveStorageStatePath = Environment.GetEnvironmentVariable("AMIT_SCRAPER_SAVE_STORAGE_STATE");
 
-        try
+        // Convenience: if the user only provides a save path, use it as the load path too.
+        if (string.IsNullOrWhiteSpace(storageStatePath) && !string.IsNullOrWhiteSpace(saveStorageStatePath))
         {
-            browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-            {
-                Headless = headless,
-                SlowMo = slowMoMs > 0 ? slowMoMs : null,
-                Args = new[] { "--disable-blink-features=AutomationControlled" }
-            });
+            storageStatePath = saveStorageStatePath;
+        }
+        var interactiveOnBotBlock = GetEnvBool("AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK", defaultValue: false);
+        var interactiveTimeoutSeconds = GetEnvInt("AMIT_SCRAPER_INTERACTIVE_TIMEOUT_SECONDS", defaultValue: 180);
+        var interactiveSiteAllowlist = Environment.GetEnvironmentVariable("AMIT_SCRAPER_INTERACTIVE_SITE_ALLOWLIST");
+        var switchedToInteractive = false;
 
-            var contextOptions = new BrowserNewContextOptions
+        BrowserNewContextOptions CreateContextOptions(bool includeStorageState)
+        {
+            var options = new BrowserNewContextOptions
             {
                 // A more "realistic" profile helps reduce bot-blocking.
                 Locale = "en-CA",
@@ -67,11 +70,11 @@ public abstract class BaseScraper : ISiteScraper
                 }
             };
 
-            if (!string.IsNullOrWhiteSpace(storageStatePath))
+            if (includeStorageState && !string.IsNullOrWhiteSpace(storageStatePath))
             {
                 if (File.Exists(storageStatePath))
                 {
-                    contextOptions.StorageStatePath = storageStatePath;
+                    options.StorageStatePath = storageStatePath;
                     _logger.LogInformation("Loaded Playwright storage state from {Path}", storageStatePath);
                 }
                 else
@@ -82,10 +85,31 @@ public abstract class BaseScraper : ISiteScraper
                 }
             }
 
-            context = await browser.NewContextAsync(contextOptions);
+            return options;
+        }
 
-            await context.AddInitScriptAsync(
+        async Task<(IBrowser Browser, IBrowserContext Context)> CreateBrowserAndContextAsync(
+            bool runHeadless,
+            bool includeStorageState)
+        {
+            var createdBrowser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            {
+                Headless = runHeadless,
+                SlowMo = slowMoMs > 0 ? slowMoMs : null,
+                Args = new[] { "--disable-blink-features=AutomationControlled" }
+            });
+
+            var createdContext = await createdBrowser.NewContextAsync(CreateContextOptions(includeStorageState));
+
+            await createdContext.AddInitScriptAsync(
                 "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });");
+
+            return (createdBrowser, createdContext);
+        }
+
+        try
+        {
+            (browser, context) = await CreateBrowserAndContextAsync(headless, includeStorageState: true);
 
             var maxPages = parameters.MaxPages ?? MaxPages;
             var currentPage = 1;
@@ -100,11 +124,67 @@ public abstract class BaseScraper : ISiteScraper
                     currentPage,
                     maxPages);
 
-                var pageListings = await ScrapePageWithRetryAsync(
-                    context,
-                    parameters,
-                    currentPage,
-                    cancellationToken);
+                (IReadOnlyList<ScrapedListing> Listings, bool HasNext) pageListings;
+                try
+                {
+                    pageListings = await ScrapePageWithRetryAsync(
+                        context,
+                        parameters,
+                        currentPage,
+                        cancellationToken);
+                }
+                catch (BotProtectionException ex)
+                {
+                    var allowInteractiveForThisSite = IsInteractiveAllowedForSite(SiteName, interactiveSiteAllowlist);
+
+                    if (headless && interactiveOnBotBlock && allowInteractiveForThisSite && !switchedToInteractive)
+                    {
+                        switchedToInteractive = true;
+                        _logger.LogWarning(
+                            "Encountered {Provider} bot-protection on {SiteName}. Switching to interactive browser to allow manual CAPTCHA completion (timeout {TimeoutSeconds}s).",
+                            ex.Provider,
+                            SiteName,
+                            interactiveTimeoutSeconds);
+
+                        await SwitchToInteractiveAndWaitAsync(
+                            url: ex.Url,
+                            provider: ex.Provider,
+                            timeoutSeconds: interactiveTimeoutSeconds,
+                            cancellationToken: cancellationToken);
+
+                        // After interactive wait, recreate an interactive (headful) browser/context and retry this page.
+                        if (context != null)
+                        {
+                            await context.CloseAsync();
+                        }
+
+                        if (browser != null)
+                        {
+                            await browser.CloseAsync();
+                        }
+
+                        headless = false;
+                        (browser, context) = await CreateBrowserAndContextAsync(headless, includeStorageState: true);
+
+                        pageListings = await ScrapePageWithRetryAsync(
+                            context,
+                            parameters,
+                            currentPage,
+                            cancellationToken);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "Request blocked by {Provider} bot-protection on {SiteName} (HTTP {Status}). " +
+                            "Enable AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=1 to switch to a visible browser for manual CAPTCHA completion. " +
+                            "Optionally set AMIT_SCRAPER_INTERACTIVE_SITE_ALLOWLIST to a comma-separated list (e.g. 'CarGurus') to limit interactive fallback.",
+                            ex.Provider,
+                            SiteName,
+                            ex.Status);
+
+                        return allListings;
+                    }
+                }
 
                 var hasNext = pageListings.HasNext;
                 var listings = pageListings.Listings;
@@ -219,6 +299,20 @@ public abstract class BaseScraper : ISiteScraper
                     await DumpDebugArtifactsAsync(page, SiteName, pageNumber, response);
                 }
 
+                // Some bot-protection/challenge pages return HTTP 200 (e.g. AWS WAF, Cloudflare).
+                // Detect these early so the caller can optionally switch to an interactive browser.
+                {
+                    var html = await page.ContentAsync();
+                    var botBlockProvider = DetectBotBlockProvider(html);
+                    if (botBlockProvider != null)
+                    {
+                        throw new BotProtectionException(
+                            provider: botBlockProvider,
+                            url: url,
+                            status: response?.Status ?? 0);
+                    }
+                }
+
                 if (response != null && response.Status >= 400)
                 {
                     var html = await page.ContentAsync();
@@ -226,15 +320,10 @@ public abstract class BaseScraper : ISiteScraper
                     var botBlockProvider = DetectBotBlockProvider(html);
                     if (botBlockProvider != null)
                     {
-                        _logger.LogError(
-                            "Request blocked by {Provider} bot-protection on {SiteName} (HTTP {Status}). " +
-                            "If this site presents a CAPTCHA, run with AMIT_SCRAPER_HEADLESS=0 to complete it manually. " +
-                            "Optionally set AMIT_SCRAPER_SAVE_STORAGE_STATE to persist cookies/session for reuse.",
-                            botBlockProvider,
-                            SiteName,
-                            response.Status);
-
-                        return (Array.Empty<ScrapedListing>(), false);
+                        throw new BotProtectionException(
+                            provider: botBlockProvider,
+                            url: url,
+                            status: response.Status);
                     }
 
                     _logger.LogWarning(
@@ -249,6 +338,11 @@ public abstract class BaseScraper : ISiteScraper
                 var hasNext = listings.Count > 0 && await HasNextPageAsync(page, cancellationToken);
 
                 return (listings, hasNext);
+            }
+            catch (BotProtectionException)
+            {
+                // Bot-protection blocks are not transient in a headless retry loop; let the caller decide.
+                throw;
             }
             catch (Exception ex) when (retryCount < MaxRetries - 1)
             {
@@ -283,6 +377,128 @@ public abstract class BaseScraper : ISiteScraper
         return (Array.Empty<ScrapedListing>(), false);
     }
 
+    private async Task SwitchToInteractiveAndWaitAsync(
+        string url,
+        string provider,
+        int timeoutSeconds,
+        CancellationToken cancellationToken)
+    {
+        // Launch a short-lived headful browser for the user to complete CAPTCHA.
+        // We do not attempt to bypass bot protection; this is manual, opt-in assistance.
+        var playwright = await Playwright.CreateAsync();
+        try
+        {
+            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            {
+                Headless = false,
+                Args = new[] { "--disable-blink-features=AutomationControlled" }
+            });
+
+            var context = await browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                Locale = "en-CA",
+                TimezoneId = "America/Toronto",
+                ViewportSize = new ViewportSize { Width = 1366, Height = 768 },
+                UserAgent =
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/120.0.0.0 Safari/537.36",
+                ExtraHTTPHeaders = new Dictionary<string, string>
+                {
+                    ["Accept"] =
+                        "text/html,application/xhtml+xml,application/xml;q=0.9," +
+                        "image/avif,image/webp,image/apng,*/*;q=0.8",
+                    ["Accept-Language"] = "en-CA,en;q=0.9"
+                }
+            });
+
+            await context.AddInitScriptAsync(
+                "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });");
+
+            var page = await context.NewPageAsync();
+
+            _logger.LogWarning(
+                "Interactive browser opened for {Provider}. Please complete any CAPTCHA in the browser window. Waiting up to {TimeoutSeconds}s...",
+                provider,
+                timeoutSeconds);
+
+            await page.GotoAsync(url, new PageGotoOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 30000
+            });
+
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
+            while (DateTimeOffset.UtcNow < deadline)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    // The page may be auto-refreshing / navigating while the challenge is solved.
+                    // We treat transient navigation issues as "still waiting" rather than failing the whole scrape.
+                    await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions
+                    {
+                        Timeout = 5000
+                    });
+
+                    var html = await page.ContentAsync();
+                    if (DetectBotBlockProvider(html) == null)
+                    {
+                        _logger.LogInformation("Bot-protection page no longer detected; continuing.");
+                        break;
+                    }
+                }
+                catch (PlaywrightException ex)
+                {
+                    if (ex.Message.Contains("Target page, context or browser has been closed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning(
+                            "Interactive browser window was closed; continuing without interactive clearance.");
+                        return;
+                    }
+
+                    // Common during navigation/challenge refresh.
+                    _logger.LogDebug(ex, "Interactive wait encountered a transient Playwright error; continuing to wait.");
+                }
+
+                await Task.Delay(1000, cancellationToken);
+            }
+
+            var saveStorageStatePath = Environment.GetEnvironmentVariable("AMIT_SCRAPER_SAVE_STORAGE_STATE");
+            if (!string.IsNullOrWhiteSpace(saveStorageStatePath))
+            {
+                await context.StorageStateAsync(new BrowserContextStorageStateOptions
+                {
+                    Path = saveStorageStatePath
+                });
+
+                _logger.LogInformation("Saved Playwright storage state to {Path}", saveStorageStatePath);
+            }
+
+            await page.CloseAsync();
+            await context.CloseAsync();
+            await browser.CloseAsync();
+        }
+        finally
+        {
+            playwright.Dispose();
+        }
+    }
+
+    private static bool IsInteractiveAllowedForSite(string siteName, string? allowlist)
+    {
+        if (string.IsNullOrWhiteSpace(allowlist))
+        {
+            return true;
+        }
+
+        var allowed = allowlist
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return allowed.Any(s => string.Equals(s, siteName, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static bool IsLikelyWafBlock(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
@@ -290,11 +506,15 @@ public abstract class BaseScraper : ISiteScraper
             return false;
         }
 
-        return html.Contains("_Incapsula_Resource", StringComparison.OrdinalIgnoreCase)
-            || html.Contains("Incapsula incident ID", StringComparison.OrdinalIgnoreCase)
+        return html.Contains("Incapsula incident ID", StringComparison.OrdinalIgnoreCase)
             || html.Contains("Request unsuccessful", StringComparison.OrdinalIgnoreCase)
             || html.Contains("captcha-delivery.com", StringComparison.OrdinalIgnoreCase)
-            || html.Contains("DataDome", StringComparison.OrdinalIgnoreCase);
+            || html.Contains("captcha-sdk.awswaf.com", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("AwsWAFScript", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("cf-chl", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("Just a moment", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("verify you are human", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("Access Denied", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? DetectBotBlockProvider(string html)
@@ -304,20 +524,33 @@ public abstract class BaseScraper : ISiteScraper
             return null;
         }
 
+        // DataDome: avoid false positives from generic vendor scripts by requiring CAPTCHA delivery markers.
         if (html.Contains("captcha-delivery.com", StringComparison.OrdinalIgnoreCase)
-            || html.Contains("DataDome", StringComparison.OrdinalIgnoreCase))
+            || (html.Contains("datadome", StringComparison.OrdinalIgnoreCase)
+                && html.Contains("captcha", StringComparison.OrdinalIgnoreCase)))
         {
             return "DataDome";
         }
 
-        if (html.Contains("_Incapsula_Resource", StringComparison.OrdinalIgnoreCase)
-            || html.Contains("Incapsula incident ID", StringComparison.OrdinalIgnoreCase))
+        if (html.Contains("captcha-sdk.awswaf.com", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("AwsWAFScript", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("awswaf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "AWS WAF";
+        }
+
+        // Incapsula: don't treat the presence of Incapsula resources alone as a block.
+        if (html.Contains("Incapsula incident ID", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("Request unsuccessful", StringComparison.OrdinalIgnoreCase))
         {
             return "Incapsula";
         }
 
+        // Cloudflare: challenge pages often include cf-chl markers / "Just a moment".
         if (html.Contains("cf-chl", StringComparison.OrdinalIgnoreCase)
-            || html.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase))
+            || html.Contains("Just a moment", StringComparison.OrdinalIgnoreCase)
+            || (html.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase)
+                && html.Contains("captcha", StringComparison.OrdinalIgnoreCase)))
         {
             return "Cloudflare";
         }
@@ -345,6 +578,21 @@ public abstract class BaseScraper : ISiteScraper
     {
         var value = Environment.GetEnvironmentVariable(name);
         return int.TryParse(value, out var parsed) ? parsed : defaultValue;
+    }
+
+    private sealed class BotProtectionException : Exception
+    {
+        public BotProtectionException(string provider, string url, int status)
+            : base($"Blocked by {provider} (HTTP {status})")
+        {
+            Provider = provider;
+            Url = url;
+            Status = status;
+        }
+
+        public string Provider { get; }
+        public string Url { get; }
+        public int Status { get; }
     }
 
     private static Task<bool> IsDebugEnabledAsync()
