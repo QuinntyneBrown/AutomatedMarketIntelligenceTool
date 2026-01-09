@@ -9,6 +9,12 @@ public class StatisticsService : IStatisticsService
     private readonly IAutomatedMarketIntelligenceToolContext _context;
     private readonly ILogger<StatisticsService> _logger;
 
+    // Configuration constants for deal rating
+    private const decimal MileageTolerancePercent = 0.20m; // 20% tolerance for similar vehicle mileage
+    private const decimal GreatDealThreshold = -15m; // 15% below average
+    private const decimal GoodDealThreshold = -5m; // 5% below average
+    private const decimal FairDealThreshold = 5m; // 5% above average
+
     public StatisticsService(
         IAutomatedMarketIntelligenceToolContext context,
         ILogger<StatisticsService> logger)
@@ -139,7 +145,7 @@ public class StatisticsService : IStatisticsService
 
         if (mileage.HasValue)
         {
-            var mileageRange = mileage.Value * 0.2m; // 20% tolerance
+            var mileageRange = mileage.Value * MileageTolerancePercent;
             query = query.Where(l => l.Mileage >= mileage.Value - mileageRange && l.Mileage <= mileage.Value + mileageRange);
         }
 
@@ -156,11 +162,11 @@ public class StatisticsService : IStatisticsService
 
         _logger.LogInformation("Price difference from average: {Difference}%", percentDifference);
 
-        if (percentDifference <= -15)
+        if (percentDifference <= GreatDealThreshold)
             return "Great";
-        else if (percentDifference <= -5)
+        else if (percentDifference <= GoodDealThreshold)
             return "Good";
-        else if (percentDifference <= 5)
+        else if (percentDifference <= FairDealThreshold)
             return "Fair";
         else
             return "High";
