@@ -44,6 +44,11 @@ public class Listing
     public DateTime? DeactivatedAt { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
+    public Guid? LinkedVehicleId { get; private set; }
+    public decimal? MatchConfidence { get; private set; }
+    public string? MatchMethod { get; private set; }
+    public decimal? Latitude { get; private set; }
+    public decimal? Longitude { get; private set; }
 
     public IReadOnlyList<object> DomainEvents => _domainEvents.AsReadOnly();
 
@@ -187,6 +192,21 @@ public class Listing
             DeactivatedAt = null;
             UpdatedAt = DateTime.UtcNow;
         }
+    }
+
+    public void SetFuzzyMatchInfo(Guid? linkedVehicleId, decimal? matchConfidence, string? matchMethod)
+    {
+        LinkedVehicleId = linkedVehicleId;
+        MatchConfidence = matchConfidence;
+        MatchMethod = matchMethod;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetLocation(decimal? latitude, decimal? longitude)
+    {
+        Latitude = latitude;
+        Longitude = longitude;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void ClearDomainEvents()

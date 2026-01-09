@@ -16,4 +16,11 @@ public class SearchParameters
     public CanadianProvince? Province { get; set; }
     public int? MaxPages { get; set; }
     public bool HeadedMode { get; set; } = false;
+    public string? ExteriorColor { get; set; }
+    public string? InteriorColor { get; set; }
+    public Drivetrain? Drivetrain { get; set; }
+    public string? Keywords { get; set; }
+    public SellerType? SellerType { get; set; }
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
 }

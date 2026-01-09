@@ -2,6 +2,7 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.PriceHistoryAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.SearchSessionAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.VehicleAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure;
@@ -13,6 +14,7 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<Listing> Listings => Set<Listing>();
     public DbSet<PriceHistory> PriceHistory => Set<PriceHistory>();
     public DbSet<SearchSession> SearchSessions => Set<SearchSession>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)
@@ -32,5 +34,6 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
         modelBuilder.Entity<Listing>().HasQueryFilter(l => l.TenantId == _tenantId);
         modelBuilder.Entity<PriceHistory>().HasQueryFilter(ph => ph.TenantId == _tenantId);
         modelBuilder.Entity<SearchSession>().HasQueryFilter(ss => ss.TenantId == _tenantId);
+        modelBuilder.Entity<Vehicle>().HasQueryFilter(v => v.TenantId == _tenantId);
     }
 }

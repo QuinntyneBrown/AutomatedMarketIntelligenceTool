@@ -1,29 +1,38 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
-using AutomatedMarketIntelligenceTool.Core.Services;
+using AutomatedMarketIntelligenceTool.Core.Services.FuzzyMatching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace AutomatedMarketIntelligenceTool.Core.Tests.Services;
+namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.FuzzyMatching;
 
-public class DuplicateDetectionServiceTests
+public class FuzzyMatchingServiceTests
 {
     private readonly IAutomatedMarketIntelligenceToolContext _context;
-    private readonly DuplicateDetectionService _service;
+    private readonly FuzzyMatchingService _service;
     private readonly Guid _testTenantId = Guid.NewGuid();
 
-    public DuplicateDetectionServiceTests()
+    public FuzzyMatchingServiceTests()
     {
         var options = new DbContextOptionsBuilder<TestContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
         _context = new TestContext(options);
-        _service = new DuplicateDetectionService(_context, NullLogger<DuplicateDetectionService>.Instance);
+
+        var levenshtein = new LevenshteinCalculator();
+        var numeric = new NumericProximityCalculator();
+        var geo = new GeoDistanceCalculator();
+        var confidenceCalculator = new ConfidenceScoreCalculator(levenshtein, numeric, geo);
+
+        _service = new FuzzyMatchingService(
+            _context,
+            confidenceCalculator,
+            NullLogger<FuzzyMatchingService>.Instance);
     }
 
     [Fact]
-    public async Task CheckForDuplicateAsync_WithMatchingVin_ShouldReturnVinMatch()
+    public async Task FindBestMatchAsync_WithExactVinMatch_ShouldReturnVinMatch()
     {
         // Arrange
         var vin = "1HGBH41JXMN109186";
@@ -42,25 +51,30 @@ public class DuplicateDetectionServiceTests
         _context.Listings.Add(existingListing);
         await _context.SaveChangesAsync();
 
-        var scrapedInfo = new ScrapedListingInfo
+        var scrapedListing = new ScrapedListingData
         {
             TenantId = _testTenantId,
             ExternalId = "EXT-002",
             SourceSite = "AnotherSite",
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2020,
+            Price = 25500m,
             Vin = vin
         };
 
         // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
+        var result = await _service.FindBestMatchAsync(scrapedListing);
 
         // Assert
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.VinMatch, result.MatchType);
-        Assert.Equal(existingListing.ListingId.Value, result.ExistingListingId);
+        Assert.NotNull(result.MatchedListing);
+        Assert.Equal(100m, result.ConfidenceScore);
+        Assert.Equal(MatchMethod.ExactVin, result.Method);
+        Assert.Equal(existingListing.ListingId.Value, result.MatchedListing!.ListingId.Value);
     }
 
     [Fact]
-    public async Task CheckForDuplicateAsync_WithMatchingVinCaseInsensitive_ShouldReturnVinMatch()
+    public async Task FindBestMatchAsync_WithPartialVinMatch_ShouldReturnPartialVinMatch()
     {
         // Arrange
         var existingListing = Listing.Create(
@@ -78,24 +92,29 @@ public class DuplicateDetectionServiceTests
         _context.Listings.Add(existingListing);
         await _context.SaveChangesAsync();
 
-        var scrapedInfo = new ScrapedListingInfo
+        var scrapedListing = new ScrapedListingData
         {
             TenantId = _testTenantId,
             ExternalId = "EXT-002",
-            SourceSite = "TestSite",
-            Vin = "1hgbh41jxmn109186" // lowercase
+            SourceSite = "AnotherSite",
+            Make = "Honda",
+            Model = "Civic",
+            Year = 2021,
+            Price = 22500m,
+            Vin = "ABCDE41JXMN109186" // Last 8 characters match
         };
 
         // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
+        var result = await _service.FindBestMatchAsync(scrapedListing);
 
         // Assert
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.VinMatch, result.MatchType);
+        Assert.NotNull(result.MatchedListing);
+        Assert.Equal(95m, result.ConfidenceScore);
+        Assert.Equal(MatchMethod.PartialVin, result.Method);
     }
 
     [Fact]
-    public async Task CheckForDuplicateAsync_WithInvalidVinLength_ShouldFallbackToExternalIdCheck()
+    public async Task FindBestMatchAsync_WithExternalIdMatch_ShouldReturnExternalIdMatch()
     {
         // Arrange
         var existingListing = Listing.Create(
@@ -105,169 +124,153 @@ public class DuplicateDetectionServiceTests
             "https://test.com/1",
             "Ford",
             "F-150",
-            2019,
-            30000m,
-            Condition.Used,
-            vin: "INVALID");
-
-        _context.Listings.Add(existingListing);
-        await _context.SaveChangesAsync();
-
-        var scrapedInfo = new ScrapedListingInfo
-        {
-            TenantId = _testTenantId,
-            ExternalId = "EXT-001",
-            SourceSite = "TestSite",
-            Vin = "INVALID" // Too short
-        };
-
-        // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
-
-        // Assert
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.ExternalIdMatch, result.MatchType);
-    }
-
-    [Fact]
-    public async Task CheckForDuplicateAsync_WithMatchingExternalIdAndSourceSite_ShouldReturnExternalIdMatch()
-    {
-        // Arrange
-        var existingListing = Listing.Create(
-            _testTenantId,
-            "EXT-001",
-            "TestSite",
-            "https://test.com/1",
-            "Tesla",
-            "Model 3",
             2022,
-            45000m,
-            Condition.New);
-
-        _context.Listings.Add(existingListing);
-        await _context.SaveChangesAsync();
-
-        var scrapedInfo = new ScrapedListingInfo
-        {
-            TenantId = _testTenantId,
-            ExternalId = "EXT-001",
-            SourceSite = "TestSite",
-            Vin = null
-        };
-
-        // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
-
-        // Assert
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.ExternalIdMatch, result.MatchType);
-        Assert.Equal(existingListing.ListingId.Value, result.ExistingListingId);
-    }
-
-    [Fact]
-    public async Task CheckForDuplicateAsync_WithSameExternalIdDifferentSourceSite_ShouldReturnNewListing()
-    {
-        // Arrange
-        var existingListing = Listing.Create(
-            _testTenantId,
-            "EXT-001",
-            "TestSite",
-            "https://test.com/1",
-            "BMW",
-            "X5",
-            2021,
-            55000m,
+            35000m,
             Condition.Used);
 
         _context.Listings.Add(existingListing);
         await _context.SaveChangesAsync();
 
-        var scrapedInfo = new ScrapedListingInfo
+        var scrapedListing = new ScrapedListingData
         {
             TenantId = _testTenantId,
             ExternalId = "EXT-001",
-            SourceSite = "DifferentSite",
-            Vin = null
-        };
-
-        // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
-
-        // Assert
-        Assert.False(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.None, result.MatchType);
-        Assert.Null(result.ExistingListingId);
-    }
-
-    [Fact]
-    public async Task CheckForDuplicateAsync_WithNoMatch_ShouldReturnNewListing()
-    {
-        // Arrange
-        var scrapedInfo = new ScrapedListingInfo
-        {
-            TenantId = _testTenantId,
-            ExternalId = "EXT-NEW",
             SourceSite = "TestSite",
-            Vin = "1HGBH41JXMN999999"
+            Make = "Ford",
+            Model = "F-150",
+            Year = 2022,
+            Price = 35500m
         };
 
         // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
+        var result = await _service.FindBestMatchAsync(scrapedListing);
 
         // Assert
-        Assert.False(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.None, result.MatchType);
-        Assert.Null(result.ExistingListingId);
+        Assert.NotNull(result.MatchedListing);
+        Assert.Equal(100m, result.ConfidenceScore);
+        Assert.Equal(MatchMethod.ExternalId, result.Method);
     }
 
     [Fact]
-    public async Task CheckForDuplicateAsync_WithDifferentTenantId_ShouldReturnNewListing()
+    public async Task FindBestMatchAsync_WithHighConfidenceFuzzyMatch_ShouldReturnFuzzyMatch()
     {
         // Arrange
-        var otherTenantId = Guid.NewGuid();
         var existingListing = Listing.Create(
-            otherTenantId,
+            _testTenantId,
             "EXT-001",
             "TestSite",
             "https://test.com/1",
-            "Chevrolet",
-            "Silverado",
+            "Toyota",
+            "Camry",
             2020,
-            35000m,
+            25000m,
             Condition.Used,
-            vin: "1HGBH41JXMN109186");
+            mileage: 50000);
+
+        existingListing.SetLocation(43.6532m, -79.3832m);
 
         _context.Listings.Add(existingListing);
         await _context.SaveChangesAsync();
 
-        var scrapedInfo = new ScrapedListingInfo
+        var scrapedListing = new ScrapedListingData
         {
-            TenantId = _testTenantId, // Different tenant
-            ExternalId = "EXT-001",
-            SourceSite = "TestSite",
-            Vin = "1HGBH41JXMN109186"
+            TenantId = _testTenantId,
+            ExternalId = "EXT-002",
+            SourceSite = "AnotherSite",
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2020,
+            Price = 25200m,
+            Mileage = 50300,
+            Latitude = 43.6540m,
+            Longitude = -79.3840m
         };
 
         // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
+        var result = await _service.FindBestMatchAsync(scrapedListing);
 
         // Assert
-        Assert.False(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.None, result.MatchType);
+        Assert.NotNull(result.MatchedListing);
+        Assert.True(result.ConfidenceScore >= 85m);
+        Assert.Equal(MatchMethod.FuzzyAttributes, result.Method);
+        Assert.NotEmpty(result.FieldScores);
     }
 
     [Fact]
-    public async Task CheckForDuplicateAsync_WithNullScrapedListing_ShouldThrowArgumentNullException()
+    public async Task FindBestMatchAsync_WithNoMatch_ShouldReturnNone()
+    {
+        // Arrange
+        var scrapedListing = new ScrapedListingData
+        {
+            TenantId = _testTenantId,
+            ExternalId = "EXT-NEW",
+            SourceSite = "TestSite",
+            Make = "Tesla",
+            Model = "Model 3",
+            Year = 2023,
+            Price = 45000m,
+            Vin = "5YJ3E1EA0KF999999"
+        };
+
+        // Act
+        var result = await _service.FindBestMatchAsync(scrapedListing);
+
+        // Assert
+        Assert.Null(result.MatchedListing);
+        Assert.Equal(0m, result.ConfidenceScore);
+        Assert.Equal(MatchMethod.None, result.Method);
+    }
+
+    [Fact]
+    public async Task FindBestMatchAsync_WithLowConfidenceFuzzyMatch_ShouldReturnNone()
+    {
+        // Arrange
+        var existingListing = Listing.Create(
+            _testTenantId,
+            "EXT-001",
+            "TestSite",
+            "https://test.com/1",
+            "Toyota",
+            "Camry",
+            2020,
+            25000m,
+            Condition.Used,
+            mileage: 50000);
+
+        _context.Listings.Add(existingListing);
+        await _context.SaveChangesAsync();
+
+        var scrapedListing = new ScrapedListingData
+        {
+            TenantId = _testTenantId,
+            ExternalId = "EXT-002",
+            SourceSite = "AnotherSite",
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2020,
+            Price = 35000m, // Very different price
+            Mileage = 100000 // Very different mileage
+        };
+
+        // Act
+        var result = await _service.FindBestMatchAsync(scrapedListing);
+
+        // Assert - Low confidence should not return a match
+        Assert.Null(result.MatchedListing);
+    }
+
+    [Fact]
+    public async Task FindBestMatchAsync_WithNullListing_ShouldThrowArgumentNullException()
     {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _service.CheckForDuplicateAsync(null!));
+            () => _service.FindBestMatchAsync(null!));
     }
 
     [Fact]
-    public async Task CheckForDuplicateAsync_WithVinPriorityOverExternalId_ShouldReturnVinMatch()
+    public async Task FindBestMatchAsync_WithVinPriorityOverExternalId_ShouldReturnVinMatch()
     {
-        // Arrange - Create two listings: one with matching VIN, one with matching ExternalId
+        // Arrange
         var vinMatchListing = Listing.Create(
             _testTenantId,
             "EXT-VIN",
@@ -295,63 +298,25 @@ public class DuplicateDetectionServiceTests
         _context.Listings.Add(externalIdMatchListing);
         await _context.SaveChangesAsync();
 
-        var scrapedInfo = new ScrapedListingInfo
+        var scrapedListing = new ScrapedListingData
         {
             TenantId = _testTenantId,
-            ExternalId = "EXT-001", // Matches second listing
+            ExternalId = "EXT-001",
             SourceSite = "TestSite",
-            Vin = "1HGBH41JXMN109186" // Matches first listing
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2020,
+            Price = 25000m,
+            Vin = "1HGBH41JXMN109186"
         };
 
         // Act
-        var result = await _service.CheckForDuplicateAsync(scrapedInfo);
+        var result = await _service.FindBestMatchAsync(scrapedListing);
 
         // Assert - VIN match should take priority
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.VinMatch, result.MatchType);
-        Assert.Equal(vinMatchListing.ListingId.Value, result.ExistingListingId);
-    }
-
-    [Fact]
-    public void DuplicateCheckResult_VinMatch_ShouldHaveCorrectProperties()
-    {
-        // Arrange
-        var listingId = Guid.NewGuid();
-
-        // Act
-        var result = DuplicateCheckResult.VinMatch(listingId);
-
-        // Assert
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.VinMatch, result.MatchType);
-        Assert.Equal(listingId, result.ExistingListingId);
-    }
-
-    [Fact]
-    public void DuplicateCheckResult_ExternalIdMatch_ShouldHaveCorrectProperties()
-    {
-        // Arrange
-        var listingId = Guid.NewGuid();
-
-        // Act
-        var result = DuplicateCheckResult.ExternalIdMatch(listingId);
-
-        // Assert
-        Assert.True(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.ExternalIdMatch, result.MatchType);
-        Assert.Equal(listingId, result.ExistingListingId);
-    }
-
-    [Fact]
-    public void DuplicateCheckResult_NewListing_ShouldHaveCorrectProperties()
-    {
-        // Act
-        var result = DuplicateCheckResult.NewListing();
-
-        // Assert
-        Assert.False(result.IsDuplicate);
-        Assert.Equal(DuplicateMatchType.None, result.MatchType);
-        Assert.Null(result.ExistingListingId);
+        Assert.NotNull(result.MatchedListing);
+        Assert.Equal(MatchMethod.ExactVin, result.Method);
+        Assert.Equal(vinMatchListing.ListingId.Value, result.MatchedListing!.ListingId.Value);
     }
 
     private class TestContext : DbContext, IAutomatedMarketIntelligenceToolContext
@@ -369,51 +334,41 @@ public class DuplicateDetectionServiceTests
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure Listing entity  
             modelBuilder.Entity<Listing>(entity =>
             {
                 entity.HasKey(l => l.ListingId);
-                
                 entity.Property(l => l.ListingId)
                     .HasConversion(
                         id => id.Value,
                         value => new ListingId(value));
-
                 entity.Ignore(l => l.DomainEvents);
             });
 
-            // Configure PriceHistory entity
             modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
             {
                 entity.HasKey(ph => ph.PriceHistoryId);
-                
                 entity.Property(ph => ph.PriceHistoryId)
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
-
                 entity.Property(ph => ph.ListingId)
                     .HasConversion(
                         id => id.Value,
                         value => new ListingId(value));
             });
 
-            // Configure SearchSession entity
             modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
             {
                 entity.HasKey(ss => ss.SearchSessionId);
-                
                 entity.Property(ss => ss.SearchSessionId)
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
             });
 
-            // Configure Vehicle entity
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
             {
                 entity.HasKey(v => v.VehicleId);
-                
                 entity.Property(v => v.VehicleId)
                     .HasConversion(
                         id => id.Value,

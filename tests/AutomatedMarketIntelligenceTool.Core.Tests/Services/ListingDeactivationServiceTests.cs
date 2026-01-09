@@ -243,6 +243,7 @@ public class ListingDeactivationServiceTests
         public DbSet<Listing> Listings => Set<Listing>();
         public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
         public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
+        public DbSet<Core.Models.VehicleAggregate.Vehicle> Vehicles => Set<Core.Models.VehicleAggregate.Vehicle>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -283,6 +284,16 @@ public class ListingDeactivationServiceTests
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
+            {
+                entity.HasKey(v => v.VehicleId);
+                
+                entity.Property(v => v.VehicleId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.VehicleAggregate.VehicleId(value));
             });
         }
     }
