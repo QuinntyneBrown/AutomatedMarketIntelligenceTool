@@ -22,8 +22,11 @@ var scraperFactory = new ScraperFactory(loggerFactory);
 var searchParams = new SearchParameters
 {
     Make = "Volkswagen",
-    Model = "Jetta",
+    Model = "Jetta GLI",
+    YearMin = 2025,
+    YearMax = 2025,
     Province = CanadianProvince.ON,
+    PostalCode = "M5V", // Toronto area
     MaxPages = 3 // Limit to 3 pages for playground testing
 };
 
