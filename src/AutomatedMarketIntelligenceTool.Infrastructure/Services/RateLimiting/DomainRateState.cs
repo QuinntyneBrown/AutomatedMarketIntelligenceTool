@@ -6,6 +6,7 @@ internal class DomainRateState
     private int _backoffLevel;
     private int _requestCount;
     private readonly object _lock = new();
+    private const int MaxBackoffLevel = 10; // Prevents overflow and excessive delays
 
     public DomainRateState()
     {
@@ -14,12 +15,14 @@ internal class DomainRateState
         _requestCount = 0;
     }
 
-    public TimeSpan GetRequiredDelay(int defaultDelayMs)
+    public TimeSpan GetRequiredDelay(int defaultDelayMs, int maxBackoffMs = 30000)
     {
         lock (_lock)
         {
             var timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
-            var requiredDelay = TimeSpan.FromMilliseconds(defaultDelayMs * Math.Pow(2, _backoffLevel));
+            var calculatedDelayMs = defaultDelayMs * Math.Pow(2, _backoffLevel);
+            var cappedDelayMs = Math.Min(calculatedDelayMs, maxBackoffMs);
+            var requiredDelay = TimeSpan.FromMilliseconds(cappedDelayMs);
             var remainingDelay = requiredDelay - timeSinceLastRequest;
 
             return remainingDelay > TimeSpan.Zero ? remainingDelay : TimeSpan.Zero;
@@ -39,20 +42,26 @@ internal class DomainRateState
     {
         lock (_lock)
         {
-            _backoffLevel++;
+            if (_backoffLevel < MaxBackoffLevel)
+            {
+                _backoffLevel++;
+            }
         }
     }
 
-    public RateLimitStatus GetStatus(string domain, int defaultDelayMs)
+    public RateLimitStatus GetStatus(string domain, int defaultDelayMs, int maxBackoffMs = 30000)
     {
         lock (_lock)
         {
+            var calculatedDelayMs = defaultDelayMs * Math.Pow(2, _backoffLevel);
+            var cappedDelayMs = (int)Math.Min(calculatedDelayMs, maxBackoffMs);
+
             return new RateLimitStatus
             {
                 Domain = domain,
                 RequestCount = _requestCount,
                 LastRequestTime = _lastRequestTime != DateTime.MinValue ? _lastRequestTime : null,
-                CurrentDelayMs = (int)(defaultDelayMs * Math.Pow(2, _backoffLevel)),
+                CurrentDelayMs = cappedDelayMs,
                 BackoffLevel = _backoffLevel
             };
         }

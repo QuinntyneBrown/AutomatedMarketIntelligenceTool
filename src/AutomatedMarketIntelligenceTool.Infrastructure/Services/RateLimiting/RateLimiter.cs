@@ -19,7 +19,7 @@ public class RateLimiter : IRateLimiter
     {
         var state = _domainStates.GetOrAdd(domain, _ => new DomainRateState());
 
-        var delay = state.GetRequiredDelay(_config.DefaultDelayMs);
+        var delay = state.GetRequiredDelay(_config.DefaultDelayMs, _config.MaxBackoffMs);
         if (delay > TimeSpan.Zero)
         {
             _logger.LogDebug("Rate limiting: waiting {Delay}ms for {Domain}",
@@ -41,7 +41,7 @@ public class RateLimiter : IRateLimiter
     {
         if (_domainStates.TryGetValue(domain, out var state))
         {
-            return state.GetStatus(domain, _config.DefaultDelayMs);
+            return state.GetStatus(domain, _config.DefaultDelayMs, _config.MaxBackoffMs);
         }
 
         return new RateLimitStatus

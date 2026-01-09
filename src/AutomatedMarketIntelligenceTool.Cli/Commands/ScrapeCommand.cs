@@ -155,6 +155,8 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                                 }
                                 else
                                 {
+                                    // Phase 2: New fields (bodyStyle, drivetrain, sellerType, etc.) 
+                                    // are not yet extracted by scrapers - will be implemented in Sprint 2
                                     var listing = Core.Models.ListingAggregate.Listing.Create(
                                         tenantId: settings.TenantId,
                                         externalId: scrapedListing.ExternalId,
@@ -174,13 +176,13 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                                         currency: scrapedListing.Currency,
                                         transmission: scrapedListing.Transmission,
                                         fuelType: scrapedListing.FuelType,
-                                        bodyStyle: null,
-                                        drivetrain: null,
+                                        bodyStyle: null, // TODO Sprint 2: Extract from scrapers
+                                        drivetrain: null, // TODO Sprint 2: Extract from scrapers
                                         exteriorColor: scrapedListing.ExteriorColor,
                                         interiorColor: scrapedListing.InteriorColor,
-                                        sellerType: null,
-                                        sellerName: null,
-                                        sellerPhone: null,
+                                        sellerType: null, // TODO Sprint 2: Extract from scrapers
+                                        sellerName: null, // TODO Sprint 2: Extract from scrapers
+                                        sellerPhone: null, // TODO Sprint 2: Extract from scrapers
                                         description: scrapedListing.Description,
                                         imageUrls: scrapedListing.ImageUrls);
 
