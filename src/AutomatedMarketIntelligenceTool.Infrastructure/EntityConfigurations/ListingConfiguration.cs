@@ -109,6 +109,9 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
                 v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
             .HasMaxLength(4000);
 
+        builder.Property(l => l.ImageHashes)
+            .HasMaxLength(2000);
+
         builder.Property(l => l.ListingDate);
 
         builder.Property(l => l.DaysOnMarket);
@@ -128,6 +131,12 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
             .HasDefaultValue(true);
 
         builder.Property(l => l.DeactivatedAt);
+
+        builder.Property(l => l.RelistedCount)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        builder.Property(l => l.PreviousListingId);
 
         builder.Property(l => l.CreatedAt)
             .IsRequired();
@@ -175,5 +184,10 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
         builder.HasIndex(l => new { l.SourceSite, l.ExternalId, l.TenantId })
             .IsUnique()
             .HasDatabaseName("UQ_Listing_External");
+
+        // Phase 4: Index for relisted listings
+        builder.HasIndex(l => l.RelistedCount)
+            .HasDatabaseName("IX_Listing_RelistedCount")
+            .HasFilter("[RelistedCount] > 0");
     }
 }

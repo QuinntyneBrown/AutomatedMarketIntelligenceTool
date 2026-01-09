@@ -1,0 +1,291 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+using AutomatedMarketIntelligenceTool.Core.Models.ReviewQueueAggregate;
+using AutomatedMarketIntelligenceTool.Core.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace AutomatedMarketIntelligenceTool.Core.Tests.Services;
+
+public class RelistedDetectionServiceTests
+{
+    private readonly IAutomatedMarketIntelligenceToolContext _context;
+    private readonly RelistedDetectionService _service;
+    private readonly Guid _testTenantId = Guid.NewGuid();
+
+    public RelistedDetectionServiceTests()
+    {
+        var options = new DbContextOptionsBuilder<TestContextWithRelisted>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _context = new TestContextWithRelisted(options);
+        _service = new RelistedDetectionService(_context, NullLogger<RelistedDetectionService>.Instance);
+    }
+
+    [Fact]
+    public async Task CheckForRelistingAsync_WithNoPreviousListing_ShouldReturnNotRelisted()
+    {
+        // Arrange
+        var scrapedInfo = new ScrapedListingInfo
+        {
+            TenantId = _testTenantId,
+            ExternalId = "EXT-NEW",
+            SourceSite = "TestSite",
+            Vin = "1HGBH41JXMN109186"
+        };
+
+        // Act
+        var result = await _service.CheckForRelistingAsync(scrapedInfo);
+
+        // Assert
+        Assert.False(result.IsRelisted);
+        Assert.Null(result.PreviousListing);
+        Assert.Null(result.PreviousListingId);
+    }
+
+    [Fact]
+    public async Task CheckForRelistingAsync_WithActiveMatchingVin_ShouldReturnNotRelisted()
+    {
+        // Arrange - create an ACTIVE listing
+        var vin = "1HGBH41JXMN109186";
+        var existingListing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, vin: vin);
+        // Listing is active by default
+
+        _context.Listings.Add(existingListing);
+        await _context.SaveChangesAsync();
+
+        var scrapedInfo = new ScrapedListingInfo
+        {
+            TenantId = _testTenantId,
+            ExternalId = "EXT-002",
+            SourceSite = "TestSite",
+            Vin = vin
+        };
+
+        // Act
+        var result = await _service.CheckForRelistingAsync(scrapedInfo);
+
+        // Assert - should not be considered relisting since previous is still active
+        Assert.False(result.IsRelisted);
+    }
+
+    [Fact]
+    public async Task CheckForRelistingAsync_WithDeactivatedMatchingVin_ShouldReturnRelisted()
+    {
+        // Arrange - create a DEACTIVATED listing
+        var vin = "1HGBH41JXMN109186";
+        var existingListing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, vin: vin);
+        existingListing.Deactivate();
+
+        _context.Listings.Add(existingListing);
+        await _context.SaveChangesAsync();
+
+        // Wait to simulate time off market
+        await Task.Delay(100);
+
+        var scrapedInfo = new ScrapedListingInfo
+        {
+            TenantId = _testTenantId,
+            ExternalId = "EXT-002",
+            SourceSite = "TestSite",
+            Vin = vin,
+            Price = 24000m
+        };
+
+        // Act
+        var result = await _service.CheckForRelistingAsync(scrapedInfo);
+
+        // Assert
+        Assert.True(result.IsRelisted);
+        Assert.NotNull(result.PreviousListing);
+        Assert.Equal(existingListing.ListingId.Value, result.PreviousListingId);
+        Assert.Equal(-1000m, result.PriceDelta);
+        Assert.Equal(100.0, result.MatchConfidence);
+    }
+
+    [Fact]
+    public async Task CheckForRelistingAsync_WithDeactivatedMatchingExternalId_ShouldReturnRelisted()
+    {
+        // Arrange - create a DEACTIVATED listing
+        var externalId = "EXT-001";
+        var sourceSite = "TestSite";
+        var existingListing = Listing.Create(
+            _testTenantId, externalId, sourceSite, "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used);
+        existingListing.Deactivate();
+
+        _context.Listings.Add(existingListing);
+        await _context.SaveChangesAsync();
+
+        var scrapedInfo = new ScrapedListingInfo
+        {
+            TenantId = _testTenantId,
+            ExternalId = externalId,
+            SourceSite = sourceSite,
+            Price = 26000m
+        };
+
+        // Act
+        var result = await _service.CheckForRelistingAsync(scrapedInfo);
+
+        // Assert
+        Assert.True(result.IsRelisted);
+        Assert.Equal(1000m, result.PriceDelta);
+        Assert.Equal(95.0, result.MatchConfidence); // ExternalId match confidence
+    }
+
+    [Fact]
+    public async Task CheckForRelistingAsync_WithDifferentTenant_ShouldReturnNotRelisted()
+    {
+        // Arrange
+        var otherTenantId = Guid.NewGuid();
+        var vin = "1HGBH41JXMN109186";
+
+        var existingListing = Listing.Create(
+            otherTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, vin: vin);
+        existingListing.Deactivate();
+
+        _context.Listings.Add(existingListing);
+        await _context.SaveChangesAsync();
+
+        var scrapedInfo = new ScrapedListingInfo
+        {
+            TenantId = _testTenantId, // Different tenant
+            ExternalId = "EXT-002",
+            SourceSite = "TestSite",
+            Vin = vin
+        };
+
+        // Act
+        var result = await _service.CheckForRelistingAsync(scrapedInfo);
+
+        // Assert
+        Assert.False(result.IsRelisted);
+    }
+
+    [Fact]
+    public async Task CheckForRelistingAsync_WithNullScrapedListing_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            _service.CheckForRelistingAsync(null!));
+    }
+
+    [Fact]
+    public async Task GetStatsAsync_WithNoRelistedListings_ShouldReturnEmptyStats()
+    {
+        // Act
+        var stats = await _service.GetStatsAsync(_testTenantId);
+
+        // Assert
+        Assert.Equal(0, stats.TotalRelistedCount);
+        Assert.Equal(0, stats.ActiveRelistedCount);
+        Assert.Equal(0, stats.FrequentRelisterCount);
+    }
+
+    [Fact]
+    public async Task GetRelistedListingsAsync_WithNoRelistedListings_ShouldReturnEmptyList()
+    {
+        // Act
+        var listings = await _service.GetRelistedListingsAsync(_testTenantId);
+
+        // Assert
+        Assert.Empty(listings);
+    }
+
+    [Fact]
+    public void RelistingCheckResult_NotRelisted_ShouldHaveCorrectProperties()
+    {
+        // Act
+        var result = RelistingCheckResult.NotRelisted();
+
+        // Assert
+        Assert.False(result.IsRelisted);
+        Assert.Null(result.PreviousListing);
+        Assert.Null(result.PreviousListingId);
+        Assert.Null(result.TimeOffMarket);
+        Assert.Null(result.PriceDelta);
+    }
+
+    [Fact]
+    public void RelistingCheckResult_Relisted_ShouldCalculatePriceChangePercentage()
+    {
+        // Arrange
+        var listing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 20000m, Condition.Used);
+        listing.Deactivate();
+
+        // Act
+        var result = RelistingCheckResult.Relisted(
+            listing,
+            TimeSpan.FromDays(30),
+            -2000m, // Price dropped by 2000
+            95.0);
+
+        // Assert
+        Assert.True(result.IsRelisted);
+        Assert.Equal(-2000m, result.PriceDelta);
+        Assert.Equal(-10.0, result.PriceChangePercentage); // -2000/20000 * 100 = -10%
+        Assert.Equal(1, result.TotalRelistCount);
+    }
+
+    private class TestContextWithRelisted : DbContext, IAutomatedMarketIntelligenceToolContext
+    {
+        public TestContextWithRelisted(DbContextOptions<TestContextWithRelisted> options) : base(options)
+        {
+        }
+
+        public DbSet<Listing> Listings => Set<Listing>();
+        public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
+        public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
+        public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Listing>(entity =>
+            {
+                entity.HasKey(l => l.ListingId);
+                entity.Property(l => l.ListingId)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Ignore(l => l.DomainEvents);
+            });
+
+            modelBuilder.Entity<ReviewItem>(entity =>
+            {
+                entity.HasKey(r => r.ReviewItemId);
+                entity.Property(r => r.ReviewItemId)
+                    .HasConversion(id => id.Value, value => new ReviewItemId(value));
+                entity.Property(r => r.Listing1Id)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Property(r => r.Listing2Id)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Ignore(r => r.DomainEvents);
+            });
+
+            modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            {
+                entity.HasKey(ph => ph.PriceHistoryId);
+                entity.Property(ph => ph.PriceHistoryId)
+                    .HasConversion(id => id.Value, value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
+                entity.Property(ph => ph.ListingId)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
+            {
+                entity.HasKey(ss => ss.SearchSessionId);
+                entity.Property(ss => ss.SearchSessionId)
+                    .HasConversion(id => id.Value, value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+        }
+    }
+}

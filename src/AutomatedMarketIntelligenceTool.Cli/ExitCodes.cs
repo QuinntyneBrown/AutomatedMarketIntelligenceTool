@@ -34,4 +34,9 @@ public static class ExitCodes
     /// Scraping error - web scraping operation failure.
     /// </summary>
     public const int ScrapingError = 5;
+
+    /// <summary>
+    /// Not found - requested resource was not found.
+    /// </summary>
+    public const int NotFound = 6;
 }

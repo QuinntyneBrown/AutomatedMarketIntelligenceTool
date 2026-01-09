@@ -35,6 +35,7 @@ public class Listing
     public string? SellerPhone { get; private set; }
     public string? Description { get; private set; }
     public List<string> ImageUrls { get; private set; } = new();
+    public string? ImageHashes { get; private set; }
     public DateTime? ListingDate { get; private set; }
     public int? DaysOnMarket { get; private set; }
     public DateTime FirstSeenDate { get; private set; }
@@ -42,6 +43,8 @@ public class Listing
     public bool IsNewListing { get; private set; }
     public bool IsActive { get; private set; }
     public DateTime? DeactivatedAt { get; private set; }
+    public int RelistedCount { get; private set; }
+    public Guid? PreviousListingId { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     public Guid? LinkedVehicleId { get; private set; }
@@ -212,5 +215,24 @@ public class Listing
     public void ClearDomainEvents()
     {
         _domainEvents.Clear();
+    }
+
+    public void SetImageHashes(string? imageHashes)
+    {
+        ImageHashes = imageHashes;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void MarkAsRelisted(Guid previousListingId)
+    {
+        PreviousListingId = previousListingId;
+        RelistedCount++;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void IncrementRelistedCount()
+    {
+        RelistedCount++;
+        UpdatedAt = DateTime.UtcNow;
     }
 }
