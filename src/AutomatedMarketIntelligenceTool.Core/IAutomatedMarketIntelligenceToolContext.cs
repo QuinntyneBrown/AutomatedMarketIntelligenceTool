@@ -12,6 +12,9 @@ using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Core;
@@ -33,6 +36,9 @@ public interface IAutomatedMarketIntelligenceToolContext
     DbSet<Report> Reports { get; }
     DbSet<AuditEntry> AuditEntries { get; }
     DbSet<DeduplicationConfig> DeduplicationConfigs { get; }
+    DbSet<CustomMarket> CustomMarkets { get; }
+    DbSet<ScheduledReport> ScheduledReports { get; }
+    DbSet<ResourceThrottle> ResourceThrottles { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -13,6 +13,9 @@ using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure;
@@ -36,6 +39,9 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
     public DbSet<DeduplicationConfig> DeduplicationConfigs => Set<DeduplicationConfig>();
+    public DbSet<CustomMarket> CustomMarkets => Set<CustomMarket>();
+    public DbSet<ScheduledReport> ScheduledReports => Set<ScheduledReport>();
+    public DbSet<ResourceThrottle> ResourceThrottles => Set<ResourceThrottle>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)
@@ -64,5 +70,8 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
         modelBuilder.Entity<Dealer>().HasQueryFilter(d => d.TenantId == _tenantId);
         modelBuilder.Entity<AuditEntry>().HasQueryFilter(ae => ae.TenantId == _tenantId);
         modelBuilder.Entity<DeduplicationConfig>().HasQueryFilter(dc => dc.TenantId == _tenantId);
+        modelBuilder.Entity<CustomMarket>().HasQueryFilter(cm => cm.TenantId == _tenantId);
+        modelBuilder.Entity<ScheduledReport>().HasQueryFilter(sr => sr.TenantId == _tenantId);
+        modelBuilder.Entity<ResourceThrottle>().HasQueryFilter(rt => rt.TenantId == _tenantId);
     }
 }
