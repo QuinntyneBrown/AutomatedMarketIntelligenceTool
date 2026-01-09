@@ -96,7 +96,7 @@ public class CompareCommand : AsyncCommand<CompareCommand.Settings>
         }
 
         // Add rows for each field
-        AddComparisonRow(table, "ID", listings.Select(l => l.ListingId.Value.ToString().Substring(0, 8)).ToArray());
+        AddComparisonRow(table, "ID", listings.Select(l => l.ListingId.Value.ToString()[..Math.Min(8, l.ListingId.Value.ToString().Length)]).ToArray());
         AddComparisonRow(table, "Make", listings.Select(l => l.Make).ToArray());
         AddComparisonRow(table, "Model", listings.Select(l => l.Model).ToArray());
         AddComparisonRow(table, "Year", listings.Select(l => l.Year.ToString()).ToArray());

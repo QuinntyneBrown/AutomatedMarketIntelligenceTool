@@ -154,7 +154,7 @@ public class WatchListServiceTests
             condition: Condition.Used);
 
         _context.Listings.Add(listing);
-        _context.SaveChangesAsync().Wait();
+        _context.SaveChangesAsync().GetAwaiter().GetResult();
         return listing;
     }
 

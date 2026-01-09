@@ -118,7 +118,7 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
             var notes = watchedListing.Notes ?? "";
 
             table.AddRow(
-                listing.ListingId.Value.ToString().Substring(0, 8),
+                listing.ListingId.Value.ToString()[..Math.Min(8, listing.ListingId.Value.ToString().Length)],
                 vehicle,
                 price,
                 status,

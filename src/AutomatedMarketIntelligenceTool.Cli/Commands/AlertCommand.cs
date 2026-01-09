@@ -108,7 +108,7 @@ public class AlertCommand : AsyncCommand<AlertCommand.Settings>
             var criteria = GetCriteriaSummary(alert.GetCriteria());
 
             table.AddRow(
-                alert.AlertId.Value.ToString().Substring(0, 8),
+                alert.AlertId.Value.ToString()[..Math.Min(8, alert.AlertId.Value.ToString().Length)],
                 alert.Name,
                 status,
                 alert.TriggerCount.ToString(),

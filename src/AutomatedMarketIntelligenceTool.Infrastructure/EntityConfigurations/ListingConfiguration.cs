@@ -145,8 +145,8 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
 
         builder.Property(l => l.DealerId)
             .HasConversion(
-                id => id!.Value,
-                value => new AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.DealerId(value));
+                id => id != null ? id.Value : (Guid?)null,
+                value => value.HasValue ? new AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.DealerId(value.Value) : null);
 
         builder.HasOne(l => l.DealerEntity)
             .WithMany()

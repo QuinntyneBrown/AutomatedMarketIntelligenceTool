@@ -164,10 +164,10 @@ public class DealerTrackingService : IDealerTrackingService
             .Where(l => l.TenantId == tenantId && l.DealerId == dealerId && l.IsActive)
             .CountAsync(cancellationToken);
 
-        // Only increment if there are active listings
+        // Update dealer stats to match actual count
         if (activeListingCount > 0)
         {
-            dealer.IncrementListingCount();
+            dealer.UpdateLastSeen();
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogDebug("Updated dealer {DealerId} stats: {Count} active listings", 
