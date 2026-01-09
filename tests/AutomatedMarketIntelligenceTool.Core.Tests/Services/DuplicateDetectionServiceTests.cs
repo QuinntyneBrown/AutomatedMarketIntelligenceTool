@@ -380,6 +380,33 @@ public class DuplicateDetectionServiceTests
 
                 entity.Ignore(l => l.DomainEvents);
             });
+
+            // Configure PriceHistory entity
+            modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            {
+                entity.HasKey(ph => ph.PriceHistoryId);
+                
+                entity.Property(ph => ph.PriceHistoryId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
+
+                entity.Property(ph => ph.ListingId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new ListingId(value));
+            });
+
+            // Configure SearchSession entity
+            modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
+            {
+                entity.HasKey(ss => ss.SearchSessionId);
+                
+                entity.Property(ss => ss.SearchSessionId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
         }
     }
 }
