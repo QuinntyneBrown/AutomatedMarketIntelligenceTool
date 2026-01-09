@@ -32,6 +32,32 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CustomMarkets",
+                columns: table => new
+                {
+                    CustomMarketId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    PostalCodes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    Provinces = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CenterLatitude = table.Column<double>(type: "REAL", nullable: true),
+                    CenterLongitude = table.Column<double>(type: "REAL", nullable: true),
+                    RadiusKm = table.Column<int>(type: "INTEGER", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    ConfigurationJson = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    UpdatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomMarkets", x => x.CustomMarketId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Dealers",
                 columns: table => new
                 {
@@ -52,6 +78,49 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DeduplicationAudit",
+                columns: table => new
+                {
+                    AuditEntryId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Listing1Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Listing2Id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Decision = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Reason = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    ConfidenceScore = table.Column<decimal>(type: "TEXT", precision: 5, scale: 2, nullable: true),
+                    WasAutomatic = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ManualOverride = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    OverrideReason = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    OriginalAuditEntryId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    IsFalsePositive = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    IsFalseNegative = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    FuzzyMatchDetails = table.Column<string>(type: "TEXT", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeduplicationAudit", x => x.AuditEntryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DeduplicationConfig",
+                columns: table => new
+                {
+                    ConfigId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ConfigKey = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ConfigValue = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeduplicationConfig", x => x.ConfigId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PriceHistory",
                 columns: table => new
                 {
@@ -67,6 +136,52 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PriceHistory", x => x.PriceHistoryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reports",
+                columns: table => new
+                {
+                    ReportId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Format = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    SearchCriteria = table.Column<string>(type: "TEXT", nullable: true),
+                    FilePath = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    FileSize = table.Column<long>(type: "INTEGER", nullable: true),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CompletedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reports", x => x.ReportId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ResourceThrottles",
+                columns: table => new
+                {
+                    ResourceThrottleId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ResourceType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    MaxValue = table.Column<int>(type: "INTEGER", nullable: false),
+                    TimeWindow = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    CurrentUsage = table.Column<int>(type: "INTEGER", nullable: false),
+                    WindowStartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Action = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    WarningThresholdPercent = table.Column<int>(type: "INTEGER", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    UpdatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ResourceThrottles", x => x.ResourceThrottleId);
                 });
 
             migrationBuilder.CreateTable(
@@ -109,6 +224,44 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ReviewQueue", x => x.ReviewItemId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ScheduledReports",
+                columns: table => new
+                {
+                    ScheduledReportId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Format = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Schedule = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    ScheduledTime = table.Column<TimeSpan>(type: "TEXT", nullable: false),
+                    ScheduledDayOfWeek = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    ScheduledDayOfMonth = table.Column<int>(type: "INTEGER", nullable: true),
+                    SearchCriteriaJson = table.Column<string>(type: "TEXT", nullable: true),
+                    CustomMarketId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    OutputDirectory = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    FilenameTemplate = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    LastRunAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    NextRunAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    SuccessfulRuns = table.Column<int>(type: "INTEGER", nullable: false),
+                    FailedRuns = table.Column<int>(type: "INTEGER", nullable: false),
+                    LastErrorMessage = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    EmailRecipients = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    IncludeStatistics = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IncludePriceTrends = table.Column<bool>(type: "INTEGER", nullable: false),
+                    MaxListings = table.Column<int>(type: "INTEGER", nullable: false),
+                    RetentionCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    UpdatedBy = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ScheduledReports", x => x.ScheduledReportId);
                 });
 
             migrationBuilder.CreateTable(
@@ -345,6 +498,22 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 columns: new[] { "TenantId", "Name" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CustomMarket_Active",
+                table: "CustomMarkets",
+                columns: new[] { "TenantId", "IsActive" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomMarket_TenantId",
+                table: "CustomMarkets",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_CustomMarket_Name",
+                table: "CustomMarkets",
+                columns: new[] { "TenantId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Dealer_NormalizedName",
                 table: "Dealers",
                 column: "NormalizedName");
@@ -358,6 +527,47 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 name: "IX_Dealer_TenantNormalizedName",
                 table: "Dealers",
                 columns: new[] { "TenantId", "NormalizedName" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Audit_CreatedAt",
+                table: "DeduplicationAudit",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Audit_Decision",
+                table: "DeduplicationAudit",
+                column: "Decision");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Audit_FalsePositiveNegative",
+                table: "DeduplicationAudit",
+                columns: new[] { "TenantId", "IsFalsePositive", "IsFalseNegative" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Audit_Listing1Id",
+                table: "DeduplicationAudit",
+                column: "Listing1Id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Audit_TenantId",
+                table: "DeduplicationAudit",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Audit_TenantId_CreatedAt",
+                table: "DeduplicationAudit",
+                columns: new[] { "TenantId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DedupConfig_TenantId",
+                table: "DeduplicationConfig",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_DedupConfig_Key",
+                table: "DeduplicationConfig",
+                columns: new[] { "TenantId", "ConfigKey" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Listing_BatchDedup",
@@ -467,6 +677,37 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Report_CreatedAt",
+                table: "Reports",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Report_Status",
+                table: "Reports",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Report_TenantId",
+                table: "Reports",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ResourceThrottle_Enabled",
+                table: "ResourceThrottles",
+                columns: new[] { "TenantId", "IsEnabled" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ResourceThrottle_TenantId",
+                table: "ResourceThrottles",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_ResourceThrottle_Type",
+                table: "ResourceThrottles",
+                columns: new[] { "TenantId", "ResourceType" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ResponseCache_ExpiresAt",
                 table: "ResponseCache",
                 column: "ExpiresAt");
@@ -496,6 +737,22 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 name: "IX_Review_TenantId",
                 table: "ReviewQueue",
                 column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScheduledReport_DueReports",
+                table: "ScheduledReports",
+                columns: new[] { "Status", "NextRunAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScheduledReport_TenantId",
+                table: "ScheduledReports",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_ScheduledReport_Name",
+                table: "ScheduledReports",
+                columns: new[] { "TenantId", "Name" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Health_RecordedAt",
@@ -567,13 +824,31 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                 name: "AlertNotifications");
 
             migrationBuilder.DropTable(
+                name: "CustomMarkets");
+
+            migrationBuilder.DropTable(
+                name: "DeduplicationAudit");
+
+            migrationBuilder.DropTable(
+                name: "DeduplicationConfig");
+
+            migrationBuilder.DropTable(
                 name: "PriceHistory");
+
+            migrationBuilder.DropTable(
+                name: "Reports");
+
+            migrationBuilder.DropTable(
+                name: "ResourceThrottles");
 
             migrationBuilder.DropTable(
                 name: "ResponseCache");
 
             migrationBuilder.DropTable(
                 name: "ReviewQueue");
+
+            migrationBuilder.DropTable(
+                name: "ScheduledReports");
 
             migrationBuilder.DropTable(
                 name: "ScraperHealth");

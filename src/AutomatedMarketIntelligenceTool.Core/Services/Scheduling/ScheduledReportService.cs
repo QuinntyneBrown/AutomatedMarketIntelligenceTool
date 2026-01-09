@@ -4,6 +4,7 @@ using AutomatedMarketIntelligenceTool.Core.Services.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 
 namespace AutomatedMarketIntelligenceTool.Core.Services.Scheduling;
 
@@ -371,16 +372,34 @@ public class ScheduledReportService : IScheduledReportService
         try
         {
             // Build search criteria from JSON
-            var searchCriteria = new SearchCriteria();
+            var searchCriteria = new SearchCriteria { TenantId = tenantId };
             if (!string.IsNullOrWhiteSpace(scheduledReport.SearchCriteriaJson))
             {
-                searchCriteria = JsonSerializer.Deserialize<SearchCriteria>(scheduledReport.SearchCriteriaJson)
-                    ?? new SearchCriteria();
+                var deserialized = JsonSerializer.Deserialize<ScheduledReportSearchCriteria>(scheduledReport.SearchCriteriaJson);
+                if (deserialized != null)
+                {
+                    searchCriteria = new SearchCriteria
+                    {
+                        TenantId = tenantId,
+                        Makes = deserialized.Make != null ? new[] { deserialized.Make } : null,
+                        Models = deserialized.Model != null ? new[] { deserialized.Model } : null,
+                        YearMin = deserialized.YearMin,
+                        YearMax = deserialized.YearMax,
+                        PriceMin = deserialized.PriceMin,
+                        PriceMax = deserialized.PriceMax,
+                        MileageMin = deserialized.MileageMin,
+                        MileageMax = deserialized.MileageMax,
+                        PostalCode = deserialized.PostalCode
+                    };
+                }
             }
 
             // Get listings based on search criteria
-            var listings = await _searchService.SearchAsync(tenantId, searchCriteria, cancellationToken);
-            var listingsToInclude = listings.Take(scheduledReport.MaxListings).ToList();
+            var searchResult = await _searchService.SearchListingsAsync(searchCriteria, cancellationToken);
+            var listingsToInclude = searchResult.Listings
+                .Select(l => l.Listing)
+                .Take(scheduledReport.MaxListings)
+                .ToList();
 
             // Build report data
             var reportData = new ReportData
@@ -388,10 +407,7 @@ public class ScheduledReportService : IScheduledReportService
                 Title = scheduledReport.Name,
                 GeneratedAt = DateTime.UtcNow,
                 Listings = listingsToInclude,
-                SearchCriteria = searchCriteria,
-                IncludeStatistics = scheduledReport.IncludeStatistics,
-                IncludePriceTrends = scheduledReport.IncludePriceTrends,
-                TotalListingsFound = listings.Count
+                SearchCriteria = scheduledReport.SearchCriteriaJson
             };
 
             // Ensure output directory exists
@@ -487,7 +503,7 @@ public class ScheduledReportService : IScheduledReportService
 /// <summary>
 /// Search criteria for scheduled reports.
 /// </summary>
-public class SearchCriteria
+public class ScheduledReportSearchCriteria
 {
     public string? Make { get; set; }
     public string? Model { get; set; }

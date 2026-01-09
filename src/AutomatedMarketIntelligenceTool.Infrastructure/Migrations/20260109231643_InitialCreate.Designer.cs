@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 {
     [DbContext(typeof(AutomatedMarketIntelligenceToolContext))]
-    [Migration("20260109212645_InitialCreate")]
+    [Migration("20260109231643_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -173,6 +173,79 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                     b.ToTable("ResponseCache", (string)null);
                 });
 
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate.CustomMarket", b =>
+                {
+                    b.Property<Guid>("CustomMarketId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("CenterLatitude")
+                        .HasColumnType("REAL");
+
+                    b.Property<double?>("CenterLongitude")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("ConfigurationJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PostalCodes")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Provinces")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RadiusKm")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("CustomMarketId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_CustomMarket_TenantId");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_CustomMarket_Active");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_CustomMarket_Name");
+
+                    b.ToTable("CustomMarkets", (string)null);
+                });
+
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.Dealer", b =>
                 {
                     b.Property<Guid>("DealerId")
@@ -226,6 +299,133 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                         .HasDatabaseName("IX_Dealer_TenantNormalizedName");
 
                     b.ToTable("Dealers", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate.AuditEntry", b =>
+                {
+                    b.Property<Guid>("AuditEntryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("ConfidenceScore")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FuzzyMatchDetailsJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("FuzzyMatchDetails");
+
+                    b.Property<bool>("IsFalseNegative")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsFalsePositive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("Listing1Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("Listing2Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ManualOverride")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid?>("OriginalAuditEntryId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OverrideReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("WasAutomatic")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("AuditEntryId");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_Audit_CreatedAt");
+
+                    b.HasIndex("Decision")
+                        .HasDatabaseName("IX_Audit_Decision");
+
+                    b.HasIndex("Listing1Id")
+                        .HasDatabaseName("IX_Audit_Listing1Id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Audit_TenantId");
+
+                    b.HasIndex("TenantId", "CreatedAt")
+                        .HasDatabaseName("IX_Audit_TenantId_CreatedAt");
+
+                    b.HasIndex("TenantId", "IsFalsePositive", "IsFalseNegative")
+                        .HasDatabaseName("IX_Audit_FalsePositiveNegative");
+
+                    b.ToTable("DeduplicationAudit", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate.DeduplicationConfig", b =>
+                {
+                    b.Property<Guid>("ConfigId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConfigKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConfigValue")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ConfigId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_DedupConfig_TenantId");
+
+                    b.HasIndex("TenantId", "ConfigKey")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_DedupConfig_Key");
+
+                    b.ToTable("DeduplicationConfig", (string)null);
                 });
 
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Listing", b =>
@@ -504,6 +704,134 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                     b.ToTable("PriceHistory", (string)null);
                 });
 
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate.Report", b =>
+                {
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("FileSize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SearchCriteriaJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SearchCriteria");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ReportId");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_Report_CreatedAt");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_Report_Status");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Report_TenantId");
+
+                    b.ToTable("Reports", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate.ResourceThrottle", b =>
+                {
+                    b.Property<Guid>("ResourceThrottleId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CurrentUsage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ResourceType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TimeWindow")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("WarningThresholdPercent")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("WindowStartTime")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ResourceThrottleId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_ResourceThrottle_TenantId");
+
+                    b.HasIndex("TenantId", "IsEnabled")
+                        .HasDatabaseName("IX_ResourceThrottle_Enabled");
+
+                    b.HasIndex("TenantId", "ResourceType")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_ResourceThrottle_Type");
+
+                    b.ToTable("ResourceThrottles", (string)null);
+                });
+
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ReviewQueueAggregate.ReviewItem", b =>
                 {
                     b.Property<Guid>("ReviewItemId")
@@ -565,6 +893,124 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
                         .HasDatabaseName("IX_Review_Listings");
 
                     b.ToTable("ReviewQueue", (string)null);
+                });
+
+            modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate.ScheduledReport", b =>
+                {
+                    b.Property<Guid>("ScheduledReportId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("CustomMarketId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmailRecipients")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FailedRuns")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FilenameTemplate")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IncludePriceTrends")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IncludeStatistics")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MaxListings")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("NextRunAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OutputDirectory")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RetentionCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Schedule")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ScheduledDayOfMonth")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ScheduledDayOfWeek")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeSpan>("ScheduledTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SearchCriteriaJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SuccessfulRuns")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ScheduledReportId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_ScheduledReport_TenantId");
+
+                    b.HasIndex("Status", "NextRunAt")
+                        .HasDatabaseName("IX_ScheduledReport_DueReports");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_ScheduledReport_Name");
+
+                    b.ToTable("ScheduledReports", (string)null);
                 });
 
             modelBuilder.Entity("AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate.ScraperHealthRecord", b =>

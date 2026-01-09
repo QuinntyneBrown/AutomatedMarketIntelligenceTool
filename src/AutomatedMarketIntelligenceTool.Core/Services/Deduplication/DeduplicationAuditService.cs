@@ -172,7 +172,7 @@ public class DeduplicationAuditService : IDeduplicationAuditService
         var entry = await _context.AuditEntries
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
-                a => a.TenantId == tenantId && a.AuditEntryId == auditEntryId,
+                a => a.TenantId == tenantId && a.AuditEntryId.Value == auditEntryId,
                 cancellationToken);
 
         if (entry == null)
@@ -196,7 +196,7 @@ public class DeduplicationAuditService : IDeduplicationAuditService
         var entry = await _context.AuditEntries
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
-                a => a.TenantId == tenantId && a.AuditEntryId == auditEntryId,
+                a => a.TenantId == tenantId && a.AuditEntryId.Value == auditEntryId,
                 cancellationToken);
 
         if (entry == null)
@@ -220,7 +220,7 @@ public class DeduplicationAuditService : IDeduplicationAuditService
         var entry = await _context.AuditEntries
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
-                a => a.TenantId == tenantId && a.AuditEntryId == auditEntryId,
+                a => a.TenantId == tenantId && a.AuditEntryId.Value == auditEntryId,
                 cancellationToken);
 
         if (entry == null)
@@ -293,7 +293,7 @@ public class DeduplicationAuditService : IDeduplicationAuditService
         return await _context.AuditEntries
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
-                a => a.TenantId == tenantId && a.AuditEntryId == auditEntryId,
+                a => a.TenantId == tenantId && a.AuditEntryId.Value == auditEntryId,
                 cancellationToken);
     }
 }
