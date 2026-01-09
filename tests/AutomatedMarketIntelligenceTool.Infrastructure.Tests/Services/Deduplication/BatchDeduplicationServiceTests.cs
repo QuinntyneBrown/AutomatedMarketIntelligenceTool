@@ -1,13 +1,17 @@
+using System.Linq.Expressions;
+using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Core.Services;
-using AutomatedMarketIntelligenceTool.Core.Services.Deduplication;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Deduplication;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Deduplication;
+namespace AutomatedMarketIntelligenceTool.Infrastructure.Tests.Services.Deduplication;
 
 public class BatchDeduplicationServiceTests
 {
@@ -125,7 +129,8 @@ public class BatchDeduplicationServiceTests
                 Price = 25000 + (i * 1000),
                 Mileage = 30000 + (i * 5000),
                 City = "Toronto",
-                ListingUrl = $"https://example.com/listing/{i}"
+                ListingUrl = $"https://example.com/listing/{i}",
+                Condition = Condition.Used
             });
         }
         return listings;

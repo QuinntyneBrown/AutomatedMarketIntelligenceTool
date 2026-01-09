@@ -1,10 +1,12 @@
 using System.Diagnostics;
+using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace AutomatedMarketIntelligenceTool.Core.Services.Deduplication;
+namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Deduplication;
 
 /// <summary>
 /// Service for processing batch deduplication operations with optimized
@@ -160,7 +162,7 @@ public class BatchDeduplicationService : IBatchDeduplicationService
         // Get unique make/year combinations from input
         var makeYears = listingList
             .Where(l => !string.IsNullOrEmpty(l.Make))
-            .Select(l => (Make: l.Make!.ToUpperInvariant(), Year: l.Year ?? DateTime.Now.Year))
+            .Select(l => (Make: l.Make!.ToUpperInvariant(), Year: l.Year))
             .Distinct()
             .ToList();
 
@@ -395,9 +397,9 @@ public class BatchDeduplicationService : IBatchDeduplicationService
 
         foreach (var listing in listings)
         {
-            // Create a unique key based on VIN or ExternalId+SourceSite
-            var key = !string.IsNullOrWhiteSpace(listing.VIN)
-                ? $"VIN:{listing.VIN}"
+            // Create a unique key based on Vin or ExternalId+SourceSite
+            var key = !string.IsNullOrWhiteSpace(listing.Vin)
+                ? $"VIN:{listing.Vin}"
                 : $"{listing.SourceSite}:{listing.ExternalId}";
 
             if (seen.Add(key))
@@ -415,7 +417,7 @@ public class BatchDeduplicationService : IBatchDeduplicationService
         {
             ExternalId = listing.ExternalId ?? string.Empty,
             SourceSite = listing.SourceSite ?? string.Empty,
-            Vin = listing.VIN,
+            Vin = listing.Vin,
             TenantId = tenantId,
             Make = listing.Make,
             Model = listing.Model,
