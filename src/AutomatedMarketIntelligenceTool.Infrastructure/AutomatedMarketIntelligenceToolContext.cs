@@ -9,6 +9,7 @@ using AutomatedMarketIntelligenceTool.Core.Models.VehicleAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.WatchListAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure;
@@ -28,6 +29,7 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<AlertNotification> AlertNotifications => Set<AlertNotification>();
     public DbSet<Dealer> Dealers => Set<Dealer>();
     public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
+    public DbSet<ResponseCacheEntry> ResponseCacheEntries => Set<ResponseCacheEntry>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)

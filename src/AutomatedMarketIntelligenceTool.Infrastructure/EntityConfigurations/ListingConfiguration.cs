@@ -203,5 +203,28 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
         builder.HasIndex(l => l.RelistedCount)
             .HasDatabaseName("IX_Listing_RelistedCount")
             .HasFilter("[RelistedCount] > 0");
+
+        // Phase 5: Covering indexes for performance optimization
+
+        // Index for timestamp-based queries with tenant filtering
+        builder.HasIndex(l => new { l.CreatedAt, l.TenantId })
+            .HasDatabaseName("IX_Listing_CreatedAt_TenantId");
+
+        // Index for Make/Model/Year queries with tenant filtering
+        builder.HasIndex(l => new { l.Make, l.Model, l.Year, l.TenantId })
+            .HasDatabaseName("IX_Listing_Make_Model_Year_TenantId");
+
+        // Covering index for fuzzy matching candidate lookup
+        // This index supports blocking/bucketing queries by Make + Year range
+        builder.HasIndex(l => new { l.Make, l.Year, l.Price, l.TenantId, l.IsActive })
+            .HasDatabaseName("IX_Listing_FuzzyCandidate");
+
+        // Index for VIN lookup with tenant filtering
+        builder.HasIndex(l => new { l.Vin, l.TenantId })
+            .HasDatabaseName("IX_Listing_Vin_TenantId");
+
+        // Index for batch deduplication - active listings by make
+        builder.HasIndex(l => new { l.TenantId, l.IsActive, l.Make, l.Year })
+            .HasDatabaseName("IX_Listing_BatchDedup");
     }
 }
