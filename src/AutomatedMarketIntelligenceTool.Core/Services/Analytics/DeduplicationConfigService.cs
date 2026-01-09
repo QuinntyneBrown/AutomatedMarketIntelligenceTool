@@ -1,4 +1,5 @@
 using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 

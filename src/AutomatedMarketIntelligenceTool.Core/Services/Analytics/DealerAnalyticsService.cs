@@ -61,7 +61,7 @@ public class DealerAnalyticsService : IDealerAnalyticsService
         if (listingsWithDeactivation.Any())
         {
             var totalDays = listingsWithDeactivation
-                .Sum(l => (l.DeactivatedAt!.Value - l.FirstSeenAt).TotalDays);
+                .Sum(l => (l.DeactivatedAt!.Value - l.FirstSeenDate).TotalDays);
             avgDaysOnMarket = (int)(totalDays / listingsWithDeactivation.Count);
         }
 
@@ -177,8 +177,8 @@ public class DealerAnalyticsService : IDealerAnalyticsService
         // Group listings by date and generate snapshots
         var listings = await _context.Listings
             .Where(l => l.DealerId == dealerId && l.TenantId == tenantId)
-            .Where(l => l.FirstSeenAt >= effectiveFromDate && l.FirstSeenAt <= effectiveToDate)
-            .OrderBy(l => l.FirstSeenAt)
+            .Where(l => l.FirstSeenDate >= effectiveFromDate && l.FirstSeenDate <= effectiveToDate)
+            .OrderBy(l => l.FirstSeenDate)
             .ToListAsync(cancellationToken);
 
         // Create weekly snapshots
@@ -189,11 +189,11 @@ public class DealerAnalyticsService : IDealerAnalyticsService
         {
             var weekEnd = currentDate.AddDays(7);
             var weekListings = listings
-                .Where(l => l.FirstSeenAt >= currentDate && l.FirstSeenAt < weekEnd)
+                .Where(l => l.FirstSeenDate >= currentDate && l.FirstSeenDate < weekEnd)
                 .ToList();
 
             var activeInWeek = listings
-                .Where(l => l.FirstSeenAt < weekEnd && (!l.DeactivatedAt.HasValue || l.DeactivatedAt >= currentDate))
+                .Where(l => l.FirstSeenDate < weekEnd && (!l.DeactivatedAt.HasValue || l.DeactivatedAt >= currentDate))
                 .ToList();
 
             var deactivatedInWeek = listings
