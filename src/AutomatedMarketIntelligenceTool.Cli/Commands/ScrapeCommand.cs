@@ -117,7 +117,10 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                 PostalCode = settings.ZipCode,
                 RadiusKilometers = settings.Radius,
                 MaxPages = settings.MaxPages,
-                HeadedMode = settings.HeadedMode
+                HeadedMode = settings.HeadedMode,
+                ScreenshotOnError = settings.ScreenshotOnError,
+                ScreenshotAll = settings.ScreenshotAll,
+                SaveHtml = settings.SaveHtml
             };
 
             // Determine which scrapers to use
@@ -564,5 +567,20 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         [Description("Number of sites to scrape concurrently (default: 3, min: 1, max: 10)")]
         [DefaultValue(3)]
         public int Concurrency { get; set; } = 3;
+
+        [CommandOption("--screenshot-on-error")]
+        [Description("Capture screenshots when scraping errors occur")]
+        [DefaultValue(false)]
+        public bool ScreenshotOnError { get; set; }
+
+        [CommandOption("--screenshot-all")]
+        [Description("Capture screenshots of all pages during scraping")]
+        [DefaultValue(false)]
+        public bool ScreenshotAll { get; set; }
+
+        [CommandOption("--save-html")]
+        [Description("Save HTML source of pages for debugging")]
+        [DefaultValue(false)]
+        public bool SaveHtml { get; set; }
     }
 }

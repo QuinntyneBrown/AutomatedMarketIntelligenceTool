@@ -5,6 +5,7 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
 using AutomatedMarketIntelligenceTool.Infrastructure;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Health;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.RateLimiting;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +107,18 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     // Phase 4: Review and Relisted Detection Services
     services.AddScoped<IReviewService, ReviewService>();
     services.AddScoped<IRelistedDetectionService, RelistedDetectionService>();
+
+    // Phase 4: Health Monitoring Services
+    services.AddSingleton<IScraperHealthService, ScraperHealthService>();
+    services.AddSingleton<IDebugCaptureService>(sp =>
+    {
+        var logger = sp.GetRequiredService<ILogger<DebugCaptureService>>();
+        var debugPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AutomatedMarketIntelligenceTool",
+            "DebugArtifacts");
+        return new DebugCaptureService(logger, debugPath);
+    });
 
     // Store verbosity level for services to access
     services.AddSingleton(typeof(VerbosityLevel), verbosityLevel);
