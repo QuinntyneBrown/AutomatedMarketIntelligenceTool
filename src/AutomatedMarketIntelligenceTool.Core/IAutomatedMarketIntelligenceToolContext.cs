@@ -9,6 +9,7 @@ using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Core;
@@ -27,6 +28,7 @@ public interface IAutomatedMarketIntelligenceToolContext
     DbSet<Dealer> Dealers { get; }
     DbSet<ScraperHealthRecord> ScraperHealthRecords { get; }
     DbSet<ResponseCacheEntry> ResponseCacheEntries { get; }
+    DbSet<Report> Reports { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
