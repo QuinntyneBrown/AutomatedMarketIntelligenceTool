@@ -13,6 +13,18 @@ public class DealerAnalyticsService : IDealerAnalyticsService
     private readonly IAutomatedMarketIntelligenceToolContext _context;
     private readonly ILogger<DealerAnalyticsService> _logger;
 
+    // Reliability scoring constants
+    private const int DaysOnMarketThreshold = 60;
+    private const decimal DaysPenaltyDivisor = 10m;
+    private const decimal MaxDaysPenalty = 30m;
+    private const decimal MinActiveListingRatio = 0.5m;
+    private const decimal ActiveRatioPenaltyMultiplier = 40m;
+    private const decimal MaxRelistingPenalty = 30m;
+    private const decimal MaxActiveRatioPenalty = 20m;
+    private const decimal ConsistentInventoryBonus = 10m;
+    private const int MinListingsForBonus = 10;
+    private const int MinActiveListingsForBonus = 5;
+
     public DealerAnalyticsService(
         IAutomatedMarketIntelligenceToolContext context,
         ILogger<DealerAnalyticsService> logger)
@@ -256,35 +268,35 @@ public class DealerAnalyticsService : IDealerAnalyticsService
         // Base score starts at 100
         decimal score = 100m;
 
-        // Penalty for relisting rate (max -30 points)
+        // Penalty for relisting rate (max penalty defined by MaxRelistingPenalty)
         if (totalListings > 0)
         {
             var relistingRate = (decimal)relistedCount / totalListings;
-            score -= Math.Min(relistingRate * 100m * 0.3m, 30m);
+            score -= Math.Min(relistingRate * 100m * (MaxRelistingPenalty / 100m), MaxRelistingPenalty);
         }
 
-        // Penalty for long days on market (max -30 points)
-        // Over 60 days is considered poor
-        if (avgDaysOnMarket > 60)
+        // Penalty for long days on market (max penalty defined by MaxDaysPenalty)
+        // Over DaysOnMarketThreshold is considered poor
+        if (avgDaysOnMarket > DaysOnMarketThreshold)
         {
-            var daysPenalty = Math.Min((avgDaysOnMarket - 60) / 10m, 30m);
+            var daysPenalty = Math.Min((avgDaysOnMarket - DaysOnMarketThreshold) / DaysPenaltyDivisor, MaxDaysPenalty);
             score -= daysPenalty;
         }
 
-        // Penalty for low active listing ratio (max -20 points)
+        // Penalty for low active listing ratio (max penalty defined by MaxActiveRatioPenalty)
         if (totalListings > 0)
         {
             var activeRatio = (decimal)activeListings / totalListings;
-            if (activeRatio < 0.5m)
+            if (activeRatio < MinActiveListingRatio)
             {
-                score -= (0.5m - activeRatio) * 40m;
+                score -= (MinActiveListingRatio - activeRatio) * ActiveRatioPenaltyMultiplier;
             }
         }
 
-        // Bonus for consistent inventory (max +10 points)
-        if (totalListings >= 10 && activeListings >= 5)
+        // Bonus for consistent inventory
+        if (totalListings >= MinListingsForBonus && activeListings >= MinActiveListingsForBonus)
         {
-            score += 10m;
+            score += ConsistentInventoryBonus;
         }
 
         // Ensure score is between 0 and 100

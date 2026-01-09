@@ -13,6 +13,9 @@ public class RelistingPatternService : IRelistingPatternService
     private readonly IAutomatedMarketIntelligenceToolContext _context;
     private readonly ILogger<RelistingPatternService> _logger;
 
+    // Configuration constants for price change estimation
+    private const decimal EstimatedPriceReductionPerRelist = 0.05m;
+
     public RelistingPatternService(
         IAutomatedMarketIntelligenceToolContext context,
         ILogger<RelistingPatternService> logger)
@@ -55,7 +58,7 @@ public class RelistingPatternService : IRelistingPatternService
 
         // Price changes - estimate based on current price vs historical average
         var priceChanges = relistedListings
-            .Select(l => l.Price * -0.05m) // Assume average 5% reduction
+            .Select(l => l.Price * -EstimatedPriceReductionPerRelist) // Assume average reduction per relist
             .OrderBy(p => p)
             .ToList();
 
@@ -130,9 +133,9 @@ public class RelistingPatternService : IRelistingPatternService
             ? listingsWithTimeData.Average(l => (l.UpdatedAt!.Value - l.DeactivatedAt!.Value).TotalDays)
             : 0;
 
-        // Estimate price change as 5% reduction per relist
+        // Estimate price change per relist
         var avgPriceChangePercent = relistedListings.Any()
-            ? relistedListings.Average(l => l.RelistedCount * -5.0)
+            ? relistedListings.Average(l => l.RelistedCount * -(EstimatedPriceReductionPerRelist * 100))
             : 0;
 
         var isFrequentRelister = relistedListings.Any(l => l.RelistedCount >= 3);
@@ -148,8 +151,8 @@ public class RelistingPatternService : IRelistingPatternService
                 Year = l.Year,
                 RelistCount = l.RelistedCount,
                 CurrentPrice = l.Price,
-                OriginalPrice = l.Price * (1 + (l.RelistedCount * 0.05m)), // Estimate original price
-                PriceChange = l.Price * l.RelistedCount * -0.05m, // Estimate price change
+                OriginalPrice = l.Price * (1 + (l.RelistedCount * EstimatedPriceReductionPerRelist)), // Estimate original price
+                PriceChange = l.Price * l.RelistedCount * -EstimatedPriceReductionPerRelist, // Estimate price change
                 FirstSeenAt = l.FirstSeenDate,
                 LastRelistedAt = l.UpdatedAt
             })
@@ -182,7 +185,7 @@ public class RelistingPatternService : IRelistingPatternService
                 DealerId = g.Key,
                 RelistedCount = g.Count(),
                 AvgRelistCount = g.Average(l => l.RelistedCount),
-                AvgPriceReduction = g.Average(l => l.Price * l.RelistedCount * 0.05m) // Estimate
+                AvgPriceReduction = g.Average(l => l.Price * l.RelistedCount * EstimatedPriceReductionPerRelist) // Estimate
             })
             .ToListAsync(cancellationToken);
 
@@ -244,7 +247,7 @@ public class RelistingPatternService : IRelistingPatternService
                 Date = g.Key,
                 RelistCount = g.Count(),
                 UniqueVehicles = g.Select(l => l.LinkedVehicleId).Distinct().Count(),
-                AveragePriceChange = g.Average(l => l.Price * l.RelistedCount * -0.05m), // Estimate
+                AveragePriceChange = g.Average(l => l.Price * l.RelistedCount * -EstimatedPriceReductionPerRelist), // Estimate
                 AverageDaysOffMarket = g.Where(l => l.DeactivatedAt.HasValue && l.UpdatedAt.HasValue)
                     .Average(l => (l.UpdatedAt!.Value - l.DeactivatedAt!.Value).TotalDays)
             })

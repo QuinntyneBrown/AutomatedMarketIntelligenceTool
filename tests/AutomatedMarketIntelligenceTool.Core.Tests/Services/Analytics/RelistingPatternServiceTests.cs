@@ -195,7 +195,7 @@ public class RelistingPatternServiceTests
             listing.SetDealer(dealer2.DealerId);
             for (int j = 0; j < 3; j++)
             {
-                listing.IncrementRelistedCount());
+                listing.IncrementRelistedCount();
             }
             _context.Listings.Add(listing);
         }
@@ -208,7 +208,7 @@ public class RelistingPatternServiceTests
             listing.SetDealer(dealer1.DealerId);
             for (int j = 0; j < 3; j++)
             {
-                listing.IncrementRelistedCount());
+                listing.IncrementRelistedCount();
             }
             _context.Listings.Add(listing);
         }
@@ -265,7 +265,7 @@ public class RelistingPatternServiceTests
         var listing = Listing.Create(_testTenantId, "EXT-001", "TestSite", "https://test.com/1",
             "Mazda", "CX-5", 2021, 30000m, Condition.Used);
         listing.SetDealer(dealer.DealerId);
-        listing.IncrementRelistedCount(); // $2000 reduction = -6.67%
+        listing.IncrementRelistedCount(); // Increment relist count
         _context.Listings.Add(listing);
 
         await _context.SaveChangesAsync();
