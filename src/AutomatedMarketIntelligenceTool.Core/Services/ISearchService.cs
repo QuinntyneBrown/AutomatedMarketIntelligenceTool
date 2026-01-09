@@ -1,4 +1,5 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 
 namespace AutomatedMarketIntelligenceTool.Core.Services;
 
@@ -20,6 +21,12 @@ public class SearchCriteria
     public decimal? PriceMax { get; init; }
     public int? MileageMin { get; init; }
     public int? MileageMax { get; init; }
+    public Condition[]? Conditions { get; init; }
+    public Transmission[]? Transmissions { get; init; }
+    public FuelType[]? FuelTypes { get; init; }
+    public BodyStyle[]? BodyStyles { get; init; }
+    public string? City { get; init; }
+    public string? Province { get; init; }
     public string? PostalCode { get; init; }
     public double? RadiusKilometers { get; init; }
     public double? SearchLatitude { get; init; }

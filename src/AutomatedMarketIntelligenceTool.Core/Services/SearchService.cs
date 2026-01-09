@@ -87,6 +87,42 @@ public class SearchService : ISearchService
             query = query.Where(l => l.Mileage.HasValue && l.Mileage.Value <= criteria.MileageMax.Value);
         }
 
+        // Apply condition filter
+        if (criteria.Conditions?.Length > 0)
+        {
+            query = query.Where(l => criteria.Conditions.Contains(l.Condition));
+        }
+
+        // Apply transmission filter
+        if (criteria.Transmissions?.Length > 0)
+        {
+            query = query.Where(l => l.Transmission.HasValue && criteria.Transmissions.Contains(l.Transmission.Value));
+        }
+
+        // Apply fuel type filter
+        if (criteria.FuelTypes?.Length > 0)
+        {
+            query = query.Where(l => l.FuelType.HasValue && criteria.FuelTypes.Contains(l.FuelType.Value));
+        }
+
+        // Apply body style filter
+        if (criteria.BodyStyles?.Length > 0)
+        {
+            query = query.Where(l => l.BodyStyle.HasValue && criteria.BodyStyles.Contains(l.BodyStyle.Value));
+        }
+
+        // Apply city filter (case-insensitive)
+        if (!string.IsNullOrWhiteSpace(criteria.City))
+        {
+            query = query.Where(l => l.City != null && EF.Functions.Like(l.City, $"%{criteria.City}%"));
+        }
+
+        // Apply province filter (case-insensitive)
+        if (!string.IsNullOrWhiteSpace(criteria.Province))
+        {
+            query = query.Where(l => l.Province != null && EF.Functions.Like(l.Province, criteria.Province));
+        }
+
         // Get total count before pagination
         var totalCount = await query.CountAsync(cancellationToken);
 

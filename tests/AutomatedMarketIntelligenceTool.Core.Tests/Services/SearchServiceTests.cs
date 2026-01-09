@@ -580,6 +580,223 @@ public class SearchServiceTests
         });
     }
 
+    [Fact]
+    public async Task SearchListingsAsync_WithConditionFilter_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Conditions = new[] { Condition.Used },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => Assert.Equal(Condition.Used, l.Listing.Condition));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithMultipleConditions_ShouldReturnAllMatches()
+    {
+        // Arrange
+        await SeedTestDataAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Conditions = new[] { Condition.New, Condition.Certified },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => 
+            Assert.Contains(l.Listing.Condition, new[] { Condition.New, Condition.Certified }));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithTransmissionFilter_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataWithPhase2Fields();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Transmissions = new[] { Transmission.Automatic },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => Assert.Equal(Transmission.Automatic, l.Listing.Transmission));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithFuelTypeFilter_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataWithPhase2Fields();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            FuelTypes = new[] { FuelType.Electric },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => Assert.Equal(FuelType.Electric, l.Listing.FuelType));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithBodyStyleFilter_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataWithPhase2Fields();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            BodyStyles = new[] { BodyStyle.Sedan },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => Assert.Equal(BodyStyle.Sedan, l.Listing.BodyStyle));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithCityFilter_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataWithPhase2Fields();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            City = "Toronto",
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => Assert.Contains("Toronto", l.Listing.City ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithProvinceFilter_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataWithPhase2Fields();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Province = "ON",
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l => Assert.Equal("ON", l.Listing.Province, StringComparer.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithAllPhase2Filters_ShouldReturnMatchingListings()
+    {
+        // Arrange
+        await SeedTestDataWithPhase2Fields();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Conditions = new[] { Condition.Used },
+            Transmissions = new[] { Transmission.Automatic },
+            FuelTypes = new[] { FuelType.Gasoline },
+            BodyStyles = new[] { BodyStyle.Sedan },
+            City = "Toronto",
+            Province = "ON",
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.All(result.Listings, l =>
+        {
+            Assert.Equal(Condition.Used, l.Listing.Condition);
+            Assert.Equal(Transmission.Automatic, l.Listing.Transmission);
+            Assert.Equal(FuelType.Gasoline, l.Listing.FuelType);
+            Assert.Equal(BodyStyle.Sedan, l.Listing.BodyStyle);
+            Assert.Contains("Toronto", l.Listing.City ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal("ON", l.Listing.Province, StringComparer.OrdinalIgnoreCase);
+        });
+    }
+
+    private async Task SeedTestDataWithPhase2Fields()
+    {
+        var listings = new[]
+        {
+            Listing.Create(_testTenantId, "EXT-P2-001", "TestSite", "https://test.com/p2-1",
+                "Toyota", "Camry", 2020, 25000m, Condition.Used, 
+                mileage: 30000, city: "Toronto", province: "ON",
+                transmission: Transmission.Automatic, fuelType: FuelType.Gasoline, 
+                bodyStyle: BodyStyle.Sedan),
+            Listing.Create(_testTenantId, "EXT-P2-002", "TestSite", "https://test.com/p2-2",
+                "Tesla", "Model 3", 2022, 45000m, Condition.New, 
+                mileage: 500, city: "Vancouver", province: "BC",
+                transmission: Transmission.Automatic, fuelType: FuelType.Electric, 
+                bodyStyle: BodyStyle.Sedan),
+            Listing.Create(_testTenantId, "EXT-P2-003", "TestSite", "https://test.com/p2-3",
+                "Ford", "F-150", 2019, 35000m, Condition.Used, 
+                mileage: 45000, city: "Calgary", province: "AB",
+                transmission: Transmission.Automatic, fuelType: FuelType.Gasoline, 
+                bodyStyle: BodyStyle.Truck),
+            Listing.Create(_testTenantId, "EXT-P2-004", "TestSite", "https://test.com/p2-4",
+                "Honda", "Civic", 2021, 22000m, Condition.Certified, 
+                mileage: 15000, city: "Toronto", province: "ON",
+                transmission: Transmission.Manual, fuelType: FuelType.Gasoline, 
+                bodyStyle: BodyStyle.Sedan),
+            Listing.Create(_testTenantId, "EXT-P2-005", "TestSite", "https://test.com/p2-5",
+                "Jeep", "Wrangler", 2020, 38000m, Condition.Used, 
+                mileage: 25000, city: "Montreal", province: "QC",
+                transmission: Transmission.Automatic, fuelType: FuelType.Gasoline, 
+                bodyStyle: BodyStyle.SUV)
+        };
+
+        _context.Listings.AddRange(listings);
+        await _context.SaveChangesAsync();
+    }
+
     private async Task SeedTestDataAsync()
     {
         var listings = new[]
