@@ -49,6 +49,9 @@ The project follows Clean Architecture principles with a clear separation of con
 
 ### Web Scraping
 - Canadian automotive sites support (Autotrader.ca, Kijiji.ca)
+- Multi-browser support (Chromium, Firefox, WebKit)
+- Proxy support (HTTP/HTTPS/SOCKS5) with authentication
+- User agent rotation for improved scraping reliability
 - Rate limiting and retry logic
 - Browser automation for dynamic content
 - Intelligent duplicate detection
@@ -84,7 +87,9 @@ The project follows Clean Architecture principles with a clear separation of con
 - Playwright for e2e testing
 
 ### Database
+- SQLite (default, zero-configuration)
 - SQL Server Express
+- PostgreSQL (Phase 3)
 
 ## Getting Started
 
@@ -178,6 +183,28 @@ Check scraper status:
 car-search status --verbose
 ```
 
+### Phase 3 Advanced Features
+
+Use different browser engines:
+```bash
+car-search search --browser firefox --make Toyota
+car-search search --browser webkit --make Honda
+```
+
+Configure proxy for scraping:
+```bash
+car-search search --proxy http://proxy.example.com:8080 --make Toyota
+car-search search --proxy socks5://user:pass@proxy:1080 --make Honda
+```
+
+Use PostgreSQL database:
+```bash
+# Set environment variables
+export AMI_DB_PROVIDER=postgresql
+export AMI_CONNECTION_STRING="Host=localhost;Database=ami;Username=user;Password=pass"
+dotnet ef database update
+```
+
 ## Project Structure
 
 ```
@@ -223,6 +250,11 @@ Run backend tests:
 dotnet test
 ```
 
+Run backend tests with coverage:
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
 Run frontend unit tests:
 ```bash
 cd src/AutomatedMarketIntelligenceTool.WebApp
@@ -232,6 +264,29 @@ npm test
 Run frontend e2e tests:
 ```bash
 npm run e2e
+```
+
+### Configuration
+
+#### Database Provider Configuration
+
+The application supports multiple database providers through environment variables:
+
+**SQLite (Default):**
+```bash
+# No configuration needed - uses local SQLite database
+```
+
+**SQL Server:**
+```bash
+export AMI_DB_PROVIDER=sqlserver
+export AMI_CONNECTION_STRING="Server=localhost;Database=AMI;Trusted_Connection=True;"
+```
+
+**PostgreSQL:**
+```bash
+export AMI_DB_PROVIDER=postgresql
+export AMI_CONNECTION_STRING="Host=localhost;Database=ami;Username=user;Password=pass"
 ```
 
 ### Linting
