@@ -314,7 +314,7 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
         if (string.IsNullOrEmpty(value))
             return "";
 
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
         {
             return $"\"{value.Replace("\"", "\"\"")}\"";
         }

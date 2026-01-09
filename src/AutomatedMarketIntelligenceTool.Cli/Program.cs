@@ -77,7 +77,7 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
         config.AddCommand<ScrapeCommand>("scrape")
             .WithDescription("Scrape car listings from automotive websites")
             .WithExample("scrape", "-t", "12345678-1234-1234-1234-123456789012", "-s", "autotrader", "-m", "Toyota")
-            .WithExample("scrape", "-t", "12345678-1234-1234-1234-123456789012", "-s", "all", "-p", "M5V3L9", "-r", "50");
+            .WithExample("scrape", "-t", "12345678-1234-1234-1234-123456789012", "-s", "all", "-p", "M5V 3L9", "-r", "50");
         
         config.AddCommand<ListCommand>("list")
             .WithDescription("List saved car listings from the database with filtering and pagination")

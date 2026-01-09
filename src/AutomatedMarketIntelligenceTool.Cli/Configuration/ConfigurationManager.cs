@@ -66,8 +66,15 @@ public class ConfigurationManager
             _cachedSettings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
             return _cachedSettings;
         }
-        catch
+        catch (JsonException)
         {
+            // Invalid JSON, return default settings
+            _cachedSettings = new AppSettings();
+            return _cachedSettings;
+        }
+        catch (IOException)
+        {
+            // File access issue, return default settings
             _cachedSettings = new AppSettings();
             return _cachedSettings;
         }
@@ -190,7 +197,15 @@ public class ConfigurationManager
             SaveSettings(settings);
             return true;
         }
-        catch
+        catch (FormatException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (OverflowException)
         {
             return false;
         }
