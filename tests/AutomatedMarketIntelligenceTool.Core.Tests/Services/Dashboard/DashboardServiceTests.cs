@@ -1,5 +1,16 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+using AutomatedMarketIntelligenceTool.Core.Models.PriceHistoryAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.SearchSessionAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.SearchProfileAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.VehicleAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ReviewQueueAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.WatchListAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services.Dashboard;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -607,17 +618,18 @@ public class DashboardServiceTests
         }
 
         public DbSet<Listing> Listings => Set<Listing>();
-        public DbSet<Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Models.PriceHistoryAggregate.PriceHistory>();
-        public DbSet<Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Models.SearchSessionAggregate.SearchSession>();
-        public DbSet<Models.SearchProfileAggregate.SearchProfile> SearchProfiles => Set<Models.SearchProfileAggregate.SearchProfile>();
-        public DbSet<Models.VehicleAggregate.Vehicle> Vehicles => Set<Models.VehicleAggregate.Vehicle>();
-        public DbSet<Models.ReviewQueueAggregate.ReviewItem> ReviewItems => Set<Models.ReviewQueueAggregate.ReviewItem>();
-        public DbSet<Models.WatchListAggregate.WatchedListing> WatchedListings => Set<Models.WatchListAggregate.WatchedListing>();
-        public DbSet<Models.AlertAggregate.Alert> Alerts => Set<Models.AlertAggregate.Alert>();
-        public DbSet<Models.AlertAggregate.AlertNotification> AlertNotifications => Set<Models.AlertAggregate.AlertNotification>();
-        public DbSet<Models.DealerAggregate.Dealer> Dealers => Set<Models.DealerAggregate.Dealer>();
-        public DbSet<Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Models.ScraperHealthAggregate.ScraperHealthRecord>();
-        public DbSet<Models.CacheAggregate.ResponseCacheEntry> ResponseCacheEntries => Set<Models.CacheAggregate.ResponseCacheEntry>();
+        public DbSet<PriceHistory> PriceHistory => Set<PriceHistory>();
+        public DbSet<SearchSession> SearchSessions => Set<SearchSession>();
+        public DbSet<SearchProfile> SearchProfiles => Set<SearchProfile>();
+        public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+        public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
+        public DbSet<WatchedListing> WatchedListings => Set<WatchedListing>();
+        public DbSet<Alert> Alerts => Set<Alert>();
+        public DbSet<AlertNotification> AlertNotifications => Set<AlertNotification>();
+        public DbSet<Dealer> Dealers => Set<Dealer>();
+        public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
+        public DbSet<ResponseCacheEntry> ResponseCacheEntries => Set<ResponseCacheEntry>();
+        public DbSet<Report> Reports => Set<Report>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -634,79 +646,85 @@ public class DashboardServiceTests
                 entity.Ignore(l => l.DealerId);
             });
 
-            modelBuilder.Entity<Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            modelBuilder.Entity<PriceHistory>(entity =>
             {
                 entity.HasKey(ph => ph.PriceHistoryId);
-                entity.Property(ph => ph.PriceHistoryId).HasConversion(id => id.Value, value => new Models.PriceHistoryAggregate.PriceHistoryId(value));
+                entity.Property(ph => ph.PriceHistoryId).HasConversion(id => id.Value, value => new PriceHistoryId(value));
                 entity.Property(ph => ph.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
             });
 
-            modelBuilder.Entity<Models.SearchSessionAggregate.SearchSession>(entity =>
+            modelBuilder.Entity<SearchSession>(entity =>
             {
                 entity.HasKey(ss => ss.SearchSessionId);
-                entity.Property(ss => ss.SearchSessionId).HasConversion(id => id.Value, value => new Models.SearchSessionAggregate.SearchSessionId(value));
+                entity.Property(ss => ss.SearchSessionId).HasConversion(id => id.Value, value => new SearchSessionId(value));
             });
 
-            modelBuilder.Entity<Models.SearchProfileAggregate.SearchProfile>(entity =>
+            modelBuilder.Entity<SearchProfile>(entity =>
             {
                 entity.HasKey(sp => sp.SearchProfileId);
-                entity.Property(sp => sp.SearchProfileId).HasConversion(id => id.Value, value => Models.SearchProfileAggregate.SearchProfileId.From(value));
+                entity.Property(sp => sp.SearchProfileId).HasConversion(id => id.Value, value => SearchProfileId.From(value));
             });
 
-            modelBuilder.Entity<Models.VehicleAggregate.Vehicle>(entity =>
+            modelBuilder.Entity<Vehicle>(entity =>
             {
                 entity.HasKey(v => v.VehicleId);
-                entity.Property(v => v.VehicleId).HasConversion(id => id.Value, value => new Models.VehicleAggregate.VehicleId(value));
+                entity.Property(v => v.VehicleId).HasConversion(id => id.Value, value => new VehicleId(value));
             });
 
-            modelBuilder.Entity<Models.ReviewQueueAggregate.ReviewItem>(entity =>
+            modelBuilder.Entity<ReviewItem>(entity =>
             {
                 entity.HasKey(r => r.ReviewItemId);
-                entity.Property(r => r.ReviewItemId).HasConversion(id => id.Value, value => new Models.ReviewQueueAggregate.ReviewItemId(value));
+                entity.Property(r => r.ReviewItemId).HasConversion(id => id.Value, value => new ReviewItemId(value));
                 entity.Property(r => r.Listing1Id).HasConversion(id => id.Value, value => new ListingId(value));
                 entity.Property(r => r.Listing2Id).HasConversion(id => id.Value, value => new ListingId(value));
                 entity.Ignore(r => r.DomainEvents);
             });
 
-            modelBuilder.Entity<Models.WatchListAggregate.WatchedListing>(entity =>
+            modelBuilder.Entity<WatchedListing>(entity =>
             {
                 entity.HasKey(w => w.WatchedListingId);
-                entity.Property(w => w.WatchedListingId).HasConversion(id => id.Value, value => new Models.WatchListAggregate.WatchedListingId(value));
+                entity.Property(w => w.WatchedListingId).HasConversion(id => id.Value, value => new WatchedListingId(value));
                 entity.Property(w => w.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
                 entity.HasOne(w => w.Listing).WithMany().HasForeignKey(w => w.ListingId);
             });
 
-            modelBuilder.Entity<Models.AlertAggregate.Alert>(entity =>
+            modelBuilder.Entity<Alert>(entity =>
             {
                 entity.HasKey(a => a.AlertId);
-                entity.Property(a => a.AlertId).HasConversion(id => id.Value, value => new Models.AlertAggregate.AlertId(value));
+                entity.Property(a => a.AlertId).HasConversion(id => id.Value, value => new AlertId(value));
             });
 
-            modelBuilder.Entity<Models.AlertAggregate.AlertNotification>(entity =>
+            modelBuilder.Entity<AlertNotification>(entity =>
             {
                 entity.HasKey(an => an.NotificationId);
-                entity.Property(an => an.AlertId).HasConversion(id => id.Value, value => new Models.AlertAggregate.AlertId(value));
+                entity.Property(an => an.AlertId).HasConversion(id => id.Value, value => new AlertId(value));
                 entity.Property(an => an.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
                 entity.HasOne(an => an.Alert).WithMany().HasForeignKey(an => an.AlertId);
                 entity.HasOne(an => an.Listing).WithMany().HasForeignKey(an => an.ListingId);
             });
 
-            modelBuilder.Entity<Models.DealerAggregate.Dealer>(entity =>
+            modelBuilder.Entity<Dealer>(entity =>
             {
                 entity.HasKey(d => d.DealerId);
-                entity.Property(d => d.DealerId).HasConversion(id => id.Value, value => new Models.DealerAggregate.DealerId(value));
+                entity.Property(d => d.DealerId).HasConversion(id => id.Value, value => new DealerId(value));
             });
 
-            modelBuilder.Entity<Models.ScraperHealthAggregate.ScraperHealthRecord>(entity =>
+            modelBuilder.Entity<ScraperHealthRecord>(entity =>
             {
                 entity.HasKey(sh => sh.ScraperHealthRecordId);
-                entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(id => id.Value, value => new Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
+                entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(id => id.Value, value => new ScraperHealthRecordId(value));
             });
 
-            modelBuilder.Entity<Models.CacheAggregate.ResponseCacheEntry>(entity =>
+            modelBuilder.Entity<ResponseCacheEntry>(entity =>
             {
                 entity.HasKey(c => c.ResponseCacheEntryId);
-                entity.Property(c => c.ResponseCacheEntryId).HasConversion(id => id.Value, value => new Models.CacheAggregate.ResponseCacheEntryId(value));
+                entity.Property(c => c.ResponseCacheEntryId).HasConversion(id => id.Value, value => new ResponseCacheEntryId(value));
+            });
+
+            modelBuilder.Entity<Report>(entity =>
+            {
+                entity.HasKey(r => r.ReportId);
+                entity.Property(r => r.ReportId).HasConversion(id => id.Value, value => new ReportId(value));
             });
         }
     }

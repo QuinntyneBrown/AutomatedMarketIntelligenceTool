@@ -247,7 +247,7 @@ public class DashboardCommand : AsyncCommand<DashboardCommand.Settings>
                 .Width(60)
                 .Label("[bold]Sources[/]");
 
-            var colors = new[] { Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan };
+            var colors = new[] { Color.Green, Color.Blue, Color.Yellow, Color.Purple, Color.Aqua };
             var colorIndex = 0;
 
             foreach (var source in summary.BySource.OrderByDescending(x => x.Value).Take(8))
@@ -562,7 +562,7 @@ public class DashboardCommand : AsyncCommand<DashboardCommand.Settings>
         [CommandOption("-r|--refresh <SECONDS>")]
         [Description("Refresh interval in seconds for watch mode (default: 30)")]
         [DefaultValue(30)]
-        public int RefreshInterval { get; set; }
+        public int RefreshInterval { get; set; } = 30;
 
         [CommandOption("-c|--compact")]
         [Description("Show compact dashboard view")]
@@ -572,11 +572,11 @@ public class DashboardCommand : AsyncCommand<DashboardCommand.Settings>
         [CommandOption("--trend-days <DAYS>")]
         [Description("Number of days for trend calculations (default: 30)")]
         [DefaultValue(30)]
-        public int TrendDays { get; set; }
+        public int TrendDays { get; set; } = 30;
 
         [CommandOption("--show-health")]
         [Description("Include scraper health information")]
         [DefaultValue(true)]
-        public bool ShowHealth { get; set; }
+        public bool ShowHealth { get; set; } = true;
     }
 }

@@ -1,5 +1,5 @@
+using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services;
-using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Deduplication;
 

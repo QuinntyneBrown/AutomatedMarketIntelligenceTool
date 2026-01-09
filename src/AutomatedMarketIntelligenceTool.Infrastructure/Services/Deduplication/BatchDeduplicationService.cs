@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services;
-using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -397,7 +397,7 @@ public class BatchDeduplicationService : IBatchDeduplicationService
 
         foreach (var listing in listings)
         {
-            // Create a unique key based on Vin or ExternalId+SourceSite
+            // Create a unique key based on VIN or ExternalId+SourceSite
             var key = !string.IsNullOrWhiteSpace(listing.Vin)
                 ? $"VIN:{listing.Vin}"
                 : $"{listing.SourceSite}:{listing.ExternalId}";

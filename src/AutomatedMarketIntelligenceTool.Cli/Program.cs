@@ -124,8 +124,15 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IDataImportService, DataImportService>();
     services.AddScoped<IBackupService, BackupService>();
 
-    // Phase 5: Dashboard Services
-    services.AddScoped<IDashboardService, DashboardService>();
+    // Phase 5: Reporting Services
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerationService, 
+        AutomatedMarketIntelligenceTool.Core.Services.Reporting.ReportGenerationService>();
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.HtmlReportGenerator>();
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.PdfReportGenerator>();
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.ExcelReportGenerator>();
 
     // Add configuration
     var configuration = new ConfigurationBuilder()
@@ -224,12 +231,11 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("completion", "--shell", "zsh", "--output", "~/.zsh/completions/_car-search")
             .WithExample("completion", "-s", "powershell", "-o", "car-search-completion.ps1");
 
-        config.AddCommand<DashboardCommand>("dashboard")
-            .WithDescription("Display real-time dashboard with market insights and tracking summary")
-            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012")
-            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012", "--watch")
-            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012", "--compact")
-            .WithExample("dashboard", "-t", "12345678-1234-1234-1234-123456789012", "--watch", "--refresh", "10");
+        config.AddCommand<ReportCommand>("report")
+            .WithDescription("Generate reports in various formats (HTML, PDF, Excel)")
+            .WithExample("report", "-t", "12345678-1234-1234-1234-123456789012", "-f", "html", "-o", "report.html", "-m", "Toyota")
+            .WithExample("report", "-t", "12345678-1234-1234-1234-123456789012", "-f", "pdf", "--price-max", "30000")
+            .WithExample("report", "-t", "12345678-1234-1234-1234-123456789012", "-f", "excel", "-o", "market-report.xlsx");
 
         config.PropagateExceptions();
         config.ValidateExamples();

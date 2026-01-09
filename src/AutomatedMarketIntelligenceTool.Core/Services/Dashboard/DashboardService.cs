@@ -73,8 +73,8 @@ public class DashboardService : IDashboardService
 
         // Price changes today
         var priceChangesToday = await _context.PriceHistory
-            .Where(ph => ph.ObservedAt >= today)
-            .GroupBy(ph => new { ph.ListingId, IsDecrease = ph.Price < ph.PreviousPrice })
+            .Where(ph => ph.ObservedAt >= today && ph.PriceChange.HasValue)
+            .GroupBy(ph => new { ph.ListingId, IsDecrease = ph.PriceChange < 0 })
             .Select(g => new { g.Key.IsDecrease, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
@@ -127,7 +127,7 @@ public class DashboardService : IDashboardService
 
         // Get recent changes for watched listings
         var recentChanges = await _context.PriceHistory
-            .Where(ph => watchedListingIds.Contains(ph.ListingId.Value))
+            .Where(ph => watchedListingIds.Contains(ph.ListingId.Value) && ph.PriceChange.HasValue)
             .OrderByDescending(ph => ph.ObservedAt)
             .Take(5)
             .Join(_context.Listings,
@@ -137,8 +137,8 @@ public class DashboardService : IDashboardService
                 {
                     ListingId = l.ListingId.Value,
                     Title = $"{l.Year} {l.Make} {l.Model}",
-                    ChangeType = ph.Price < ph.PreviousPrice ? "Price Drop" : "Price Increase",
-                    Details = $"${ph.PreviousPrice:N0} → ${ph.Price:N0}",
+                    ChangeType = ph.PriceChange < 0 ? "Price Drop" : "Price Increase",
+                    Details = $"${ph.Price - ph.PriceChange!.Value:N0} → ${ph.Price:N0}",
                     ChangedAt = ph.ObservedAt
                 })
             .ToListAsync(cancellationToken);
@@ -164,16 +164,16 @@ public class DashboardService : IDashboardService
 
         // Triggered today and this week
         summary.TriggeredToday = await _context.AlertNotifications
-            .CountAsync(n => n.CreatedAt >= today, cancellationToken);
+            .CountAsync(n => n.SentAt >= today, cancellationToken);
 
         summary.TriggeredThisWeek = await _context.AlertNotifications
-            .CountAsync(n => n.CreatedAt >= weekAgo, cancellationToken);
+            .CountAsync(n => n.SentAt >= weekAgo, cancellationToken);
 
         // Recent notifications
         summary.RecentNotifications = await _context.AlertNotifications
             .Include(n => n.Alert)
             .Include(n => n.Listing)
-            .OrderByDescending(n => n.CreatedAt)
+            .OrderByDescending(n => n.SentAt)
             .Take(5)
             .Select(n => new RecentAlertNotification
             {
@@ -181,7 +181,7 @@ public class DashboardService : IDashboardService
                 AlertName = n.Alert.Name,
                 ListingId = n.ListingId.Value,
                 ListingTitle = $"{n.Listing.Year} {n.Listing.Make} {n.Listing.Model}",
-                TriggeredAt = n.CreatedAt
+                TriggeredAt = n.SentAt
             })
             .ToListAsync(cancellationToken);
 
@@ -276,13 +276,13 @@ public class DashboardService : IDashboardService
 
         // Daily breakdown of price changes
         trends.DailyPriceChanges = await _context.PriceHistory
-            .Where(ph => ph.ObservedAt >= startDate)
+            .Where(ph => ph.ObservedAt >= startDate && ph.PriceChange.HasValue)
             .GroupBy(ph => ph.ObservedAt.Date)
             .Select(g => new DailyMetric
             {
                 Date = g.Key,
                 Count = g.Count(),
-                AverageValue = g.Average(ph => Math.Abs(ph.Price - (ph.PreviousPrice ?? ph.Price)))
+                AverageValue = g.Average(ph => Math.Abs(ph.PriceChange!.Value))
             })
             .OrderBy(m => m.Date)
             .ToListAsync(cancellationToken);

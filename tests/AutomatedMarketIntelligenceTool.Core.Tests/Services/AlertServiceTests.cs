@@ -119,6 +119,7 @@ public class AlertServiceTests
         public DbSet<Core.Models.DealerAggregate.Dealer> Dealers => Set<Core.Models.DealerAggregate.Dealer>();
         public DbSet<Core.Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>();
         public DbSet<Core.Models.CacheAggregate.ResponseCacheEntry> ResponseCacheEntries => Set<Core.Models.CacheAggregate.ResponseCacheEntry>();
+        public DbSet<Core.Models.ReportAggregate.Report> Reports => Set<Core.Models.ReportAggregate.Report>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -126,15 +127,7 @@ public class AlertServiceTests
 
             // Ignore strongly-typed ID value objects
             modelBuilder.Ignore<ListingId>();
-            modelBuilder.Ignore<Core.Models.WatchListAggregate.WatchedListingId>();
-            modelBuilder.Ignore<AlertId>();
-            modelBuilder.Ignore<Core.Models.DealerAggregate.DealerId>();
-            modelBuilder.Ignore<Core.Models.ScraperHealthAggregate.ScraperHealthRecordId>();
-            modelBuilder.Ignore<Core.Models.VehicleAggregate.VehicleId>();
-            modelBuilder.Ignore<Core.Models.PriceHistoryAggregate.PriceHistoryId>();
-            modelBuilder.Ignore<Core.Models.SearchSessionAggregate.SearchSessionId>();
-            modelBuilder.Ignore<Core.Models.SearchProfileAggregate.SearchProfileId>();
-            modelBuilder.Ignore<Core.Models.ReviewQueueAggregate.ReviewItemId>();
+            // Note: Cannot ignore value types (structs) like *Id types - they are not entities
 
             modelBuilder.Entity<Listing>(entity =>
             {

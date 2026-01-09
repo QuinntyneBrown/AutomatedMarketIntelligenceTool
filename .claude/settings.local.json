@@ -5,7 +5,11 @@
       "Bash(del \"src\\AutomatedMarketIntelligenceTool.Infrastructure\\Migrations\\20260109210948_Phase5_CacheAndPerformanceIndexes.cs\")",
       "Bash(Remove-Item \"src\\AutomatedMarketIntelligenceTool.Infrastructure\\Migrations\\20260109210948_Phase5_CacheAndPerformanceIndexes.cs\" -Force)",
       "Bash(rm:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(dotnet build:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

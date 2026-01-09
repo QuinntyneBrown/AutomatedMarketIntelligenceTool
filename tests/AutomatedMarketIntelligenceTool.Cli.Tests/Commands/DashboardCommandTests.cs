@@ -9,13 +9,13 @@ namespace AutomatedMarketIntelligenceTool.Cli.Tests.Commands;
 public class DashboardCommandTests
 {
     private readonly Mock<IDashboardService> _dashboardServiceMock;
-    private readonly Mock<SignalHandler> _signalHandlerMock;
+    private readonly SignalHandler _signalHandler;
     private readonly DashboardCommand _command;
 
     public DashboardCommandTests()
     {
         _dashboardServiceMock = new Mock<IDashboardService>();
-        _signalHandlerMock = new Mock<SignalHandler>();
+        _signalHandler = SignalHandler.Instance;
 
         // Setup default mock behavior
         _dashboardServiceMock
@@ -27,7 +27,7 @@ public class DashboardCommandTests
 
         _command = new DashboardCommand(
             _dashboardServiceMock.Object,
-            _signalHandlerMock.Object,
+            _signalHandler,
             null);
     }
 
