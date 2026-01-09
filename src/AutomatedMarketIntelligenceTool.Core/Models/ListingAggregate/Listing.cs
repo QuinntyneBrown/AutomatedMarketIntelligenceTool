@@ -1,5 +1,6 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Events;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 
 namespace AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 
@@ -52,6 +53,11 @@ public class Listing
     public string? MatchMethod { get; private set; }
     public decimal? Latitude { get; private set; }
     public decimal? Longitude { get; private set; }
+    public DealerId? DealerId { get; private set; }
+    public Dealer? DealerEntity { get; private set; }
+
+    public string Location => $"{City}, {Province}".Trim(' ', ',');
+    public string Dealer => SellerName ?? "Unknown";
 
     public IReadOnlyList<object> DomainEvents => _domainEvents.AsReadOnly();
 
@@ -233,6 +239,12 @@ public class Listing
     public void IncrementRelistedCount()
     {
         RelistedCount++;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetDealer(DealerId dealerId)
+    {
+        DealerId = dealerId;
         UpdatedAt = DateTime.UtcNow;
     }
 }
