@@ -250,6 +250,7 @@ public class ListingDeactivationServiceTests
         public DbSet<Core.Models.AlertAggregate.Alert> Alerts => Set<Core.Models.AlertAggregate.Alert>();
         public DbSet<Core.Models.AlertAggregate.AlertNotification> AlertNotifications => Set<Core.Models.AlertAggregate.AlertNotification>();
         public DbSet<Core.Models.DealerAggregate.Dealer> Dealers => Set<Core.Models.DealerAggregate.Dealer>();
+        public DbSet<Core.Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -265,6 +266,10 @@ public class ListingDeactivationServiceTests
                         value => new ListingId(value));
 
                 entity.Ignore(l => l.DomainEvents);
+                entity.Ignore(l => l.Location);
+                entity.Ignore(l => l.Dealer);
+                entity.Ignore(l => l.DealerEntity);
+                entity.Ignore(l => l.DealerId);
             });
 
             modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
@@ -324,6 +329,38 @@ public class ListingDeactivationServiceTests
                 entity.Property(r => r.Listing2Id)
                     .HasConversion(id => id.Value, value => new ListingId(value));
                 entity.Ignore(r => r.DomainEvents);
+            });
+
+            modelBuilder.Entity<Core.Models.WatchListAggregate.WatchedListing>(entity =>
+            {
+                entity.HasKey(w => w.WatchedListingId);
+                entity.Property(w => w.WatchedListingId).HasConversion(id => id.Value, value => new Core.Models.WatchListAggregate.WatchedListingId(value));
+                entity.Property(w => w.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.AlertAggregate.Alert>(entity =>
+            {
+                entity.HasKey(a => a.AlertId);
+                entity.Property(a => a.AlertId).HasConversion(id => id.Value, value => new Core.Models.AlertAggregate.AlertId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.AlertAggregate.AlertNotification>(entity =>
+            {
+                entity.HasKey(an => an.NotificationId);
+                entity.Property(an => an.AlertId).HasConversion(id => id.Value, value => new Core.Models.AlertAggregate.AlertId(value));
+                entity.Property(an => an.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DealerAggregate.Dealer>(entity =>
+            {
+                entity.HasKey(d => d.DealerId);
+                entity.Property(d => d.DealerId).HasConversion(id => id.Value, value => new Core.Models.DealerAggregate.DealerId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>(entity =>
+            {
+                entity.HasKey(sh => sh.ScraperHealthRecordId);
+                entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(id => id.Value, value => new Core.Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
             });
         }
     }

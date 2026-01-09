@@ -27,6 +27,7 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<Alert> Alerts => Set<Alert>();
     public DbSet<AlertNotification> AlertNotifications => Set<AlertNotification>();
     public DbSet<Dealer> Dealers => Set<Dealer>();
+    public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)

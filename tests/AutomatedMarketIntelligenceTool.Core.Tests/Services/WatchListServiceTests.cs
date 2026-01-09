@@ -174,6 +174,7 @@ public class WatchListServiceTests
         public DbSet<Core.Models.AlertAggregate.Alert> Alerts => Set<Core.Models.AlertAggregate.Alert>();
         public DbSet<Core.Models.AlertAggregate.AlertNotification> AlertNotifications => Set<Core.Models.AlertAggregate.AlertNotification>();
         public DbSet<Core.Models.DealerAggregate.Dealer> Dealers => Set<Core.Models.DealerAggregate.Dealer>();
+        public DbSet<Core.Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -188,6 +189,7 @@ public class WatchListServiceTests
                 entity.Ignore(l => l.DomainEvents);
                 entity.Ignore(l => l.Location);
                 entity.Ignore(l => l.Dealer);
+                entity.Ignore(l => l.DealerId);
             });
 
             modelBuilder.Entity<WatchedListing>(entity =>
@@ -199,6 +201,47 @@ public class WatchListServiceTests
                 entity.Property(w => w.ListingId).HasConversion(
                     id => id.Value,
                     value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.AlertAggregate.Alert>(entity =>
+            {
+                entity.HasKey(a => a.AlertId);
+                entity.Property(a => a.AlertId).HasConversion(
+                    id => id.Value,
+                    value => new Core.Models.AlertAggregate.AlertId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.AlertAggregate.AlertNotification>(entity =>
+            {
+                entity.HasKey(an => an.NotificationId);
+                entity.Property(an => an.AlertId).HasConversion(
+                    id => id.Value,
+                    value => new Core.Models.AlertAggregate.AlertId(value));
+                entity.Property(an => an.ListingId).HasConversion(
+                    id => id.Value,
+                    value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DealerAggregate.Dealer>(entity =>
+            {
+                entity.HasKey(d => d.DealerId);
+                entity.Property(d => d.DealerId).HasConversion(
+                    id => id.Value,
+                    value => new Core.Models.DealerAggregate.DealerId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>(entity =>
+            {
+                entity.HasKey(sh => sh.ScraperHealthRecordId);
+                entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(
+                    id => id.Value,
+                    value => new Core.Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
+            {
+                entity.HasKey(v => v.VehicleId);
+                entity.Property(v => v.VehicleId).HasConversion(id => id.Value, value => new Core.Models.VehicleAggregate.VehicleId(value));
             });
         }
     }
