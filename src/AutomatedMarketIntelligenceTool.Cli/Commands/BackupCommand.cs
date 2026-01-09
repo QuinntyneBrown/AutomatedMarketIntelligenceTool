@@ -30,7 +30,7 @@ public class BackupCommand : AsyncCommand<BackupCommand.Settings>
             // Check if user wants to cleanup old backups
             if (settings.Cleanup)
             {
-                return await CleanupBackupsAsync(settings.RetentionCount);
+                return await CleanupBackupsAsync(settings.RetentionCount, settings.Yes);
             }
 
             // Check for file overwrite confirmation
@@ -129,14 +129,43 @@ public class BackupCommand : AsyncCommand<BackupCommand.Settings>
         }
     }
 
-    private async Task<int> CleanupBackupsAsync(int retentionCount)
+    private async Task<int> CleanupBackupsAsync(int retentionCount, bool skipConfirmation)
     {
         try
         {
-            AnsiConsole.MarkupLine($"[yellow]Cleaning up old backups (keeping {retentionCount} most recent)...[/]");
-            
+            // Get current backup count to show user what will be deleted
+            var backups = await _backupService.ListBackupsAsync();
+            var toDeleteCount = Math.Max(0, backups.Count - retentionCount);
+
+            if (toDeleteCount == 0)
+            {
+                AnsiConsole.MarkupLine($"[yellow]No backups to clean up. Currently have {backups.Count} backup(s), retention is set to {retentionCount}.[/]");
+                return ExitCodes.Success;
+            }
+
+            // Confirm deletion unless --yes flag is provided
+            if (!skipConfirmation)
+            {
+                var panel = new Panel(
+                    $"[yellow]This will delete {toDeleteCount} backup file(s), keeping the {retentionCount} most recent.[/]")
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Yellow)
+                    .Header("[bold yellow]Backup Cleanup[/]");
+
+                AnsiConsole.Write(panel);
+                AnsiConsole.WriteLine();
+
+                if (!AnsiConsole.Confirm("Are you sure you want to delete these backups?"))
+                {
+                    AnsiConsole.MarkupLine("[yellow]Cleanup cancelled.[/]");
+                    return ExitCodes.Success;
+                }
+            }
+
+            AnsiConsole.MarkupLine($"[dim]Cleaning up old backups (keeping {retentionCount} most recent)...[/]");
+
             var deletedCount = await _backupService.CleanupOldBackupsAsync(retentionCount);
-            
+
             if (deletedCount > 0)
             {
                 AnsiConsole.MarkupLine($"[green]✓ Deleted {deletedCount} old backup file(s).[/]");
@@ -175,5 +204,10 @@ public class BackupCommand : AsyncCommand<BackupCommand.Settings>
         [Description("Number of backups to keep when cleaning up (default: 5)")]
         [DefaultValue(5)]
         public int RetentionCount { get; set; } = 5;
+
+        [CommandOption("-y|--yes")]
+        [Description("Skip confirmation prompt for cleanup operation")]
+        [DefaultValue(false)]
+        public bool Yes { get; set; }
     }
 }
