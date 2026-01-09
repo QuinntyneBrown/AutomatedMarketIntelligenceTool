@@ -2,6 +2,7 @@ using System.ComponentModel;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scraping;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
@@ -18,6 +19,7 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
     private readonly IDuplicateDetectionService _duplicateDetectionService;
     private readonly IAutomatedMarketIntelligenceToolContext _context;
     private readonly ICorrelationIdProvider _correlationIdProvider;
+    private readonly IConcurrentScrapingEngine? _concurrentScrapingEngine;
     private readonly ILogger<ScrapeCommand> _logger;
 
     public ScrapeCommand(
@@ -25,12 +27,14 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         IDuplicateDetectionService duplicateDetectionService,
         IAutomatedMarketIntelligenceToolContext context,
         ICorrelationIdProvider correlationIdProvider,
-        ILogger<ScrapeCommand> logger)
+        ILogger<ScrapeCommand> logger,
+        IConcurrentScrapingEngine? concurrentScrapingEngine = null)
     {
         _scraperFactory = scraperFactory ?? throw new ArgumentNullException(nameof(scraperFactory));
         _duplicateDetectionService = duplicateDetectionService ?? throw new ArgumentNullException(nameof(duplicateDetectionService));
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _correlationIdProvider = correlationIdProvider ?? throw new ArgumentNullException(nameof(correlationIdProvider));
+        _concurrentScrapingEngine = concurrentScrapingEngine;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -147,12 +151,68 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
             _logger.LogInformation("Executing scraping with {ScraperCount} scraper(s)", scrapers.Count);
             AnsiConsole.MarkupLine($"[green]Starting scrape with {scrapers.Count} scraper(s)...[/]");
 
-            int totalScraped = 0;
-            int totalSaved = 0;
-            int totalDuplicates = 0;
+            ScrapeResults results;
 
-            // Execute scraping for each site
-            foreach (var scraper in scrapers)
+            // Use concurrent scraping if enabled and available
+            if (settings.Concurrency > 1 && _concurrentScrapingEngine != null && scrapers.Count > 1)
+            {
+                _logger.LogInformation(
+                    "Using concurrent scraping with concurrency level: {Concurrency}",
+                    settings.Concurrency);
+
+                results = await ExecuteConcurrentScrapingAsync(
+                    scrapers,
+                    searchParams,
+                    settings);
+            }
+            else
+            {
+                // Execute scraping sequentially for each site
+                results = await ExecuteSequentialScrapingAsync(
+                    scrapers,
+                    searchParams,
+                    settings);
+            }
+
+            // Display summary
+            var summaryTable = new Table();
+            summaryTable.Border(TableBorder.Rounded);
+            summaryTable.AddColumn("[bold]Metric[/]");
+            summaryTable.AddColumn("[bold]Count[/]");
+            summaryTable.AddRow("Total Scraped", results.TotalScraped.ToString());
+            summaryTable.AddRow("[green]New Listings Saved[/]", $"[green]{results.TotalSaved}[/]");
+            summaryTable.AddRow("[yellow]Duplicates Found[/]", $"[yellow]{results.TotalDuplicates}[/]");
+
+            AnsiConsole.Write(summaryTable);
+
+            _logger.LogInformation(
+                "Scrape operation completed. Total: {TotalScraped}, New: {TotalSaved}, Duplicates: {TotalDuplicates}",
+                results.TotalScraped,
+                results.TotalSaved,
+                results.TotalDuplicates);
+
+            return ExitCodes.Success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Scrape operation failed: {ErrorMessage}", ex.Message);
+            
+            AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            return ExitCodes.ScrapingError;
+        }
+    }
+
+    private async Task<ScrapeResults> ExecuteSequentialScrapingAsync(
+        List<ISiteScraper> scrapers,
+        SearchParameters searchParams,
+        Settings settings)
+    {
+        var totalScraped = 0;
+        var totalSaved = 0;
+        var totalDuplicates = 0;
+
+        foreach (var scraper in scrapers)
             {
                 await AnsiConsole.Progress()
                     .AutoClear(false)
@@ -273,35 +333,166 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
                             AnsiConsole.MarkupLine($"[red]Error scraping {scraper.SiteName}: {ex.Message}[/]");
                         }
                     });
-            }
-
-            // Display summary
-            var summaryTable = new Table();
-            summaryTable.Border(TableBorder.Rounded);
-            summaryTable.AddColumn("[bold]Metric[/]");
-            summaryTable.AddColumn("[bold]Count[/]");
-            summaryTable.AddRow("Total Scraped", totalScraped.ToString());
-            summaryTable.AddRow("[green]New Listings Saved[/]", $"[green]{totalSaved}[/]");
-            summaryTable.AddRow("[yellow]Duplicates Found[/]", $"[yellow]{totalDuplicates}[/]");
-
-            AnsiConsole.Write(summaryTable);
-
-            _logger.LogInformation(
-                "Scrape operation completed. Total: {TotalScraped}, New: {TotalSaved}, Duplicates: {TotalDuplicates}",
-                totalScraped,
-                totalSaved,
-                totalDuplicates);
-
-            return ExitCodes.Success;
         }
-        catch (Exception ex)
+
+        return new ScrapeResults
         {
-            _logger.LogError(ex, "Scrape operation failed: {ErrorMessage}", ex.Message);
-            
-            AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-            Console.Error.WriteLine($"Error: {ex.Message}");
-            return ExitCodes.ScrapingError;
-        }
+            TotalScraped = totalScraped,
+            TotalSaved = totalSaved,
+            TotalDuplicates = totalDuplicates
+        };
+    }
+
+    private async Task<ScrapeResults> ExecuteConcurrentScrapingAsync(
+        List<ISiteScraper> scrapers,
+        SearchParameters searchParams,
+        Settings settings)
+    {
+        var totalScraped = 0;
+        var totalSaved = 0;
+        var totalDuplicates = 0;
+
+        await AnsiConsole.Progress()
+            .AutoClear(false)
+            .Columns(
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new SpinnerColumn())
+            .StartAsync(async ctx =>
+            {
+                var progressTasks = new Dictionary<string, ProgressTask>();
+                
+                var progress = new Progress<ConcurrentScrapeProgress>(p =>
+                {
+                    if (!progressTasks.ContainsKey(p.SiteName))
+                    {
+                        progressTasks[p.SiteName] = ctx.AddTask($"[green]{p.SiteName}[/]");
+                    }
+
+                    var task = progressTasks[p.SiteName];
+                    
+                    switch (p.EventType)
+                    {
+                        case ConcurrentScrapeEventType.Started:
+                            task.Description = $"[yellow]{p.SiteName}[/] - Starting...";
+                            break;
+                        case ConcurrentScrapeEventType.Completed:
+                            task.Description = $"[green]{p.SiteName}[/] - {p.Message}";
+                            task.StopTask();
+                            break;
+                        case ConcurrentScrapeEventType.Failed:
+                            task.Description = $"[red]{p.SiteName}[/] - Failed";
+                            task.StopTask();
+                            break;
+                    }
+                });
+
+                var results = await _concurrentScrapingEngine!.ScrapeAsync(
+                    scrapers,
+                    searchParams,
+                    settings.Concurrency,
+                    progress);
+
+                // Process results
+                foreach (var result in results)
+                {
+                    if (result.Success)
+                    {
+                        var listingsList = result.Listings.ToList();
+                        totalScraped += listingsList.Count;
+
+                        _logger.LogInformation(
+                            "Processing {Count} listings from {SiteName}",
+                            listingsList.Count,
+                            result.SiteName);
+
+                        foreach (var scrapedListing in listingsList)
+                        {
+                            var scrapedListingInfo = new ScrapedListingInfo
+                            {
+                                TenantId = settings.TenantId,
+                                ExternalId = scrapedListing.ExternalId,
+                                SourceSite = scrapedListing.SourceSite,
+                                Vin = scrapedListing.Vin
+                            };
+
+                            var duplicateResult = await _duplicateDetectionService.CheckForDuplicateAsync(scrapedListingInfo);
+
+                            if (duplicateResult.IsDuplicate && duplicateResult.ExistingListingId.HasValue)
+                            {
+                                totalDuplicates++;
+                                
+                                var existingListing = await _context.Listings
+                                    .FirstOrDefaultAsync(l => l.ListingId.Value == duplicateResult.ExistingListingId.Value);
+                                
+                                if (existingListing != null && scrapedListing.Price != existingListing.Price)
+                                {
+                                    existingListing.UpdatePrice(scrapedListing.Price);
+                                    existingListing.MarkAsSeen();
+                                }
+                            }
+                            else
+                            {
+                                var listing = Core.Models.ListingAggregate.Listing.Create(
+                                    tenantId: settings.TenantId,
+                                    externalId: scrapedListing.ExternalId,
+                                    sourceSite: scrapedListing.SourceSite,
+                                    listingUrl: scrapedListing.ListingUrl,
+                                    make: scrapedListing.Make,
+                                    model: scrapedListing.Model,
+                                    year: scrapedListing.Year,
+                                    price: scrapedListing.Price,
+                                    condition: scrapedListing.Condition,
+                                    trim: scrapedListing.Trim,
+                                    mileage: scrapedListing.Mileage,
+                                    vin: scrapedListing.Vin,
+                                    city: scrapedListing.City,
+                                    province: scrapedListing.Province,
+                                    postalCode: scrapedListing.PostalCode,
+                                    currency: scrapedListing.Currency,
+                                    transmission: scrapedListing.Transmission,
+                                    fuelType: scrapedListing.FuelType,
+                                    bodyStyle: scrapedListing.BodyStyle,
+                                    drivetrain: scrapedListing.Drivetrain,
+                                    exteriorColor: scrapedListing.ExteriorColor,
+                                    interiorColor: scrapedListing.InteriorColor,
+                                    sellerType: scrapedListing.SellerType,
+                                    sellerName: scrapedListing.SellerName,
+                                    sellerPhone: scrapedListing.SellerPhone,
+                                    description: scrapedListing.Description,
+                                    imageUrls: scrapedListing.ImageUrls);
+
+                                _context.Listings.Add(listing);
+                                totalSaved++;
+                            }
+                        }
+
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "Scraping failed for {SiteName}: {ErrorMessage}",
+                            result.SiteName,
+                            result.ErrorMessage);
+                    }
+                }
+            });
+
+        return new ScrapeResults
+        {
+            TotalScraped = totalScraped,
+            TotalSaved = totalSaved,
+            TotalDuplicates = totalDuplicates
+        };
+    }
+
+    private class ScrapeResults
+    {
+        public int TotalScraped { get; init; }
+        public int TotalSaved { get; init; }
+        public int TotalDuplicates { get; init; }
     }
 
     public class Settings : CommandSettings
@@ -368,5 +559,10 @@ public class ScrapeCommand : AsyncCommand<ScrapeCommand.Settings>
         [Description("Maximum number of pages to scrape (default: 50)")]
         [DefaultValue(50)]
         public int MaxPages { get; set; } = 50;
+
+        [CommandOption("--concurrency")]
+        [Description("Number of sites to scrape concurrently (default: 3, min: 1, max: 10)")]
+        [DefaultValue(3)]
+        public int Concurrency { get; set; } = 3;
     }
 }
