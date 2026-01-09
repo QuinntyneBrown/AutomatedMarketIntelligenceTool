@@ -1,23 +1,24 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services.Throttling;
+using AutomatedMarketIntelligenceTool.Core.Tests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Sprint7;
+namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Throttling;
 
 public class ResourceThrottleServiceTests
 {
-    private readonly Sprint7TestContext _context;
+    private readonly InMemoryTestContext _context;
     private readonly ResourceThrottleService _service;
     private readonly Guid _testTenantId = Guid.NewGuid();
 
     public ResourceThrottleServiceTests()
     {
-        var options = new DbContextOptionsBuilder<Sprint7TestContext>()
+        var options = new DbContextOptionsBuilder<InMemoryTestContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new Sprint7TestContext(options);
+        _context = new InMemoryTestContext(options);
         _service = new ResourceThrottleService(_context, NullLogger<ResourceThrottleService>.Instance);
     }
 

@@ -6,14 +6,14 @@ using AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using Microsoft.EntityFrameworkCore;
 
-namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Sprint7;
+namespace AutomatedMarketIntelligenceTool.Core.Tests.TestHelpers;
 
 /// <summary>
-/// Test context for Sprint 7 service tests with in-memory database.
+/// In-memory test context for service tests with EF Core.
 /// </summary>
-public class Sprint7TestContext : DbContext, IAutomatedMarketIntelligenceToolContext
+public class InMemoryTestContext : DbContext, IAutomatedMarketIntelligenceToolContext
 {
-    public Sprint7TestContext(DbContextOptions<Sprint7TestContext> options) : base(options)
+    public InMemoryTestContext(DbContextOptions<InMemoryTestContext> options) : base(options)
     {
     }
 

@@ -1,23 +1,24 @@
 using AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services.CustomMarkets;
+using AutomatedMarketIntelligenceTool.Core.Tests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Sprint7;
+namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.CustomMarkets;
 
 public class CustomMarketServiceTests
 {
-    private readonly Sprint7TestContext _context;
+    private readonly InMemoryTestContext _context;
     private readonly CustomMarketService _service;
     private readonly Guid _testTenantId = Guid.NewGuid();
 
     public CustomMarketServiceTests()
     {
-        var options = new DbContextOptionsBuilder<Sprint7TestContext>()
+        var options = new DbContextOptionsBuilder<InMemoryTestContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new Sprint7TestContext(options);
+        _context = new InMemoryTestContext(options);
         _service = new CustomMarketService(_context, NullLogger<CustomMarketService>.Instance);
     }
 

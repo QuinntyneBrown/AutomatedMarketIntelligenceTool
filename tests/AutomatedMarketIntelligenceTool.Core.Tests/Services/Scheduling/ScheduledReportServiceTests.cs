@@ -2,15 +2,16 @@ using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services.Scheduling;
 using AutomatedMarketIntelligenceTool.Core.Services.Reporting;
+using AutomatedMarketIntelligenceTool.Core.Tests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
-namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Sprint7;
+namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Scheduling;
 
 public class ScheduledReportServiceTests
 {
-    private readonly Sprint7TestContext _context;
+    private readonly InMemoryTestContext _context;
     private readonly ScheduledReportService _service;
     private readonly Mock<IReportGenerationService> _mockReportService;
     private readonly Mock<ISearchService> _mockSearchService;
@@ -18,11 +19,11 @@ public class ScheduledReportServiceTests
 
     public ScheduledReportServiceTests()
     {
-        var options = new DbContextOptionsBuilder<Sprint7TestContext>()
+        var options = new DbContextOptionsBuilder<InMemoryTestContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new Sprint7TestContext(options);
+        _context = new InMemoryTestContext(options);
         _mockReportService = new Mock<IReportGenerationService>();
         _mockSearchService = new Mock<ISearchService>();
 
