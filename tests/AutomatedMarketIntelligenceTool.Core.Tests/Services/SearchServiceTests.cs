@@ -819,6 +819,202 @@ public class SearchServiceTests
         await _context.SaveChangesAsync();
     }
 
+    [Fact]
+    public async Task SearchListingsAsync_WithPriceHistory_ShouldPopulatePriceChangeInfo()
+    {
+        // Arrange
+        var listing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, mileage: 30000);
+        
+        _context.Listings.Add(listing);
+        await _context.SaveChangesAsync();
+
+        // Add a price history record
+        var priceHistory = Core.Models.PriceHistoryAggregate.PriceHistory.Create(
+            _testTenantId,
+            listing.ListingId,
+            25000m,
+            27000m); // Previous price was $27,000
+        
+        _context.PriceHistory.Add(priceHistory);
+        await _context.SaveChangesAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Makes = new[] { "Toyota" },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result.Listings);
+        
+        var searchResult = result.Listings[0];
+        Assert.NotNull(searchResult.PriceChange);
+        Assert.Equal(27000m, searchResult.PriceChange.PreviousPrice);
+        Assert.Equal(25000m, searchResult.PriceChange.CurrentPrice);
+        Assert.Equal(-2000m, searchResult.PriceChange.PriceChange);
+        Assert.Equal(-7.41m, searchResult.PriceChange.ChangePercentage);
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithNoPriceHistory_ShouldHaveNullPriceChange()
+    {
+        // Arrange
+        var listing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, mileage: 30000);
+        
+        _context.Listings.Add(listing);
+        await _context.SaveChangesAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Makes = new[] { "Toyota" },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result.Listings);
+        Assert.Null(result.Listings[0].PriceChange);
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_ShouldSetNewListingsCount()
+    {
+        // Arrange
+        var newListing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, mileage: 30000);
+        
+        var oldListing = Listing.Create(
+            _testTenantId, "EXT-002", "TestSite", "https://test.com/2",
+            "Honda", "Civic", 2021, 22000m, Condition.Used, mileage: 15000);
+        
+        // Mark the second listing as not new by updating it
+        typeof(Listing).GetProperty("IsNewListing")!.SetValue(oldListing, false);
+        
+        _context.Listings.AddRange(newListing, oldListing);
+        await _context.SaveChangesAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(1, result.NewListingsCount);
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_ShouldSetPriceChangesCount()
+    {
+        // Arrange
+        var listing1 = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, mileage: 30000);
+        
+        var listing2 = Listing.Create(
+            _testTenantId, "EXT-002", "TestSite", "https://test.com/2",
+            "Honda", "Civic", 2021, 22000m, Condition.Used, mileage: 15000);
+        
+        _context.Listings.AddRange(listing1, listing2);
+        await _context.SaveChangesAsync();
+
+        // Add price history for listing1 only
+        var priceHistory = Core.Models.PriceHistoryAggregate.PriceHistory.Create(
+            _testTenantId,
+            listing1.ListingId,
+            25000m,
+            27000m);
+        
+        _context.PriceHistory.Add(priceHistory);
+        await _context.SaveChangesAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(1, result.PriceChangesCount);
+    }
+
+    [Fact]
+    public async Task SearchListingsAsync_WithMultiplePriceHistories_ShouldUseLatest()
+    {
+        // Arrange
+        var listing = Listing.Create(
+            _testTenantId, "EXT-001", "TestSite", "https://test.com/1",
+            "Toyota", "Camry", 2020, 25000m, Condition.Used, mileage: 30000);
+        
+        _context.Listings.Add(listing);
+        await _context.SaveChangesAsync();
+
+        // Add multiple price history records
+        var oldHistory = Core.Models.PriceHistoryAggregate.PriceHistory.Create(
+            _testTenantId,
+            listing.ListingId,
+            27000m,
+            28000m);
+        
+        // Use reflection to set an older ObservedAt time
+        typeof(Core.Models.PriceHistoryAggregate.PriceHistory)
+            .GetProperty("ObservedAt")!
+            .SetValue(oldHistory, DateTime.UtcNow.AddDays(-2));
+        
+        var newHistory = Core.Models.PriceHistoryAggregate.PriceHistory.Create(
+            _testTenantId,
+            listing.ListingId,
+            25000m,
+            27000m);
+        
+        _context.PriceHistory.AddRange(oldHistory, newHistory);
+        await _context.SaveChangesAsync();
+
+        var criteria = new SearchCriteria
+        {
+            TenantId = _testTenantId,
+            Makes = new[] { "Toyota" },
+            PageSize = 10
+        };
+
+        // Act
+        var result = await _service.SearchListingsAsync(criteria);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result.Listings);
+        
+        var searchResult = result.Listings[0];
+        Assert.NotNull(searchResult.PriceChange);
+        // Should use the latest price change (27000 -> 25000)
+        Assert.Equal(27000m, searchResult.PriceChange.PreviousPrice);
+        Assert.Equal(25000m, searchResult.PriceChange.CurrentPrice);
+    }
+
     private class TestContext : DbContext, IAutomatedMarketIntelligenceToolContext
     {
         public TestContext(DbContextOptions<TestContext> options) : base(options)
