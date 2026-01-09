@@ -5,10 +5,12 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
 using AutomatedMarketIntelligenceTool.Infrastructure;
-using AutomatedMarketIntelligenceTool.Infrastructure.Services.Health;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Backup;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Import;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.RateLimiting;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -20,7 +22,7 @@ var verbosityLevel = VerbosityHelper.ParseFromArgs(args);
 var logLevel = VerbosityHelper.ToLogEventLevel(verbosityLevel);
 
 // Load configuration for log directory
-var configManager = new ConfigurationManager();
+var configManager = new AutomatedMarketIntelligenceTool.Cli.Configuration.ConfigurationManager();
 var appSettings = configManager.LoadSettings();
 var logDirectory = appSettings.Verbosity.LogDirectory;
 var retainDays = appSettings.Verbosity.RetainDays;
@@ -108,10 +110,18 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IReviewService, ReviewService>();
     services.AddScoped<IRelistedDetectionService, RelistedDetectionService>();
 
-    // Phase 4: User Feature Services
-    services.AddScoped<IWatchListService, WatchListService>();
-    services.AddScoped<IAlertService, AlertService>();
-    services.AddScoped<IDealerTrackingService, DealerTrackingService>();
+    // Phase 4: Data Operations Services
+    services.AddScoped<IDataImportService, DataImportService>();
+    services.AddScoped<IBackupService, BackupService>();
+
+    // Add configuration
+    var configuration = new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:DefaultConnection"] = "Data Source=car-search.db"
+        })
+        .Build();
+    services.AddSingleton<IConfiguration>(configuration);
 
     // Store verbosity level for services to access
     services.AddSingleton(typeof(VerbosityLevel), verbosityLevel);
@@ -174,29 +184,23 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("show", "<listing-id>", "-t", "12345678-1234-1234-1234-123456789012")
             .WithExample("show", "<listing-id>", "-t", "12345678-1234-1234-1234-123456789012", "--with-history");
 
-        // Phase 4: User Feature Commands
-        config.AddCommand<ReviewCommand>("review")
-            .WithDescription("Manage the review queue for near-match duplicates")
-            .WithExample("review", "list")
-            .WithExample("review", "resolve", "<review-id>", "--same-vehicle")
-            .WithExample("review", "dismiss", "<review-id>");
+        config.AddCommand<ImportCommand>("import")
+            .WithDescription("Import car listings from CSV or JSON files")
+            .WithExample("import", "listings.csv", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("import", "listings.json", "-t", "12345678-1234-1234-1234-123456789012", "--format", "json")
+            .WithExample("import", "listings.csv", "-t", "12345678-1234-1234-1234-123456789012", "--dry-run");
 
-        config.AddCommand<WatchCommand>("watch")
-            .WithDescription("Manage the watch list")
-            .WithExample("watch", "list", "-t", "12345678-1234-1234-1234-123456789012")
-            .WithExample("watch", "add", "--listing-id", "<listing-id>", "--notes", "Great deal")
-            .WithExample("watch", "remove", "--listing-id", "<listing-id>");
+        config.AddCommand<BackupCommand>("backup")
+            .WithDescription("Create database backups or manage existing backups")
+            .WithExample("backup")
+            .WithExample("backup", "-o", "/path/to/backup.db")
+            .WithExample("backup", "--list")
+            .WithExample("backup", "--cleanup", "--retention", "5");
 
-        config.AddCommand<CompareCommand>("compare")
-            .WithDescription("Compare multiple listings side-by-side")
-            .WithExample("compare", "<listing-id-1>", "<listing-id-2>")
-            .WithExample("compare", "<listing-id-1>", "<listing-id-2>", "<listing-id-3>");
-
-        config.AddCommand<AlertCommand>("alert")
-            .WithDescription("Manage alerts for listing notifications")
-            .WithExample("alert", "list")
-            .WithExample("alert", "create", "--name", "cheap-camry", "-m", "Toyota", "--model", "Camry", "--price-max", "15000")
-            .WithExample("alert", "delete", "--alert-id", "<alert-id>");
+        config.AddCommand<RestoreCommand>("restore")
+            .WithDescription("Restore database from a backup file")
+            .WithExample("restore", "/path/to/backup.db")
+            .WithExample("restore", "/path/to/backup.db", "--yes");
 
         config.PropagateExceptions();
         config.ValidateExamples();
