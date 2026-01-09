@@ -32,7 +32,7 @@ public class BackupServiceTests : IDisposable
         {
             ["ConnectionStrings:DefaultConnection"] = $"Data Source={_testDbPath}"
         });
-        _mockConfiguration = configBuilder.Build() as IConfiguration ?? throw new InvalidOperationException();
+        _configuration = configBuilder.Build() as IConfiguration ?? throw new InvalidOperationException();
 
         _logger = new LoggerFactory().CreateLogger<BackupService>();
     }
