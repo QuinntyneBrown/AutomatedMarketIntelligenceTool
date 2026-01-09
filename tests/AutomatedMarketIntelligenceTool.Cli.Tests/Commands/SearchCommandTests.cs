@@ -17,6 +17,7 @@ public class SearchCommandTests
         settings.Format.Should().Be("table");
         settings.Page.Should().Be(1);
         settings.PageSize.Should().Be(30);
+        settings.Interactive.Should().BeFalse();
     }
 
     [Fact]
@@ -88,5 +89,48 @@ public class SearchCommandTests
 
         // Assert
         settings.Should().BeAssignableTo<CommandSettings>();
+    }
+
+    [Fact]
+    public void Settings_Interactive_CanBeEnabled()
+    {
+        // Arrange
+        var settings = new SearchCommand.Settings();
+
+        // Act
+        settings.Interactive = true;
+
+        // Assert
+        settings.Interactive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Settings_Interactive_DefaultsToFalse()
+    {
+        // Arrange & Act
+        var settings = new SearchCommand.Settings();
+
+        // Assert
+        settings.Interactive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Settings_Interactive_CanBeSetWithAllOtherProperties()
+    {
+        // Arrange
+        var tenantId = Guid.NewGuid();
+        var settings = new SearchCommand.Settings();
+
+        // Act
+        settings.TenantId = tenantId;
+        settings.Interactive = true;
+        settings.Makes = new[] { "Toyota" };
+        settings.Format = "json";
+
+        // Assert
+        settings.TenantId.Should().Be(tenantId);
+        settings.Interactive.Should().BeTrue();
+        settings.Makes.Should().BeEquivalentTo(new[] { "Toyota" });
+        settings.Format.Should().Be("json");
     }
 }
