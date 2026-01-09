@@ -1,6 +1,7 @@
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+using AutomatedMarketIntelligenceTool.Core.Models.ScrapedListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.EntityFrameworkCore;

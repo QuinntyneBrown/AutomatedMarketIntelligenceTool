@@ -229,19 +229,19 @@ public class HtmlReportGenerator : IReportGenerator
                 {{if statistics.average_price}}
                 <div class=""stat-card"">
                     <div class=""stat-label"">Average Price</div>
-                    <div class=""stat-value"">${{ statistics.average_price | format '%0.2f' }}</div>
+                    <div class=""stat-value"">${{ statistics.average_price | math.format ""0.00"" }}</div>
                 </div>
                 {{end}}
                 {{if statistics.median_price}}
                 <div class=""stat-card"">
                     <div class=""stat-label"">Median Price</div>
-                    <div class=""stat-value"">${{ statistics.median_price | format '%0.2f' }}</div>
+                    <div class=""stat-value"">${{ statistics.median_price | math.format ""0.00"" }}</div>
                 </div>
                 {{end}}
                 {{if statistics.average_mileage}}
                 <div class=""stat-card"">
                     <div class=""stat-label"">Average Mileage</div>
-                    <div class=""stat-value"">{{ statistics.average_mileage | format '%0.0f' }} mi</div>
+                    <div class=""stat-value"">{{ statistics.average_mileage | math.format ""0"" }} mi</div>
                 </div>
                 {{end}}
             </div>
@@ -269,8 +269,8 @@ public class HtmlReportGenerator : IReportGenerator
                         <td>{{ listing.year }}</td>
                         <td>{{ listing.make }}</td>
                         <td>{{ listing.model }}</td>
-                        <td class=""price"">${{ listing.price | format '%0.2f' }}</td>
-                        <td>{{ listing.mileage | format '%0.0f' }} mi</td>
+                        <td class=""price"">${{ listing.price | math.format ""0.00"" }}</td>
+                        <td>{{ listing.mileage | math.format ""0"" }} mi</td>
                         <td>{{ listing.location }}</td>
                         <td>{{ listing.source }}</td>
                     </tr>

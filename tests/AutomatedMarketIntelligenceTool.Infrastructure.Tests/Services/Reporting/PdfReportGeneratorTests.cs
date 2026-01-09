@@ -57,9 +57,9 @@ public class PdfReportGeneratorTests
         var tenantId = Guid.NewGuid();
         
         var listing = Listing.Create(tenantId, "EXT-001", "autotrader",
-            "https://example.com/1", "Toyota", "Camry", 2022, 25000m, Condition.Used);
-        listing.UpdateLocation("Los Angeles, CA", 34.0522m, -118.2437m);
-        listing.UpdateMileage(15000);
+            "https://example.com/1", "Toyota", "Camry", 2022, 25000m, Condition.Used,
+            mileage: 15000, city: "Los Angeles", province: "CA");
+        listing.SetLocation(34.0522m, -118.2437m);
 
         var reportData = new ReportData
         {
@@ -113,8 +113,8 @@ public class PdfReportGeneratorTests
         for (int i = 0; i < 150; i++)
         {
             var listing = Listing.Create(tenantId, $"EXT-{i:D3}", "autotrader",
-                $"https://example.com/{i}", "Toyota", "Camry", 2020 + (i % 5), 20000m + (i * 100), Condition.Used);
-            listing.UpdateMileage(10000 + (i * 500));
+                $"https://example.com/{i}", "Toyota", "Camry", 2020 + (i % 5), 20000m + (i * 100), Condition.Used,
+                mileage: 10000 + (i * 500));
             listings.Add(listing);
         }
 

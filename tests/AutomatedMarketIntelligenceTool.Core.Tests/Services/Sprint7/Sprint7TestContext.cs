@@ -1,5 +1,14 @@
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.PriceHistoryAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ReviewQueueAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.SearchSessionAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.SearchProfileAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.VehicleAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.WatchListAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate;
@@ -21,16 +30,16 @@ public class Sprint7TestContext : DbContext, IAutomatedMarketIntelligenceToolCon
     }
 
     public DbSet<Listing> Listings => Set<Listing>();
-    public DbSet<Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Models.PriceHistoryAggregate.PriceHistory>();
-    public DbSet<Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Models.SearchSessionAggregate.SearchSession>();
-    public DbSet<Models.SearchProfileAggregate.SearchProfile> SearchProfiles => Set<Models.SearchProfileAggregate.SearchProfile>();
-    public DbSet<Models.VehicleAggregate.Vehicle> Vehicles => Set<Models.VehicleAggregate.Vehicle>();
-    public DbSet<Models.ReviewQueueAggregate.ReviewItem> ReviewItems => Set<Models.ReviewQueueAggregate.ReviewItem>();
-    public DbSet<Models.WatchListAggregate.WatchedListing> WatchedListings => Set<Models.WatchListAggregate.WatchedListing>();
-    public DbSet<Models.AlertAggregate.Alert> Alerts => Set<Models.AlertAggregate.Alert>();
-    public DbSet<Models.AlertAggregate.AlertNotification> AlertNotifications => Set<Models.AlertAggregate.AlertNotification>();
-    public DbSet<Models.DealerAggregate.Dealer> Dealers => Set<Models.DealerAggregate.Dealer>();
-    public DbSet<Models.ScraperHealthAggregate.ScraperHealthRecord> ScraperHealthRecords => Set<Models.ScraperHealthAggregate.ScraperHealthRecord>();
+    public DbSet<PriceHistory> PriceHistory => Set<PriceHistory>();
+    public DbSet<SearchSession> SearchSessions => Set<SearchSession>();
+    public DbSet<SearchProfile> SearchProfiles => Set<SearchProfile>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
+    public DbSet<WatchedListing> WatchedListings => Set<WatchedListing>();
+    public DbSet<Alert> Alerts => Set<Alert>();
+    public DbSet<AlertNotification> AlertNotifications => Set<AlertNotification>();
+    public DbSet<Dealer> Dealers => Set<Dealer>();
+    public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
     public DbSet<ResponseCacheEntry> ResponseCacheEntries => Set<ResponseCacheEntry>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();

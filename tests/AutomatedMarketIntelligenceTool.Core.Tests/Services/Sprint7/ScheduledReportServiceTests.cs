@@ -1,5 +1,6 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.Scheduling;
 using AutomatedMarketIntelligenceTool.Core.Services.Reporting;
 using Microsoft.EntityFrameworkCore;

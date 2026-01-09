@@ -438,8 +438,8 @@ public class ScheduleCommand : AsyncCommand<ScheduleCommand.Settings>
         [DefaultValue("daily")]
         public string? ScheduleType { get; set; } = "daily";
 
-        [CommandOption("--time <HH:MM>")]
-        [Description("Scheduled time (UTC)")]
+        [CommandOption("--time <TIME>")]
+        [Description("Scheduled time in HH:MM format (UTC)")]
         [DefaultValue("06:00")]
         public string? Time { get; set; } = "06:00";
 
