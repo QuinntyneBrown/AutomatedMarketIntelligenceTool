@@ -245,6 +245,7 @@ public class RelistedDetectionServiceTests
         public DbSet<Listing> Listings => Set<Listing>();
         public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
         public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
+        public DbSet<Core.Models.VehicleAggregate.Vehicle> Vehicles => Set<Core.Models.VehicleAggregate.Vehicle>();
         public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -285,6 +286,14 @@ public class RelistedDetectionServiceTests
                 entity.HasKey(ss => ss.SearchSessionId);
                 entity.Property(ss => ss.SearchSessionId)
                     .HasConversion(id => id.Value, value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
+            {
+                entity.HasKey(v => v.VehicleId);
+                entity.Property(v => v.VehicleId)
+                    .HasConversion(id => id.Value, value => new Core.Models.VehicleAggregate.VehicleId(value));
+                entity.Ignore(v => v.DomainEvents);
             });
         }
     }
