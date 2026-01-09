@@ -1,5 +1,7 @@
 # AutomatedMarketIntelligenceTool
 
+[![PR Validation](https://github.com/QuinntyneBrown/AutomatedMarketIntelligenceTool/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/QuinntyneBrown/AutomatedMarketIntelligenceTool/actions/workflows/pr-validation.yml)
+
 A comprehensive market intelligence solution for automated car listing search, web scraping, and analysis across Canadian automotive markets. This tool provides a CLI interface, REST API, and web application for gathering and analyzing automotive market data from Canadian platforms.
 
 ## Overview
