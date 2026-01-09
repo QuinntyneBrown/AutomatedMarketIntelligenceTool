@@ -48,7 +48,9 @@ The project follows Clean Architecture principles with a clear separation of con
 - Graceful signal handling
 
 ### Web Scraping
-- Canadian automotive sites support (Autotrader.ca, Kijiji.ca)
+- Support for 10+ automotive sites:
+  - Canadian: Autotrader.ca, Kijiji.ca, CarGurus.ca, Clutch.ca, Auto123.com, CarFax.ca
+  - US/North America: CarMax.com, Carvana.com, Vroom.com, TrueCar.com
 - Multi-browser support (Chromium, Firefox, WebKit)
 - Proxy support (HTTP/HTTPS/SOCKS5) with authentication
 - User agent rotation for improved scraping reliability
