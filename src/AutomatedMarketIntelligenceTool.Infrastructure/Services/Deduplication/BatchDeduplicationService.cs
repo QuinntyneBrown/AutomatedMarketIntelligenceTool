@@ -11,7 +11,7 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Deduplication;
 /// <summary>
 /// Service for processing batch deduplication operations with optimized
 /// blocking/bucketing strategies for improved performance.
-/// Target: &lt;20% overhead compared to baseline.
+/// Target: less than 20% overhead compared to baseline.
 /// </summary>
 public class BatchDeduplicationService : IBatchDeduplicationService
 {

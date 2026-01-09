@@ -272,7 +272,7 @@ public class CandidateBlockIndexTests
     }
 
     [Fact]
-    public void AddCandidate_MultipleSameMakeYear_AddsTaSameBlock()
+    public void AddCandidate_MultipleSameMakeYear_AddsToSameBlock()
     {
         var index = new CandidateBlockIndex();
 
