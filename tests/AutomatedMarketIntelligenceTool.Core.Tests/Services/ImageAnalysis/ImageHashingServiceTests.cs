@@ -320,7 +320,7 @@ public class ImageHashingServiceTests
             }
         }
         using var ms = new MemoryStream();
-        image.SaveAsPng(ms);
+        image.Save(ms, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
         return ms.ToArray();
     }
 

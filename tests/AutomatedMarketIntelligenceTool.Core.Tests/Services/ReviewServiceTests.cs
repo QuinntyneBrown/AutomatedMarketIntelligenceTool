@@ -368,7 +368,6 @@ public class ReviewServiceTests
                 entity.HasKey(v => v.VehicleId);
                 entity.Property(v => v.VehicleId)
                     .HasConversion(id => id.Value, value => new Core.Models.VehicleAggregate.VehicleId(value));
-                entity.Ignore(v => v.DomainEvents);
             });
         }
     }

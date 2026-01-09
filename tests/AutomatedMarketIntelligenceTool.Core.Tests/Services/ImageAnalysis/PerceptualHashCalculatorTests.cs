@@ -58,7 +58,7 @@ public class PerceptualHashCalculatorTests
     public void CalculateHash_WithNullData_ShouldThrowArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => _calculator.CalculateHash(null!));
+        Assert.Throws<ArgumentException>(() => _calculator.CalculateHash((byte[])null!));
     }
 
     [Fact]
@@ -293,7 +293,7 @@ public class PerceptualHashCalculatorTests
         }
 
         using var ms = new MemoryStream();
-        image.SaveAsPng(ms);
+        image.Save(ms, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
         return ms.ToArray();
     }
 }
