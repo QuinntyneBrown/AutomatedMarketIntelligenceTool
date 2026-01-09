@@ -12,6 +12,13 @@ public class Dealer
     public int ListingCount { get; private set; }
     public DateTime FirstSeenAt { get; private set; }
     public DateTime LastSeenAt { get; private set; }
+    
+    // Phase 5: Analytics fields
+    public decimal? ReliabilityScore { get; private set; }
+    public int? AvgDaysOnMarket { get; private set; }
+    public int TotalListingsHistorical { get; private set; }
+    public bool FrequentRelisterFlag { get; private set; }
+    public DateTime? LastAnalyzedAt { get; private set; }
 
     private Dealer() { }
 
@@ -33,7 +40,9 @@ public class Dealer
             Phone = phone,
             ListingCount = 0,
             FirstSeenAt = DateTime.UtcNow,
-            LastSeenAt = DateTime.UtcNow
+            LastSeenAt = DateTime.UtcNow,
+            TotalListingsHistorical = 0,
+            FrequentRelisterFlag = false
         };
     }
 
@@ -53,6 +62,34 @@ public class Dealer
         City = city ?? City;
         State = state ?? State;
         Phone = phone ?? Phone;
+    }
+
+    /// <summary>
+    /// Updates analytics metrics for this dealer.
+    /// </summary>
+    public void UpdateAnalytics(
+        decimal reliabilityScore,
+        int avgDaysOnMarket,
+        int totalListingsHistorical,
+        bool frequentRelisterFlag)
+    {
+        ReliabilityScore = reliabilityScore;
+        AvgDaysOnMarket = avgDaysOnMarket;
+        TotalListingsHistorical = totalListingsHistorical;
+        FrequentRelisterFlag = frequentRelisterFlag;
+        LastAnalyzedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Clears analytics data (used for testing or reset).
+    /// </summary>
+    public void ClearAnalytics()
+    {
+        ReliabilityScore = null;
+        AvgDaysOnMarket = null;
+        TotalListingsHistorical = 0;
+        FrequentRelisterFlag = false;
+        LastAnalyzedAt = null;
     }
 
     public static string NormalizeDealerName(string name)
