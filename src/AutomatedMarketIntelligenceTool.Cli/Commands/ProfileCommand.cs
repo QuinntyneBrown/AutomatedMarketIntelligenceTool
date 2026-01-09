@@ -171,6 +171,16 @@ public class ProfileCommand : AsyncCommand<ProfileCommand.Settings>
             return ExitCodes.ValidationError;
         }
 
+        // Confirm deletion unless --yes flag is provided
+        if (!settings.Yes)
+        {
+            if (!AnsiConsole.Confirm($"Are you sure you want to delete profile '[yellow]{settings.ProfileName}[/]'?"))
+            {
+                AnsiConsole.MarkupLine("[yellow]Deletion cancelled.[/]");
+                return ExitCodes.Success;
+            }
+        }
+
         var deleted = await _profileService.DeleteProfileAsync(settings.TenantId, settings.ProfileName);
 
         if (!deleted)
@@ -212,6 +222,11 @@ public class ProfileCommand : AsyncCommand<ProfileCommand.Settings>
         [CommandOption("-d|--description <TEXT>")]
         [Description("Description of the profile (for save action)")]
         public string? Description { get; set; }
+
+        [CommandOption("-y|--yes")]
+        [Description("Skip confirmation prompt (for delete action)")]
+        [DefaultValue(false)]
+        public bool Yes { get; set; }
 
         // Search parameters for save action
         [CommandOption("-m|--make <MAKES>")]

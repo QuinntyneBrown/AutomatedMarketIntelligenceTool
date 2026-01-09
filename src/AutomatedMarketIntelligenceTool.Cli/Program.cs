@@ -67,6 +67,15 @@ if (appSettings.Verbosity.EnableFileLogging)
 
 Log.Logger = logConfig.CreateLogger();
 
+// Initialize signal handler for graceful shutdown
+using var signalHandler = SignalHandler.Instance;
+
+// Register Serilog cleanup on shutdown
+signalHandler.RegisterCleanupAction(async () =>
+{
+    await Log.CloseAndFlushAsync();
+});
+
 try
 {
     var services = new ServiceCollection();
@@ -125,6 +134,10 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
 
     // Store verbosity level for services to access
     services.AddSingleton(typeof(VerbosityLevel), verbosityLevel);
+
+    // Register signal handler for graceful shutdown support in commands
+    services.AddSingleton(signalHandler);
+    services.AddSingleton(signalHandler.CancellationToken);
 
     // Create service provider
     var registrar = new TypeRegistrar(services);
@@ -201,6 +214,12 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithDescription("Restore database from a backup file")
             .WithExample("restore", "/path/to/backup.db")
             .WithExample("restore", "/path/to/backup.db", "--yes");
+
+        config.AddCommand<CompletionCommand>("completion")
+            .WithDescription("Generate shell completion scripts for bash, zsh, powershell, or fish")
+            .WithExample("completion", "--shell", "bash")
+            .WithExample("completion", "--shell", "zsh", "--output", "~/.zsh/completions/_car-search")
+            .WithExample("completion", "-s", "powershell", "-o", "car-search-completion.ps1");
 
         config.PropagateExceptions();
         config.ValidateExamples();

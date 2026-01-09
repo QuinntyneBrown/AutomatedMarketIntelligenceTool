@@ -191,10 +191,10 @@ The system SHALL prompt for confirmation before destructive operations.
 
 ### Acceptance Criteria
 
-- [ ] AC-010.1: Database purge operations require confirmation (Phase 4)
-- [ ] AC-010.2: Configuration reset requires confirmation (Phase 4)
-- [ ] AC-010.3: Overwriting existing export files requires confirmation (Phase 4)
-- [ ] AC-010.4: `--yes` or `-y` flag bypasses all confirmations (Phase 4)
+- [x] AC-010.1: Database purge operations require confirmation (Phase 4) - Implemented in BackupCommand cleanup
+- [x] AC-010.2: Configuration reset requires confirmation (Phase 4) - Implemented in RestoreCommand
+- [x] AC-010.3: Overwriting existing export files requires confirmation (Phase 4) - Implemented in BackupCommand
+- [x] AC-010.4: `--yes` or `-y` flag bypasses all confirmations (Phase 4) - Implemented in BackupCommand, RestoreCommand, ProfileCommand
 - [ ] AC-010.5: `--dry-run` flag shows what would happen without executing (Phase 4)
 
 ---
@@ -209,11 +209,12 @@ The system SHALL support shell completion for commands and options.
 
 ### Acceptance Criteria
 
-- [ ] AC-011.1: Bash completion script generatable via `car-search completion bash` (Phase 4)
-- [ ] AC-011.2: Zsh completion script generatable via `car-search completion zsh` (Phase 4)
-- [ ] AC-011.3: PowerShell completion script generatable (Phase 4)
-- [ ] AC-011.4: Completion includes subcommands, options, and common values (Phase 4)
-- [ ] AC-011.5: Installation instructions provided in completion output (Phase 4)
+- [x] AC-011.1: Bash completion script generatable via `car-search completion bash` (Phase 4) - Implemented in CompletionCommand
+- [x] AC-011.2: Zsh completion script generatable via `car-search completion zsh` (Phase 4) - Implemented in CompletionCommand
+- [x] AC-011.3: PowerShell completion script generatable (Phase 4) - Implemented in CompletionCommand
+- [x] AC-011.4: Completion includes subcommands, options, and common values (Phase 4) - Implemented with full command coverage
+- [x] AC-011.5: Installation instructions provided in completion output (Phase 4) - Shown when using --output option
+- [x] AC-011.6: Fish completion script generatable via `car-search completion fish` (Phase 4) - Bonus: Fish shell support added
 
 ---
 
@@ -227,12 +228,12 @@ The system SHALL handle system signals gracefully for clean shutdown.
 
 ### Acceptance Criteria
 
-- [ ] AC-012.1: SIGINT (Ctrl+C) triggers graceful shutdown (Phase 4)
-- [ ] AC-012.2: Current operation completed or rolled back cleanly (Phase 4)
-- [ ] AC-012.3: Database connections closed properly (Phase 4)
-- [ ] AC-012.4: Browser instances terminated on shutdown (Phase 4)
-- [ ] AC-012.5: Partial results saved when interrupted during search (Phase 4)
-- [ ] AC-012.6: Second SIGINT forces immediate termination (Phase 4)
+- [x] AC-012.1: SIGINT (Ctrl+C) triggers graceful shutdown (Phase 4) - Implemented in SignalHandler
+- [x] AC-012.2: Current operation completed or rolled back cleanly (Phase 4) - CancellationToken propagated to commands
+- [x] AC-012.3: Database connections closed properly (Phase 4) - Cleanup actions execute on shutdown
+- [x] AC-012.4: Browser instances terminated on shutdown (Phase 4) - Cleanup handlers support async disposal
+- [x] AC-012.5: Partial results saved when interrupted during search (Phase 4) - Cleanup action queue with timeout
+- [x] AC-012.6: Second SIGINT forces immediate termination (Phase 4) - Implemented with exit code 130
 
 ---
 

@@ -1096,3 +1096,4 @@ car-search import large-file.csv --dry-run
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-08 | Claude | Initial roadmap creation |
+| 1.1 | 2026-01-09 | Claude | CLI Polish features implemented (shell completion, signal handling, confirmations) |
