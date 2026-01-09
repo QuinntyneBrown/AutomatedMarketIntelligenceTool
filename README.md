@@ -1,5 +1,7 @@
 # AutomatedMarketIntelligenceTool
 
+[![PR Validation](https://github.com/QuinntyneBrown/AutomatedMarketIntelligenceTool/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/QuinntyneBrown/AutomatedMarketIntelligenceTool/actions/workflows/pr-validation.yml)
+
 A comprehensive market intelligence solution for automated car listing search, web scraping, and analysis across Canadian automotive markets. This tool provides a CLI interface, REST API, and web application for gathering and analyzing automotive market data from Canadian platforms.
 
 ## Overview
@@ -262,6 +264,38 @@ Detailed specifications for each feature:
 3. Follow the coding standards in the specification documents
 4. Ensure all tests pass and linting is clean
 5. Submit a pull request
+
+### Branch Protection
+
+The `main` branch is protected and requires:
+- All status checks must pass before merging
+- PR validation workflow must complete successfully
+- Both backend (.NET) and frontend (Angular) builds must succeed
+- All unit tests must pass
+
+### Continuous Integration
+
+This project uses GitHub Actions for continuous integration. On every pull request:
+- **Backend**: Builds the .NET solution and runs all unit tests
+- **Frontend**: Builds the Angular application and runs all unit tests
+- **Status**: Check the badge at the top of this README for current build status
+
+To ensure your PR will pass CI checks, run these commands locally before pushing:
+
+**Backend:**
+```bash
+dotnet restore
+dotnet build --configuration Release
+dotnet test --configuration Release
+```
+
+**Frontend:**
+```bash
+cd src/AutomatedMarketIntelligenceTool.WebApp
+npm ci
+npm run build
+npm test -- --watch=false
+```
 
 ## License
 
