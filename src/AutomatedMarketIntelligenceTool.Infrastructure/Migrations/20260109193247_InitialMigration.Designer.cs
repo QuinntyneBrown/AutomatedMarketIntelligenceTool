@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Migrations
 {
     [DbContext(typeof(AutomatedMarketIntelligenceToolContext))]
-    [Migration("20260109191301_InitialMigration")]
+    [Migration("20260109193247_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />

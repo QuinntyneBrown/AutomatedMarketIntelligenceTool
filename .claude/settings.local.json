@@ -5,7 +5,8 @@
       "Bash(dotnet ef database:*)",
       "Bash(dotnet ef migrations:*)",
       "Bash(dotnet test:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(del \"src\\AutomatedMarketIntelligenceTool.Infrastructure\\Migrations\\*.cs\")"
     ],
     "deny": [],
     "ask": []
