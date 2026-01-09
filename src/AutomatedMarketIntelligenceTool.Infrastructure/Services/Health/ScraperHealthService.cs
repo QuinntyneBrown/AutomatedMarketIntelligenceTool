@@ -11,6 +11,8 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Health;
 /// </summary>
 public class ScraperHealthService : IScraperHealthService
 {
+    private const int MaxResponseTimesKept = 100;
+    
     private readonly AutomatedMarketIntelligenceToolContext _context;
     private readonly ILogger<ScraperHealthService> _logger;
     private readonly ConcurrentDictionary<string, HealthMetrics> _metricsCache = new();
@@ -27,6 +29,9 @@ public class ScraperHealthService : IScraperHealthService
     {
         var metrics = _metricsCache.GetOrAdd(siteName, _ => new HealthMetrics { SiteName = siteName });
 
+        // Lock on the specific metrics object to ensure thread-safe updates
+        // The ConcurrentDictionary ensures thread-safe dictionary operations,
+        // while the lock ensures atomic updates to the HealthMetrics properties
         lock (metrics)
         {
             metrics.TotalAttempts++;
@@ -57,8 +62,8 @@ public class ScraperHealthService : IScraperHealthService
 
             metrics.ResponseTimes.Add(responseTimeMs);
 
-            // Keep only last 100 response times to prevent unbounded growth
-            if (metrics.ResponseTimes.Count > 100)
+            // Keep only last N response times to prevent unbounded growth
+            if (metrics.ResponseTimes.Count > MaxResponseTimesKept)
             {
                 metrics.ResponseTimes.RemoveAt(0);
             }
@@ -82,6 +87,7 @@ public class ScraperHealthService : IScraperHealthService
 
         var metrics = _metricsCache.GetOrAdd(siteName, _ => new HealthMetrics { SiteName = siteName });
 
+        // Lock on the specific metrics object to ensure thread-safe updates
         lock (metrics)
         {
             foreach (var element in elementsList)

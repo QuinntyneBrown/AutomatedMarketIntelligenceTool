@@ -5,6 +5,13 @@ namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Health;
 /// </summary>
 public class HealthMetrics
 {
+    // Health status thresholds
+    private const int MinAttemptsForFailedStatus = 3;
+    private const int MinAttemptsForDegradedStatus = 3;
+    private const decimal FailedThresholdSuccessRate = 20m;
+    private const decimal DegradedThresholdSuccessRate = 80m;
+    private const int MinAttemptsForLowSuccessRate = 5;
+
     public required string SiteName { get; init; }
     public int TotalAttempts { get; set; }
     public int SuccessfulAttempts { get; set; }
@@ -42,14 +49,14 @@ public class HealthMetrics
     public ScraperHealthStatus GetHealthStatus()
     {
         // Failed if last 3 attempts failed or success rate below 20%
-        if (TotalAttempts >= 3 && SuccessfulAttempts == 0)
+        if (TotalAttempts >= MinAttemptsForFailedStatus && SuccessfulAttempts == 0)
             return ScraperHealthStatus.Failed;
         
-        if (SuccessRate < 20 && TotalAttempts >= 5)
+        if (SuccessRate < FailedThresholdSuccessRate && TotalAttempts >= MinAttemptsForLowSuccessRate)
             return ScraperHealthStatus.Failed;
 
         // Degraded if success rate below 80% or missing elements detected or zero results
-        if (SuccessRate < 80 && TotalAttempts >= 3)
+        if (SuccessRate < DegradedThresholdSuccessRate && TotalAttempts >= MinAttemptsForDegradedStatus)
             return ScraperHealthStatus.Degraded;
         
         if (MissingElementCount > 0)
