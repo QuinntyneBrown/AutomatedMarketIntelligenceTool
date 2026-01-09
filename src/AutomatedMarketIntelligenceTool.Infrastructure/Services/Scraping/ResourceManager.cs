@@ -121,12 +121,14 @@ public class ResourceManager : IResourceManager
         try
         {
             // This is a simplified CPU usage calculation
-            // For production, consider using PerformanceCounter or more sophisticated approaches
+            // Note: This samples briefly which may not be perfectly accurate
+            // but is sufficient for adaptive throttling decisions
             var startTime = _currentProcess.TotalProcessorTime;
             var startWallTime = DateTime.UtcNow;
 
-            // Sample for a brief moment
-            Thread.Sleep(100);
+            // Brief sample period - this is a trade-off between accuracy and responsiveness
+            // For production, consider using PerformanceCounter or background sampling
+            Task.Delay(100).Wait();
 
             _currentProcess.Refresh();
             var endTime = _currentProcess.TotalProcessorTime;

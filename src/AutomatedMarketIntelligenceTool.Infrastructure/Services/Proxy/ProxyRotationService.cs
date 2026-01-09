@@ -171,11 +171,11 @@ public class ProxyRotationService : IProxyRotationService
                 var colonIndex = authPart.IndexOf(':');
                 if (colonIndex > 0)
                 {
-                    // Check if this is part of a protocol (http://)
-                    if (authPart.Substring(0, colonIndex).Contains("//"))
+                    // Check if this is part of a protocol (e.g., http://)
+                    // We need to be careful to only match protocol prefixes at the start
+                    if (authPart.Length > 3 && authPart.IndexOf("://") is int protocolEnd && protocolEnd >= 0 && protocolEnd < colonIndex)
                     {
                         // Extract protocol and credentials
-                        var protocolEnd = authPart.IndexOf("://");
                         var protocol = authPart.Substring(0, protocolEnd + 3);
                         var credentials = authPart.Substring(protocolEnd + 3);
                         
