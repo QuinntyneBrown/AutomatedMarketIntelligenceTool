@@ -246,7 +246,15 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
             LastSeenDate = lr.Listing.LastSeenDate,
             IsNewListing = lr.Listing.IsNewListing,
             IsActive = lr.Listing.IsActive,
-            CreatedAt = lr.Listing.CreatedAt
+            CreatedAt = lr.Listing.CreatedAt,
+            PriceChange = lr.PriceChange != null ? new
+            {
+                PreviousPrice = lr.PriceChange.PreviousPrice,
+                CurrentPrice = lr.PriceChange.CurrentPrice,
+                Change = lr.PriceChange.PriceChange,
+                ChangePercentage = lr.PriceChange.ChangePercentage,
+                ChangedAt = lr.PriceChange.ChangedAt
+            } : null
         });
 
         var options = new JsonSerializerOptions
@@ -265,7 +273,7 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
         using var writer = new StreamWriter(outputFile);
         
         // Write header
-        await writer.WriteLineAsync("Year,Make,Model,Trim,Price,Currency,Mileage,Condition,Transmission,FuelType,BodyStyle,Drivetrain,ExteriorColor,InteriorColor,City,Province,PostalCode,DistanceKm,SellerType,SellerName,SellerPhone,VIN,ExternalId,SourceSite,ListingUrl,ListingDate,DaysOnMarket,FirstSeenDate,LastSeenDate,IsNewListing,IsActive");
+        await writer.WriteLineAsync("Year,Make,Model,Trim,Price,Currency,Mileage,Condition,Transmission,FuelType,BodyStyle,Drivetrain,ExteriorColor,InteriorColor,City,Province,PostalCode,DistanceKm,SellerType,SellerName,SellerPhone,VIN,ExternalId,SourceSite,ListingUrl,ListingDate,DaysOnMarket,FirstSeenDate,LastSeenDate,IsNewListing,IsActive,PreviousPrice,PriceChange,ChangePercentage");
 
         // Write rows
         foreach (var lr in listings)
@@ -302,7 +310,10 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
                 lr.Listing.FirstSeenDate.ToString("yyyy-MM-dd"),
                 lr.Listing.LastSeenDate.ToString("yyyy-MM-dd"),
                 lr.Listing.IsNewListing.ToString(),
-                lr.Listing.IsActive.ToString()
+                lr.Listing.IsActive.ToString(),
+                lr.PriceChange?.PreviousPrice.ToString("F2") ?? "",
+                lr.PriceChange?.PriceChange.ToString("F2") ?? "",
+                lr.PriceChange?.ChangePercentage.ToString("F2") ?? ""
             });
             
             await writer.WriteLineAsync(row);

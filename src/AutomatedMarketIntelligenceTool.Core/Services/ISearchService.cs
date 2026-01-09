@@ -43,6 +43,8 @@ public class SearchResult
     public required int TotalCount { get; init; }
     public required int Page { get; init; }
     public required int PageSize { get; init; }
+    public int NewListingsCount { get; init; }
+    public int PriceChangesCount { get; init; }
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
 }
 
@@ -50,6 +52,16 @@ public class ListingSearchResult
 {
     public required Listing Listing { get; init; }
     public double? DistanceKilometers { get; init; }
+    public ListingPriceChange? PriceChange { get; set; }
+}
+
+public class ListingPriceChange
+{
+    public required decimal PreviousPrice { get; init; }
+    public required decimal CurrentPrice { get; init; }
+    public required decimal PriceChange { get; init; }
+    public required decimal ChangePercentage { get; init; }
+    public required DateTime ChangedAt { get; init; }
 }
 
 public enum SearchSortField

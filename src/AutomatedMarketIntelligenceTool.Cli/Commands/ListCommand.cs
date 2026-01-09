@@ -135,6 +135,12 @@ public class ListCommand : AsyncCommand<ListCommand.Settings>
                 return ExitCodes.Success;
             }
 
+            // Display search summary
+            if (settings.Format.Equals("table", StringComparison.OrdinalIgnoreCase))
+            {
+                DisplaySearchSummary(result);
+            }
+
             // Format and display results
             var formatter = _formatters[settings.Format];
             
@@ -145,7 +151,7 @@ public class ListCommand : AsyncCommand<ListCommand.Settings>
                 Year = lr.Listing.Year,
                 Make = lr.Listing.Make,
                 Model = lr.Listing.Model,
-                Price = $"${lr.Listing.Price:N0}",
+                Price = FormatPriceWithChange(lr),
                 Mileage = lr.Listing.Mileage.HasValue ? $"{lr.Listing.Mileage:N0} km" : "N/A",
                 Location = $"{lr.Listing.City}, {lr.Listing.Province}",
                 Condition = lr.Listing.Condition.ToString(),
@@ -185,6 +191,46 @@ public class ListCommand : AsyncCommand<ListCommand.Settings>
             results.Add(parsed);
         }
         return results.ToArray();
+    }
+
+    private void DisplaySearchSummary(SearchResult result)
+    {
+        var panel = new Panel(
+            new Markup($"[bold]Total:[/] {result.TotalCount} listings  " +
+                      $"[bold green]New:[/] {result.NewListingsCount}  " +
+                      $"[bold yellow]Price Changes:[/] {result.PriceChangesCount}"))
+        {
+            Header = new PanelHeader("[bold]Search Results Summary[/]"),
+            Border = BoxBorder.Rounded,
+            BorderStyle = new Style(Color.Blue)
+        };
+        
+        AnsiConsole.Write(panel);
+        AnsiConsole.WriteLine();
+    }
+
+    private string FormatPriceWithChange(ListingSearchResult lr)
+    {
+        var priceStr = $"${lr.Listing.Price:N0}";
+        
+        if (lr.PriceChange != null)
+        {
+            var change = lr.PriceChange.PriceChange;
+            var percentage = lr.PriceChange.ChangePercentage;
+            
+            if (change < 0)
+            {
+                // Price decreased - show in green
+                return $"{priceStr} [green]↓${Math.Abs(change):N0} ({percentage:+0.0;-0.0}%)[/]";
+            }
+            else if (change > 0)
+            {
+                // Price increased - show in red
+                return $"{priceStr} [red]↑${change:N0} ({percentage:+0.0;-0.0}%)[/]";
+            }
+        }
+        
+        return priceStr;
     }
 
     public class Settings : CommandSettings

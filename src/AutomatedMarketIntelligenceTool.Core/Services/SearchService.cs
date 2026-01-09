@@ -155,17 +155,28 @@ public class SearchService : ISearchService
             }).ToList();
         }
 
+        // Populate price change information for all results
+        await PopulatePriceChangesAsync(results, cancellationToken);
+
+        // Calculate summary statistics
+        var newListingsCount = results.Count(r => r.Listing.IsNewListing);
+        var priceChangesCount = results.Count(r => r.PriceChange != null);
+
         _logger.LogInformation(
-            "Search completed. Returned {ResultCount} listings out of {TotalCount} total",
+            "Search completed. Returned {ResultCount} listings out of {TotalCount} total ({NewCount} new, {PriceChangeCount} with price changes)",
             results.Count,
-            totalCount);
+            totalCount,
+            newListingsCount,
+            priceChangesCount);
 
         return new SearchResult
         {
             Listings = results,
             TotalCount = totalCount,
             Page = criteria.Page,
-            PageSize = criteria.PageSize
+            PageSize = criteria.PageSize,
+            NewListingsCount = newListingsCount,
+            PriceChangesCount = priceChangesCount
         };
     }
 
@@ -313,5 +324,46 @@ public class SearchService : ISearchService
         return direction == SortDirection.Ascending
             ? results.OrderBy(r => r.DistanceKilometers ?? double.MaxValue).ToList()
             : results.OrderByDescending(r => r.DistanceKilometers ?? double.MaxValue).ToList();
+    }
+
+    private async Task PopulatePriceChangesAsync(
+        List<ListingSearchResult> results,
+        CancellationToken cancellationToken)
+    {
+        if (results.Count == 0)
+        {
+            return;
+        }
+
+        // Get all listing IDs
+        var listingIds = results.Select(r => r.Listing.ListingId).ToList();
+
+        // Query all recent price histories for these listings
+        var priceHistories = await _context.PriceHistory
+            .Where(ph => listingIds.Contains(ph.ListingId))
+            .Where(ph => ph.PriceChange.HasValue && ph.ChangePercentage.HasValue)
+            .OrderByDescending(ph => ph.ObservedAt)
+            .ToListAsync(cancellationToken);
+
+        // Group in memory and get the most recent for each listing
+        var priceHistoryLookup = priceHistories
+            .GroupBy(ph => ph.ListingId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Populate price change information for each result
+        foreach (var result in results)
+        {
+            if (priceHistoryLookup.TryGetValue(result.Listing.ListingId, out var priceHistory))
+            {
+                result.PriceChange = new ListingPriceChange
+                {
+                    PreviousPrice = priceHistory.Price - priceHistory.PriceChange!.Value,
+                    CurrentPrice = priceHistory.Price,
+                    PriceChange = priceHistory.PriceChange!.Value,
+                    ChangePercentage = priceHistory.ChangePercentage!.Value,
+                    ChangedAt = priceHistory.ObservedAt
+                };
+            }
+        }
     }
 }
