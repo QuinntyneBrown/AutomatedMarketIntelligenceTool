@@ -40,7 +40,7 @@ public class BackupService : IBackupService
             // Determine output path
             if (string.IsNullOrWhiteSpace(outputPath))
             {
-                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
                 outputPath = Path.Combine(_defaultBackupDirectory, $"backup_{timestamp}.db");
             }
             else

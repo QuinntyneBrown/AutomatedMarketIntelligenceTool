@@ -73,8 +73,9 @@ public class DataImportService : IDataImportService
                         continue;
                     }
 
-                    // Check for duplicates
+                    // Check for duplicates (ignore query filters to check across all tenants)
                     var existingListing = await _context.Listings
+                        .IgnoreQueryFilters()
                         .FirstOrDefaultAsync(l => l.TenantId == tenantId &&
                                                   l.ExternalId == record.ExternalId &&
                                                   l.SourceSite == record.SourceSite,
@@ -173,8 +174,9 @@ public class DataImportService : IDataImportService
                         continue;
                     }
 
-                    // Check for duplicates
+                    // Check for duplicates (ignore query filters to check across all tenants)
                     var existingListing = await _context.Listings
+                        .IgnoreQueryFilters()
                         .FirstOrDefaultAsync(l => l.TenantId == tenantId &&
                                                   l.ExternalId == record.ExternalId &&
                                                   l.SourceSite == record.SourceSite,

@@ -244,8 +244,15 @@ public class BackupServiceTests : IDisposable
         {
             var backup = await service.BackupAsync();
             backups.Add(backup);
+            Assert.True(backup.IsSuccess, $"Backup {i} should succeed");
+            Assert.NotNull(backup.BackupFilePath);
+            Assert.True(File.Exists(backup.BackupFilePath), $"Backup file should exist at {backup.BackupFilePath}");
             await Task.Delay(100); // Ensure different timestamps
         }
+
+        // Verify all 7 backups exist before cleanup
+        var backupListBefore = await service.ListBackupsAsync();
+        Assert.True(backupListBefore.Count >= 7, $"Should have at least 7 backups, found {backupListBefore.Count}");
 
         // Act
         var deletedCount = await service.CleanupOldBackupsAsync(retentionCount: 5);

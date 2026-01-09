@@ -98,8 +98,8 @@ TEST002,TestSite,http://test.com/2,Honda,Civic,2021,22000,Used";
         Assert.Equal(0, result.ErrorCount);
         Assert.Equal(0, result.SkippedCount);
         
-        // Verify data was added to context
-        var listings = await _context.Listings.ToListAsync();
+        // Verify data was added to context (use IgnoreQueryFilters to bypass tenant filter)
+        var listings = await _context.Listings.IgnoreQueryFilters().ToListAsync();
         Assert.Equal(2, listings.Count);
         Assert.Contains(listings, l => l.ExternalId == "TEST001");
         Assert.Contains(listings, l => l.ExternalId == "TEST002");
@@ -181,8 +181,8 @@ TEST001,TestSite,http://test.com/1,Toyota,Camry,2020,25000,Used";
         Assert.True(result.IsDryRun);
         Assert.Equal(1, result.SuccessCount);
         
-        // Verify no data was saved
-        var listings = await _context.Listings.ToListAsync();
+        // Verify no data was saved (use IgnoreQueryFilters to bypass tenant filter)
+        var listings = await _context.Listings.IgnoreQueryFilters().ToListAsync();
         Assert.Empty(listings);
     }
 
