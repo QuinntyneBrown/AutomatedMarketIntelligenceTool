@@ -10,6 +10,8 @@ using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Core;
@@ -29,6 +31,8 @@ public interface IAutomatedMarketIntelligenceToolContext
     DbSet<ScraperHealthRecord> ScraperHealthRecords { get; }
     DbSet<ResponseCacheEntry> ResponseCacheEntries { get; }
     DbSet<Report> Reports { get; }
+    DbSet<AuditEntry> AuditEntries { get; }
+    DbSet<DeduplicationConfig> DeduplicationConfigs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

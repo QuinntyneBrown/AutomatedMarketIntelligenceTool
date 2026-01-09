@@ -11,6 +11,8 @@ using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure;
@@ -32,6 +34,8 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
     public DbSet<ResponseCacheEntry> ResponseCacheEntries => Set<ResponseCacheEntry>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+    public DbSet<DeduplicationConfig> DeduplicationConfigs => Set<DeduplicationConfig>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)
@@ -58,5 +62,7 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
         modelBuilder.Entity<Alert>().HasQueryFilter(a => a.TenantId == _tenantId);
         modelBuilder.Entity<AlertNotification>().HasQueryFilter(an => an.TenantId == _tenantId);
         modelBuilder.Entity<Dealer>().HasQueryFilter(d => d.TenantId == _tenantId);
+        modelBuilder.Entity<AuditEntry>().HasQueryFilter(ae => ae.TenantId == _tenantId);
+        modelBuilder.Entity<DeduplicationConfig>().HasQueryFilter(dc => dc.TenantId == _tenantId);
     }
 }
