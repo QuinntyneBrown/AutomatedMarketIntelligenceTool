@@ -441,6 +441,12 @@ public class FuzzyMatchingServiceTests
                 entity.HasKey(sh => sh.ScraperHealthRecordId);
                 entity.Property(sh => sh.ScraperHealthRecordId).HasConversion(id => id.Value, value => new Core.Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
             });
+
+            modelBuilder.Entity<Core.Models.CacheAggregate.ResponseCacheEntry>(entity =>
+            {
+                entity.HasKey(c => c.CacheEntryId);
+                entity.Property(c => c.CacheEntryId).HasConversion(id => id.Value, value => Core.Models.CacheAggregate.ResponseCacheEntryId.FromGuid(value));
+            });
         }
     }
 }

@@ -67,9 +67,10 @@ public class ResponseCacheService : IResponseCacheService
         _logger.LogDebug("Cache miss for key: {Key}", key);
         var fetchedValue = await fetchFunc();
 
+        var expiresAt = DateTime.UtcNow.Add(effectiveTtl);
         await SetAsync(key, fetchedValue, effectiveTtl, cancellationToken);
 
-        return CacheResult<T>.Miss(fetchedValue, key);
+        return CacheResult<T>.Miss(fetchedValue, key, expiresAt);
     }
 
     public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class

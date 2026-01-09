@@ -51,9 +51,9 @@ public class CacheResult<T>
     /// <summary>
     /// Creates a cache miss result (value was fetched).
     /// </summary>
-    public static CacheResult<T> Miss(T value, string? cacheKey = null)
+    public static CacheResult<T> Miss(T value, string? cacheKey = null, DateTime? expiresAt = null)
     {
-        return new CacheResult<T>(value, wasHit: false, cacheKey);
+        return new CacheResult<T>(value, wasHit: false, cacheKey, expiresAt);
     }
 }
 

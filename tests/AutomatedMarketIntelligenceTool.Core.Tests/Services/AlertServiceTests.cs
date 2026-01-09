@@ -189,6 +189,12 @@ public class AlertServiceTests
                     value => new Core.Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
             });
 
+            modelBuilder.Entity<Core.Models.CacheAggregate.ResponseCacheEntry>(entity =>
+            {
+                entity.HasKey(c => c.CacheEntryId);
+                entity.Property(c => c.CacheEntryId).HasConversion(id => id.Value, value => Core.Models.CacheAggregate.ResponseCacheEntryId.FromGuid(value));
+            });
+
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
             {
                 entity.HasKey(v => v.VehicleId);
