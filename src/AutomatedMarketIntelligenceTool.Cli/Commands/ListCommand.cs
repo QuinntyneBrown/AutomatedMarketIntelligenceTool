@@ -141,7 +141,7 @@ public class ListCommand : AsyncCommand<ListCommand.Settings>
             // Create simplified output objects for display
             var displayResults = listings.Select(lr => new
             {
-                Status = lr.Listing.IsNewListing ? "[NEW]" : "",
+                Status = lr.Listing.IsNewListing ? "[green][NEW][/]" : "",
                 Year = lr.Listing.Year,
                 Make = lr.Listing.Make,
                 Model = lr.Listing.Model,
