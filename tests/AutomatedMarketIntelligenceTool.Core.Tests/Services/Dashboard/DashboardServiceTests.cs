@@ -14,6 +14,7 @@ using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
 using AutomatedMarketIntelligenceTool.Core.Services.Dashboard;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Models = AutomatedMarketIntelligenceTool.Core.Models;
 
 namespace AutomatedMarketIntelligenceTool.Core.Tests.Services.Dashboard;
 
@@ -190,7 +191,7 @@ public class DashboardServiceTests
         _context.Listings.Add(listing);
         await _context.SaveChangesAsync();
 
-        var priceHistory = Models.PriceHistoryAggregate.PriceHistory.Create(
+        var priceHistory = PriceHistory.Create(
             _testTenantId, listing.ListingId, 24000m, 25000m);
         _context.PriceHistory.Add(priceHistory);
         await _context.SaveChangesAsync();
@@ -245,9 +246,9 @@ public class DashboardServiceTests
         _context.Listings.AddRange(activeListing, inactiveListing);
         await _context.SaveChangesAsync();
 
-        var watched1 = Models.WatchListAggregate.WatchedListing.Create(
+        var watched1 = WatchedListing.Create(
             _testTenantId, activeListing.ListingId, "Active listing");
-        var watched2 = Models.WatchListAggregate.WatchedListing.Create(
+        var watched2 = WatchedListing.Create(
             _testTenantId, inactiveListing.ListingId, "Inactive listing");
         _context.WatchedListings.AddRange(watched1, watched2);
         await _context.SaveChangesAsync();
@@ -309,9 +310,9 @@ public class DashboardServiceTests
     public async Task GetAlertSummaryAsync_WithDeactivatedAlert_ShouldNotCountAsActive()
     {
         // Arrange
-        var criteria = new Models.AlertAggregate.AlertCriteria { Make = "Toyota", PriceMax = 30000m };
-        var activeAlert = Models.AlertAggregate.Alert.Create(_testTenantId, "Active Alert", criteria);
-        var inactiveAlert = Models.AlertAggregate.Alert.Create(_testTenantId, "Inactive Alert", criteria);
+        var criteria = new AlertCriteria { Make = "Toyota", PriceMax = 30000m };
+        var activeAlert = Alert.Create(_testTenantId, "Active Alert", criteria);
+        var inactiveAlert = Alert.Create(_testTenantId, "Inactive Alert", criteria);
         inactiveAlert.Deactivate();
 
         _context.Alerts.AddRange(activeAlert, inactiveAlert);
@@ -554,7 +555,7 @@ public class DashboardServiceTests
 
     private async Task SeedVehiclesAsync()
     {
-        var vehicle = Models.VehicleAggregate.Vehicle.Create(
+        var vehicle = Vehicle.Create(
             _testTenantId, "Toyota", "Camry", 2020, null);
         _context.Vehicles.Add(vehicle);
         await _context.SaveChangesAsync();
@@ -570,9 +571,9 @@ public class DashboardServiceTests
         _context.Listings.AddRange(listing1, listing2);
         await _context.SaveChangesAsync();
 
-        var watched1 = Models.WatchListAggregate.WatchedListing.Create(
+        var watched1 = WatchedListing.Create(
             _testTenantId, listing1.ListingId, "Watching this one");
-        var watched2 = Models.WatchListAggregate.WatchedListing.Create(
+        var watched2 = WatchedListing.Create(
             _testTenantId, listing2.ListingId, "Also watching this");
 
         _context.WatchedListings.AddRange(watched1, watched2);
@@ -581,11 +582,11 @@ public class DashboardServiceTests
 
     private async Task SeedAlertsAsync()
     {
-        var criteria1 = new Models.AlertAggregate.AlertCriteria { Make = "Toyota", PriceMax = 30000m };
-        var criteria2 = new Models.AlertAggregate.AlertCriteria { Make = "Honda", PriceMax = 25000m };
+        var criteria1 = new AlertCriteria { Make = "Toyota", PriceMax = 30000m };
+        var criteria2 = new AlertCriteria { Make = "Honda", PriceMax = 25000m };
 
-        var alert1 = Models.AlertAggregate.Alert.Create(_testTenantId, "Toyota Alert", criteria1);
-        var alert2 = Models.AlertAggregate.Alert.Create(_testTenantId, "Honda Alert", criteria2);
+        var alert1 = Alert.Create(_testTenantId, "Toyota Alert", criteria1);
+        var alert2 = Alert.Create(_testTenantId, "Honda Alert", criteria2);
 
         _context.Alerts.AddRange(alert1, alert2);
         await _context.SaveChangesAsync();
@@ -593,15 +594,15 @@ public class DashboardServiceTests
 
     private async Task SeedSearchSessionsAsync()
     {
-        var session = Models.SearchSessionAggregate.SearchSession.Create(
-            _testTenantId, "{}", "192.168.1.1");
+        var session = SearchSession.Create(
+            _testTenantId, "{}");
         _context.SearchSessions.Add(session);
         await _context.SaveChangesAsync();
     }
 
     private async Task SeedSearchProfilesAsync()
     {
-        var profile = Models.SearchProfileAggregate.SearchProfile.Create(
+        var profile = SearchProfile.Create(
             _testTenantId, "Test Profile", "{}");
         _context.SearchProfiles.Add(profile);
         await _context.SaveChangesAsync();
@@ -722,14 +723,44 @@ public class DashboardServiceTests
 
             modelBuilder.Entity<ResponseCacheEntry>(entity =>
             {
-                entity.HasKey(c => c.ResponseCacheEntryId);
-                entity.Property(c => c.ResponseCacheEntryId).HasConversion(id => id.Value, value => new ResponseCacheEntryId(value));
+                entity.HasKey(c => c.CacheEntryId);
+                entity.Property(c => c.CacheEntryId).HasConversion(id => id.Value, value => ResponseCacheEntryId.FromGuid(value));
             });
 
             modelBuilder.Entity<Report>(entity =>
             {
                 entity.HasKey(r => r.ReportId);
                 entity.Property(r => r.ReportId).HasConversion(id => id.Value, value => new ReportId(value));
+            });
+
+            modelBuilder.Entity<AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate.CustomMarket>(entity =>
+            {
+                entity.HasKey(cm => cm.CustomMarketId);
+                entity.Property(cm => cm.CustomMarketId).HasConversion(id => id.Value, value => new AutomatedMarketIntelligenceTool.Core.Models.CustomMarketAggregate.CustomMarketId(value));
+            });
+
+            modelBuilder.Entity<AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate.ScheduledReport>(entity =>
+            {
+                entity.HasKey(sr => sr.ScheduledReportId);
+                entity.Property(sr => sr.ScheduledReportId).HasConversion(id => id.Value, value => new AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate.ScheduledReportId(value));
+            });
+
+            modelBuilder.Entity<AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate.ResourceThrottle>(entity =>
+            {
+                entity.HasKey(rt => rt.ResourceThrottleId);
+                entity.Property(rt => rt.ResourceThrottleId).HasConversion(id => id.Value, value => new AutomatedMarketIntelligenceTool.Core.Models.ResourceThrottleAggregate.ResourceThrottleId(value));
+            });
+
+            modelBuilder.Entity<AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate.AuditEntry>(entity =>
+            {
+                entity.HasKey(ae => ae.AuditEntryId);
+                entity.Property(ae => ae.AuditEntryId).HasConversion(id => id.Value, value => new AutomatedMarketIntelligenceTool.Core.Models.DeduplicationAuditAggregate.AuditEntryId(value));
+            });
+
+            modelBuilder.Entity<AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate.DeduplicationConfig>(entity =>
+            {
+                entity.HasKey(dc => dc.ConfigId);
+                entity.Property(dc => dc.ConfigId).HasConversion(id => id.Value, value => new AutomatedMarketIntelligenceTool.Core.Models.DeduplicationConfigAggregate.DeduplicationConfigId(value));
             });
         }
     }
