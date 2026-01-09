@@ -67,6 +67,7 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     app.Configure(config =>
     {
         config.SetApplicationName("car-search");
+        config.SetApplicationVersion("2.0.0");
         
         config.AddCommand<SearchCommand>("search")
             .WithDescription("Search for car listings in the database")
@@ -77,6 +78,23 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithDescription("Scrape car listings from automotive websites")
             .WithExample("scrape", "-t", "12345678-1234-1234-1234-123456789012", "-s", "autotrader", "-m", "Toyota")
             .WithExample("scrape", "-t", "12345678-1234-1234-1234-123456789012", "-s", "all", "-z", "90210", "-r", "50");
+        
+        config.AddCommand<ListCommand>("list")
+            .WithDescription("List saved car listings from the database with filtering and pagination")
+            .WithExample("list", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("list", "-t", "12345678-1234-1234-1234-123456789012", "-m", "Toyota", "--condition", "Used")
+            .WithExample("list", "-t", "12345678-1234-1234-1234-123456789012", "--new-only", "--sort", "Price", "--page-size", "50");
+        
+        config.AddCommand<ExportCommand>("export")
+            .WithDescription("Export car listings to JSON or CSV files")
+            .WithExample("export", "results.json", "-t", "12345678-1234-1234-1234-123456789012", "-m", "Honda")
+            .WithExample("export", "results.csv", "-t", "12345678-1234-1234-1234-123456789012", "--condition", "New", "--format", "csv");
+        
+        config.AddCommand<ConfigCommand>("config")
+            .WithDescription("Manage application configuration settings")
+            .WithExample("config", "list")
+            .WithExample("config", "get", "Database:Provider")
+            .WithExample("config", "set", "Scraping:DefaultDelayMs", "5000");
 
         config.PropagateExceptions();
         config.ValidateExamples();
