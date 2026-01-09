@@ -1,4 +1,4 @@
-using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
+﻿using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
 using Microsoft.Extensions.Logging;
 

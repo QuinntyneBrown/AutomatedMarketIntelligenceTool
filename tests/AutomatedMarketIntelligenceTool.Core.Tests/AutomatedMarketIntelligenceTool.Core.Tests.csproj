@@ -18,7 +18,6 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\playground\Playground.csproj" />
     <ProjectReference Include="..\..\src\AutomatedMarketIntelligenceTool.Core\AutomatedMarketIntelligenceTool.Core.csproj" />
   </ItemGroup>
 </Project>
