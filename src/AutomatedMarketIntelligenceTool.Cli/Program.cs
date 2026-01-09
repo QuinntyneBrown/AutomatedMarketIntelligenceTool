@@ -108,17 +108,10 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IReviewService, ReviewService>();
     services.AddScoped<IRelistedDetectionService, RelistedDetectionService>();
 
-    // Phase 4: Health Monitoring Services
-    services.AddSingleton<IScraperHealthService, ScraperHealthService>();
-    services.AddSingleton<IDebugCaptureService>(sp =>
-    {
-        var logger = sp.GetRequiredService<ILogger<DebugCaptureService>>();
-        var debugPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AutomatedMarketIntelligenceTool",
-            "DebugArtifacts");
-        return new DebugCaptureService(logger, debugPath);
-    });
+    // Phase 4: User Feature Services
+    services.AddScoped<IWatchListService, WatchListService>();
+    services.AddScoped<IAlertService, AlertService>();
+    services.AddScoped<IDealerTrackingService, DealerTrackingService>();
 
     // Store verbosity level for services to access
     services.AddSingleton(typeof(VerbosityLevel), verbosityLevel);
@@ -180,6 +173,30 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithDescription("Display detailed information about a specific listing")
             .WithExample("show", "<listing-id>", "-t", "12345678-1234-1234-1234-123456789012")
             .WithExample("show", "<listing-id>", "-t", "12345678-1234-1234-1234-123456789012", "--with-history");
+
+        // Phase 4: User Feature Commands
+        config.AddCommand<ReviewCommand>("review")
+            .WithDescription("Manage the review queue for near-match duplicates")
+            .WithExample("review", "list")
+            .WithExample("review", "resolve", "<review-id>", "--same-vehicle")
+            .WithExample("review", "dismiss", "<review-id>");
+
+        config.AddCommand<WatchCommand>("watch")
+            .WithDescription("Manage the watch list")
+            .WithExample("watch", "list", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("watch", "add", "--listing-id", "<listing-id>", "--notes", "Great deal")
+            .WithExample("watch", "remove", "--listing-id", "<listing-id>");
+
+        config.AddCommand<CompareCommand>("compare")
+            .WithDescription("Compare multiple listings side-by-side")
+            .WithExample("compare", "<listing-id-1>", "<listing-id-2>")
+            .WithExample("compare", "<listing-id-1>", "<listing-id-2>", "<listing-id-3>");
+
+        config.AddCommand<AlertCommand>("alert")
+            .WithDescription("Manage alerts for listing notifications")
+            .WithExample("alert", "list")
+            .WithExample("alert", "create", "--name", "cheap-camry", "-m", "Toyota", "--model", "Camry", "--price-max", "15000")
+            .WithExample("alert", "delete", "--alert-id", "<alert-id>");
 
         config.PropagateExceptions();
         config.ValidateExamples();

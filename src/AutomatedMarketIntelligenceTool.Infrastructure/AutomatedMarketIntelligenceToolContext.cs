@@ -6,6 +6,9 @@ using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.SearchSessionAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.SearchProfileAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.VehicleAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.WatchListAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure;
@@ -20,6 +23,10 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<SearchProfile> SearchProfiles => Set<SearchProfile>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
+    public DbSet<WatchedListing> WatchedListings => Set<WatchedListing>();
+    public DbSet<Alert> Alerts => Set<Alert>();
+    public DbSet<AlertNotification> AlertNotifications => Set<AlertNotification>();
+    public DbSet<Dealer> Dealers => Set<Dealer>();
     public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
@@ -43,5 +50,9 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
         modelBuilder.Entity<SearchProfile>().HasQueryFilter(sp => sp.TenantId == _tenantId);
         modelBuilder.Entity<Vehicle>().HasQueryFilter(v => v.TenantId == _tenantId);
         modelBuilder.Entity<ReviewItem>().HasQueryFilter(r => r.TenantId == _tenantId);
+        modelBuilder.Entity<WatchedListing>().HasQueryFilter(w => w.TenantId == _tenantId);
+        modelBuilder.Entity<Alert>().HasQueryFilter(a => a.TenantId == _tenantId);
+        modelBuilder.Entity<AlertNotification>().HasQueryFilter(an => an.TenantId == _tenantId);
+        modelBuilder.Entity<Dealer>().HasQueryFilter(d => d.TenantId == _tenantId);
     }
 }

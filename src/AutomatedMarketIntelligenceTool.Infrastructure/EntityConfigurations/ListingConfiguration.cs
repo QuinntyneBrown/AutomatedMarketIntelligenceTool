@@ -143,8 +143,22 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
 
         builder.Property(l => l.UpdatedAt);
 
+        builder.Property(l => l.DealerId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value.HasValue ? new AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate.DealerId(value.Value) : null);
+
+        builder.HasOne(l => l.DealerEntity)
+            .WithMany()
+            .HasForeignKey(l => l.DealerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Ignore domain events - they are not persisted
         builder.Ignore(l => l.DomainEvents);
+        
+        // Ignore computed properties
+        builder.Ignore(l => l.Location);
+        builder.Ignore(l => l.Dealer);
 
         // Indexes
         builder.HasIndex(l => l.TenantId)
