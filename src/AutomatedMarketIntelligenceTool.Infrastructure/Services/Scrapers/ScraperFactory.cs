@@ -32,6 +32,13 @@ public class ScraperFactory : IScraperFactory
             "autotrader" or "autotrader.ca" => new AutotraderScraper(_loggerFactory.CreateLogger<AutotraderScraper>()),
             "kijiji" or "kijiji.ca" => new KijijiScraper(_loggerFactory.CreateLogger<KijijiScraper>()),
             "cargurus" or "cargurus.ca" => new CarGurusScraper(_loggerFactory.CreateLogger<CarGurusScraper>()),
+            "clutch" or "clutch.ca" => new ClutchScraper(_loggerFactory.CreateLogger<ClutchScraper>()),
+            "auto123" or "auto123.com" => new Auto123Scraper(_loggerFactory.CreateLogger<Auto123Scraper>()),
+            "carmax" or "carmax.com" => new CarMaxScraper(_loggerFactory.CreateLogger<CarMaxScraper>()),
+            "carvana" or "carvana.com" => new CarvanaScraper(_loggerFactory.CreateLogger<CarvanaScraper>()),
+            "vroom" or "vroom.com" => new VroomScraper(_loggerFactory.CreateLogger<VroomScraper>()),
+            "truecar" or "truecar.com" => new TrueCarScraper(_loggerFactory.CreateLogger<TrueCarScraper>()),
+            "carfax" or "carfax.ca" => new CarFaxScraper(_loggerFactory.CreateLogger<CarFaxScraper>()),
             _ => throw new ArgumentException($"Unsupported site: {siteName}", nameof(siteName))
         };
 
@@ -56,10 +63,29 @@ public class ScraperFactory : IScraperFactory
         yield return CreateScraper("autotrader");
         yield return CreateScraper("kijiji");
         yield return CreateScraper("cargurus");
+        yield return CreateScraper("clutch");
+        yield return CreateScraper("auto123");
+        yield return CreateScraper("carmax");
+        yield return CreateScraper("carvana");
+        yield return CreateScraper("vroom");
+        yield return CreateScraper("truecar");
+        yield return CreateScraper("carfax");
     }
 
     public IEnumerable<string> GetSupportedSites()
     {
-        return new[] { "Autotrader.ca", "Kijiji.ca", "CarGurus.ca" };
+        return new[] 
+        { 
+            "Autotrader.ca", 
+            "Kijiji.ca", 
+            "CarGurus.ca",
+            "Clutch.ca",
+            "Auto123.com",
+            "CarMax.com",
+            "Carvana.com",
+            "Vroom.com",
+            "TrueCar.com",
+            "CarFax.ca"
+        };
     }
 }
