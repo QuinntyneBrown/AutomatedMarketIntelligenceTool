@@ -344,6 +344,28 @@ public class FuzzyMatchingServiceTests
                 entity.Ignore(l => l.DomainEvents);
             });
 
+            modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            {
+                entity.HasKey(ph => ph.PriceHistoryId);
+                entity.Property(ph => ph.PriceHistoryId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
+                entity.Property(ph => ph.ListingId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
+            {
+                entity.HasKey(ss => ss.SearchSessionId);
+                entity.Property(ss => ss.SearchSessionId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
+            });
+
             modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
             {
                 entity.HasKey(v => v.VehicleId);
