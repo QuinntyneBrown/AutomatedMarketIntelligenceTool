@@ -361,6 +361,8 @@ public class DuplicateDetectionServiceTests
         }
 
         public DbSet<Listing> Listings => Set<Listing>();
+        public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
+        public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -377,6 +379,33 @@ public class DuplicateDetectionServiceTests
                         value => new ListingId(value));
 
                 entity.Ignore(l => l.DomainEvents);
+            });
+
+            // Configure PriceHistory entity
+            modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            {
+                entity.HasKey(ph => ph.PriceHistoryId);
+                
+                entity.Property(ph => ph.PriceHistoryId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
+
+                entity.Property(ph => ph.ListingId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new ListingId(value));
+            });
+
+            // Configure SearchSession entity
+            modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
+            {
+                entity.HasKey(ss => ss.SearchSessionId);
+                
+                entity.Property(ss => ss.SearchSessionId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.SearchSessionAggregate.SearchSessionId(value));
             });
         }
     }

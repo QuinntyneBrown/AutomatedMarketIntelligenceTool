@@ -177,7 +177,7 @@ public class ListingTests
             postalCode: "M5V 3L9",
             transmission: Transmission.Automatic,
             fuelType: FuelType.Gasoline,
-            bodyStyle: "SUV",
+            bodyStyle: BodyStyle.SUV,
             exteriorColor: "Black",
             interiorColor: "Beige",
             description: "Excellent condition",
@@ -192,7 +192,7 @@ public class ListingTests
         Assert.Equal("M5V 3L9", listing.PostalCode);
         Assert.Equal(Transmission.Automatic, listing.Transmission);
         Assert.Equal(FuelType.Gasoline, listing.FuelType);
-        Assert.Equal("SUV", listing.BodyStyle);
+        Assert.Equal(BodyStyle.SUV, listing.BodyStyle);
         Assert.Equal("Black", listing.ExteriorColor);
         Assert.Equal("Beige", listing.InteriorColor);
         Assert.Equal("Excellent condition", listing.Description);

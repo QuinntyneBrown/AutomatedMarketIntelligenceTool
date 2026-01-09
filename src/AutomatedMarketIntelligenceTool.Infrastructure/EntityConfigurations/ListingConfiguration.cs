@@ -81,13 +81,25 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
             .HasConversion<int?>();
 
         builder.Property(l => l.BodyStyle)
-            .HasMaxLength(50);
+            .HasConversion<int?>();
+
+        builder.Property(l => l.Drivetrain)
+            .HasConversion<int?>();
 
         builder.Property(l => l.ExteriorColor)
             .HasMaxLength(50);
 
         builder.Property(l => l.InteriorColor)
             .HasMaxLength(50);
+
+        builder.Property(l => l.SellerType)
+            .HasConversion<int?>();
+
+        builder.Property(l => l.SellerName)
+            .HasMaxLength(200);
+
+        builder.Property(l => l.SellerPhone)
+            .HasMaxLength(20);
 
         builder.Property(l => l.Description);
 
@@ -96,6 +108,10 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
                 v => string.Join(',', v),
                 v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
             .HasMaxLength(4000);
+
+        builder.Property(l => l.ListingDate);
+
+        builder.Property(l => l.DaysOnMarket);
 
         builder.Property(l => l.FirstSeenDate)
             .IsRequired();
@@ -106,6 +122,12 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
         builder.Property(l => l.IsNewListing)
             .IsRequired()
             .HasDefaultValue(true);
+
+        builder.Property(l => l.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true);
+
+        builder.Property(l => l.DeactivatedAt);
 
         builder.Property(l => l.CreatedAt)
             .IsRequired();
@@ -130,6 +152,24 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
 
         builder.HasIndex(l => l.Year)
             .HasDatabaseName("IX_Listing_Year");
+
+        builder.HasIndex(l => l.Condition)
+            .HasDatabaseName("IX_Listing_Condition");
+
+        builder.HasIndex(l => l.Transmission)
+            .HasDatabaseName("IX_Listing_Transmission");
+
+        builder.HasIndex(l => l.FuelType)
+            .HasDatabaseName("IX_Listing_FuelType");
+
+        builder.HasIndex(l => l.BodyStyle)
+            .HasDatabaseName("IX_Listing_BodyStyle");
+
+        builder.HasIndex(l => l.IsActive)
+            .HasDatabaseName("IX_Listing_IsActive");
+
+        builder.HasIndex(l => l.FirstSeenDate)
+            .HasDatabaseName("IX_Listing_FirstSeenDate");
 
         // Unique constraint on ExternalId + SourceSite + TenantId
         builder.HasIndex(l => new { l.SourceSite, l.ExternalId, l.TenantId })
