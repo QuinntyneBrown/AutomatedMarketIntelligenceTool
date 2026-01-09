@@ -1,6 +1,7 @@
 ﻿using AutomatedMarketIntelligenceTool.Cli.Commands;
 using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Services;
+using AutomatedMarketIntelligenceTool.Core.Services.ImageAnalysis;
 using AutomatedMarketIntelligenceTool.Infrastructure;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.RateLimiting;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
@@ -50,7 +51,7 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<ISearchService, SearchService>();
     services.AddScoped<IDuplicateDetectionService, DuplicateDetectionService>();
     services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
-    
+
     // Add rate limiting with configuration
     services.AddSingleton(_ => new RateLimitConfiguration
     {
@@ -59,6 +60,15 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     });
     services.AddSingleton<IRateLimiter, RateLimiter>();
     services.AddSingleton<IScraperFactory, ScraperFactory>();
+
+    // Phase 4: Image Analysis Services
+    services.AddHttpClient<IImageDownloadService, ImageDownloadService>();
+    services.AddSingleton<PerceptualHashCalculator>();
+    services.AddScoped<IImageHashingService, ImageHashingService>();
+
+    // Phase 4: Review and Relisted Detection Services
+    services.AddScoped<IReviewService, ReviewService>();
+    services.AddScoped<IRelistedDetectionService, RelistedDetectionService>();
 
     // Create service provider
     var registrar = new TypeRegistrar(services);
@@ -95,6 +105,13 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
             .WithExample("config", "list")
             .WithExample("config", "get", "Database:Provider")
             .WithExample("config", "set", "Scraping:DefaultDelayMs", "5000");
+
+        config.AddCommand<ReviewCommand>("review")
+            .WithDescription("Manage the review queue for near-match duplicates")
+            .WithExample("review", "list", "-t", "12345678-1234-1234-1234-123456789012")
+            .WithExample("review", "list", "-t", "12345678-1234-1234-1234-123456789012", "--status", "Pending")
+            .WithExample("review", "resolve", "abc12345", "-t", "12345678-1234-1234-1234-123456789012", "--same-vehicle")
+            .WithExample("review", "dismiss", "abc12345", "-t", "12345678-1234-1234-1234-123456789012");
 
         config.PropagateExceptions();
         config.ValidateExamples();

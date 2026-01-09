@@ -329,6 +329,7 @@ public class FuzzyMatchingServiceTests
         public DbSet<Core.Models.PriceHistoryAggregate.PriceHistory> PriceHistory => Set<Core.Models.PriceHistoryAggregate.PriceHistory>();
         public DbSet<Core.Models.SearchSessionAggregate.SearchSession> SearchSessions => Set<Core.Models.SearchSessionAggregate.SearchSession>();
         public DbSet<Core.Models.VehicleAggregate.Vehicle> Vehicles => Set<Core.Models.VehicleAggregate.Vehicle>();
+        public DbSet<Core.Models.ReviewQueueAggregate.ReviewItem> ReviewItems => Set<Core.Models.ReviewQueueAggregate.ReviewItem>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -373,6 +374,20 @@ public class FuzzyMatchingServiceTests
                     .HasConversion(
                         id => id.Value,
                         value => new Core.Models.VehicleAggregate.VehicleId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ReviewQueueAggregate.ReviewItem>(entity =>
+            {
+                entity.HasKey(r => r.ReviewItemId);
+                entity.Property(r => r.ReviewItemId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new Core.Models.ReviewQueueAggregate.ReviewItemId(value));
+                entity.Property(r => r.Listing1Id)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Property(r => r.Listing2Id)
+                    .HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Ignore(r => r.DomainEvents);
             });
         }
     }
