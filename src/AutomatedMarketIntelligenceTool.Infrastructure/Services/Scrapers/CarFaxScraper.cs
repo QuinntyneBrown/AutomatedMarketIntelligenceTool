@@ -169,6 +169,8 @@ public class CarFaxScraper : BaseScraper
                 City = city,
                 Province = province,
                 Vin = vin,
+                Country = "CA",
+                Currency = "CAD",
                 Condition = Condition.Used
             };
         }

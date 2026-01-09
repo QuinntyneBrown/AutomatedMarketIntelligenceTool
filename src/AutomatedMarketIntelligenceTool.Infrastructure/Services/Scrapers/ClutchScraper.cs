@@ -161,6 +161,8 @@ public class ClutchScraper : BaseScraper
                 Mileage = mileage,
                 City = city,
                 Province = province,
+                Country = "CA",
+                Currency = "CAD",
                 Condition = Condition.Used
             };
         }
