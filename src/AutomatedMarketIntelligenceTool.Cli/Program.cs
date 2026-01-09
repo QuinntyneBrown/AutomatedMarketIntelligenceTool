@@ -125,14 +125,24 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     services.AddScoped<IBackupService, BackupService>();
 
     // Phase 5: Reporting Services
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerationService, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerationService,
         AutomatedMarketIntelligenceTool.Core.Services.Reporting.ReportGenerationService>();
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator,
         AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.HtmlReportGenerator>();
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator,
         AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.PdfReportGenerator>();
-    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator, 
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Reporting.IReportGenerator,
         AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting.ExcelReportGenerator>();
+
+    // Phase 5: Analytics Services
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Analytics.IDealerAnalyticsService,
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Analytics.DealerAnalyticsService>();
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Analytics.IRelistingPatternService,
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Analytics.RelistingPatternService>();
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Analytics.IDealerDeduplicationRuleService,
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Analytics.DealerDeduplicationRuleService>();
+    services.AddScoped<AutomatedMarketIntelligenceTool.Core.Services.Analytics.IInventoryHistoryService,
+        AutomatedMarketIntelligenceTool.Infrastructure.Services.Analytics.InventoryHistoryService>();
 
     // Add configuration
     var configuration = new ConfigurationBuilder()

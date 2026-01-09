@@ -48,6 +48,26 @@ public class DealerConfiguration : IEntityTypeConfiguration<Dealer>
         builder.Property(d => d.LastSeenAt)
             .IsRequired();
 
+        // Phase 5 Analytics: Reliability metrics
+        builder.Property(d => d.ReliabilityScore)
+            .HasColumnType("decimal(5,2)");
+
+        builder.Property(d => d.AvgDaysOnMarket);
+
+        builder.Property(d => d.TotalListingsHistorical)
+            .HasDefaultValue(0);
+
+        builder.Property(d => d.FrequentRelisterFlag)
+            .HasDefaultValue(false);
+
+        builder.Property(d => d.LastAnalyzedAt);
+
+        // Navigation to DealerMetrics
+        builder.HasOne(d => d.DealerMetrics)
+            .WithOne()
+            .HasForeignKey<Core.Models.DealerMetricsAggregate.DealerMetrics>(m => m.DealerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Indexes
         builder.HasIndex(d => d.TenantId)
             .HasDatabaseName("IX_Dealer_TenantId");

@@ -1,3 +1,5 @@
+using AutomatedMarketIntelligenceTool.Core.Models.DealerMetricsAggregate;
+
 namespace AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 
 public class Dealer
@@ -12,6 +14,16 @@ public class Dealer
     public int ListingCount { get; private set; }
     public DateTime FirstSeenAt { get; private set; }
     public DateTime LastSeenAt { get; private set; }
+
+    // Phase 5 Analytics: Reliability metrics (denormalized for quick access)
+    public decimal? ReliabilityScore { get; private set; }
+    public int? AvgDaysOnMarket { get; private set; }
+    public int TotalListingsHistorical { get; private set; }
+    public bool FrequentRelisterFlag { get; private set; }
+    public DateTime? LastAnalyzedAt { get; private set; }
+
+    // Navigation property to full metrics
+    public DealerMetrics? DealerMetrics { get; private set; }
 
     private Dealer() { }
 
@@ -73,5 +85,35 @@ public class Dealer
             .Trim();
 
         return normalized;
+    }
+
+    /// <summary>
+    /// Updates the denormalized reliability metrics from DealerMetrics aggregate.
+    /// </summary>
+    public void UpdateReliabilityMetrics(decimal reliabilityScore, int avgDaysOnMarket,
+        int totalListingsHistorical, bool frequentRelisterFlag)
+    {
+        ReliabilityScore = reliabilityScore;
+        AvgDaysOnMarket = avgDaysOnMarket;
+        TotalListingsHistorical = totalListingsHistorical;
+        FrequentRelisterFlag = frequentRelisterFlag;
+        LastAnalyzedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets the frequent relister flag for dealers with suspicious relisting patterns.
+    /// </summary>
+    public void SetFrequentRelisterFlag(bool isFrequentRelister)
+    {
+        FrequentRelisterFlag = isFrequentRelister;
+        LastAnalyzedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Increments the historical listing count.
+    /// </summary>
+    public void IncrementHistoricalListings()
+    {
+        TotalListingsHistorical++;
     }
 }

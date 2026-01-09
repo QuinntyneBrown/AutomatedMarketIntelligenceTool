@@ -11,6 +11,10 @@ using AutomatedMarketIntelligenceTool.Core.Models.AlertAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerMetricsAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.RelistingPatternAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerDeduplicationRuleAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.InventorySnapshotAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure;
@@ -32,6 +36,12 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
     public DbSet<ResponseCacheEntry> ResponseCacheEntries => Set<ResponseCacheEntry>();
     public DbSet<Report> Reports => Set<Report>();
+
+    // Phase 5 Analytics
+    public DbSet<DealerMetrics> DealerMetrics => Set<DealerMetrics>();
+    public DbSet<RelistingPattern> RelistingPatterns => Set<RelistingPattern>();
+    public DbSet<DealerDeduplicationRule> DealerDeduplicationRules => Set<DealerDeduplicationRule>();
+    public DbSet<InventorySnapshot> InventorySnapshots => Set<InventorySnapshot>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)
@@ -58,5 +68,11 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
         modelBuilder.Entity<Alert>().HasQueryFilter(a => a.TenantId == _tenantId);
         modelBuilder.Entity<AlertNotification>().HasQueryFilter(an => an.TenantId == _tenantId);
         modelBuilder.Entity<Dealer>().HasQueryFilter(d => d.TenantId == _tenantId);
+
+        // Phase 5 Analytics query filters
+        modelBuilder.Entity<DealerMetrics>().HasQueryFilter(m => m.TenantId == _tenantId);
+        modelBuilder.Entity<RelistingPattern>().HasQueryFilter(p => p.TenantId == _tenantId);
+        modelBuilder.Entity<DealerDeduplicationRule>().HasQueryFilter(r => r.TenantId == _tenantId);
+        modelBuilder.Entity<InventorySnapshot>().HasQueryFilter(s => s.TenantId == _tenantId);
     }
 }

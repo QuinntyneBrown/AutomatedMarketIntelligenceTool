@@ -10,6 +10,10 @@ using AutomatedMarketIntelligenceTool.Core.Models.DealerAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.CacheAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerMetricsAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.RelistingPatternAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.DealerDeduplicationRuleAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.InventorySnapshotAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedMarketIntelligenceTool.Core;
@@ -29,6 +33,12 @@ public interface IAutomatedMarketIntelligenceToolContext
     DbSet<ScraperHealthRecord> ScraperHealthRecords { get; }
     DbSet<ResponseCacheEntry> ResponseCacheEntries { get; }
     DbSet<Report> Reports { get; }
+
+    // Phase 5 Analytics
+    DbSet<DealerMetrics> DealerMetrics { get; }
+    DbSet<RelistingPattern> RelistingPatterns { get; }
+    DbSet<DealerDeduplicationRule> DealerDeduplicationRules { get; }
+    DbSet<InventorySnapshot> InventorySnapshots { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
