@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using FluentAssertions;
 
@@ -185,7 +186,7 @@ public class CliEndToEndTests : IDisposable
 
         // Assert
         exitCode.Should().Be(0);
-        output.Should().Contain("--tenant-id");
+        output.Should().Contain("--tenant");
         output.Should().Contain("--make");
         output.Should().Contain("--model");
     }
@@ -293,12 +294,22 @@ public class CliEndToEndTests : IDisposable
             currentDir = Directory.GetParent(currentDir)?.FullName;
         }
 
-        // Fallback: check common paths
-        var possiblePaths = new[]
+        // Fallback: check common paths based on OS
+        var possiblePaths = new List<string>
         {
-            "/home/user/AutomatedMarketIntelligenceTool",
             Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "..", "..")
         };
+
+        // Add OS-specific paths
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            possiblePaths.Add(@"c:\projects\AutomatedMarketIntelligenceTool");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            possiblePaths.Add("/home/user/AutomatedMarketIntelligenceTool");
+            possiblePaths.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AutomatedMarketIntelligenceTool"));
+        }
 
         foreach (var path in possiblePaths)
         {

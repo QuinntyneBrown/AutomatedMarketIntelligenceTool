@@ -137,7 +137,6 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
 
     // Register signal handler for graceful shutdown support in commands
     services.AddSingleton(signalHandler);
-    services.AddSingleton(signalHandler.CancellationToken);
 
     // Create service provider
     var registrar = new TypeRegistrar(services);
