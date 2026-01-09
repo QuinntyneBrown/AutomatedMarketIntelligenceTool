@@ -2,6 +2,7 @@ using AutomatedMarketIntelligenceTool.Core;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.PriceHistoryAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.ReviewQueueAggregate;
+using AutomatedMarketIntelligenceTool.Core.Models.ScraperHealthAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.SearchSessionAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.SearchProfileAggregate;
 using AutomatedMarketIntelligenceTool.Core.Models.VehicleAggregate;
@@ -19,6 +20,7 @@ public class AutomatedMarketIntelligenceToolContext : DbContext, IAutomatedMarke
     public DbSet<SearchProfile> SearchProfiles => Set<SearchProfile>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<ReviewItem> ReviewItems => Set<ReviewItem>();
+    public DbSet<ScraperHealthRecord> ScraperHealthRecords => Set<ScraperHealthRecord>();
 
     public AutomatedMarketIntelligenceToolContext(DbContextOptions<AutomatedMarketIntelligenceToolContext> options)
         : base(options)
