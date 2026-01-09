@@ -15,13 +15,18 @@ public class AutomatedMarketIntelligenceToolContextFactory : IDesignTimeDbContex
 
         if (!string.IsNullOrEmpty(connectionString))
         {
-            if (provider == "sqlserver")
+            switch (provider)
             {
-                optionsBuilder.UseSqlServer(connectionString);
-            }
-            else
-            {
-                optionsBuilder.UseSqlite(connectionString);
+                case "sqlserver":
+                    optionsBuilder.UseSqlServer(connectionString);
+                    break;
+                case "postgresql":
+                case "postgres":
+                    optionsBuilder.UseNpgsql(connectionString);
+                    break;
+                default:
+                    optionsBuilder.UseSqlite(connectionString);
+                    break;
             }
         }
         else
