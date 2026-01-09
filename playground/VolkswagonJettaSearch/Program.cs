@@ -77,7 +77,9 @@ if (allListings.Count == 0)
 else
 {
     // Sort by price
-    var sortedListings = allListings.OrderBy(l => l.Price).ToList();
+    var sortedListings = allListings 
+        .Where(x => x.Year >= searchParams.YearMin && x.Year <= searchParams.YearMax)
+        .OrderBy(l => l.Price).ToList();
 
     foreach (var listing in sortedListings)
     {

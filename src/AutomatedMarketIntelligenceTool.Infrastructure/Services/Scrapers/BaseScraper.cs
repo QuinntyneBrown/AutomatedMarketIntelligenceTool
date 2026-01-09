@@ -34,15 +34,21 @@ public abstract class BaseScraper : ISiteScraper
         IBrowser? browser = null;
         IBrowserContext? context = null;
 
+        var headless = GetEnvBool("AMIT_SCRAPER_HEADLESS", defaultValue: true);
+        var slowMoMs = GetEnvInt("AMIT_SCRAPER_SLOWMO_MS", defaultValue: 0);
+        var storageStatePath = Environment.GetEnvironmentVariable("AMIT_SCRAPER_STORAGE_STATE");
+        var saveStorageStatePath = Environment.GetEnvironmentVariable("AMIT_SCRAPER_SAVE_STORAGE_STATE");
+
         try
         {
             browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
-                Headless = !parameters.HeadedMode,
+                Headless = headless,
+                SlowMo = slowMoMs > 0 ? slowMoMs : null,
                 Args = new[] { "--disable-blink-features=AutomationControlled" }
             });
 
-            context = await browser.NewContextAsync(new BrowserNewContextOptions
+            var contextOptions = new BrowserNewContextOptions
             {
                 // A more "realistic" profile helps reduce bot-blocking.
                 Locale = "en-CA",
@@ -54,9 +60,29 @@ public abstract class BaseScraper : ISiteScraper
                     "Chrome/120.0.0.0 Safari/537.36",
                 ExtraHTTPHeaders = new Dictionary<string, string>
                 {
+                    ["Accept"] =
+                        "text/html,application/xhtml+xml,application/xml;q=0.9," +
+                        "image/avif,image/webp,image/apng,*/*;q=0.8",
                     ["Accept-Language"] = "en-CA,en;q=0.9"
                 }
-            });
+            };
+
+            if (!string.IsNullOrWhiteSpace(storageStatePath))
+            {
+                if (File.Exists(storageStatePath))
+                {
+                    contextOptions.StorageStatePath = storageStatePath;
+                    _logger.LogInformation("Loaded Playwright storage state from {Path}", storageStatePath);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "AMIT_SCRAPER_STORAGE_STATE was set but file does not exist: {Path}",
+                        storageStatePath);
+                }
+            }
+
+            context = await browser.NewContextAsync(contextOptions);
 
             await context.AddInitScriptAsync(
                 "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });");
@@ -117,6 +143,16 @@ public abstract class BaseScraper : ISiteScraper
                 SiteName,
                 allListings.Count,
                 currentPage);
+
+            if (context != null && !string.IsNullOrWhiteSpace(saveStorageStatePath))
+            {
+                await context.StorageStateAsync(new BrowserContextStorageStateOptions
+                {
+                    Path = saveStorageStatePath
+                });
+
+                _logger.LogInformation("Saved Playwright storage state to {Path}", saveStorageStatePath);
+            }
 
             return allListings;
         }
@@ -187,11 +223,14 @@ public abstract class BaseScraper : ISiteScraper
                 {
                     var html = await page.ContentAsync();
 
-                    if (IsLikelyWafBlock(html))
+                    var botBlockProvider = DetectBotBlockProvider(html);
+                    if (botBlockProvider != null)
                     {
                         _logger.LogError(
-                            "Request blocked by a WAF/bot-protection page on {SiteName} (HTTP {Status}). " +
-                            "This commonly requires a non-automated session (or proxy/allowlisting) to access.",
+                            "Request blocked by {Provider} bot-protection on {SiteName} (HTTP {Status}). " +
+                            "If this site presents a CAPTCHA, run with AMIT_SCRAPER_HEADLESS=0 to complete it manually. " +
+                            "Optionally set AMIT_SCRAPER_SAVE_STORAGE_STATE to persist cookies/session for reuse.",
+                            botBlockProvider,
                             SiteName,
                             response.Status);
 
@@ -253,7 +292,59 @@ public abstract class BaseScraper : ISiteScraper
 
         return html.Contains("_Incapsula_Resource", StringComparison.OrdinalIgnoreCase)
             || html.Contains("Incapsula incident ID", StringComparison.OrdinalIgnoreCase)
-            || html.Contains("Request unsuccessful", StringComparison.OrdinalIgnoreCase);
+            || html.Contains("Request unsuccessful", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("captcha-delivery.com", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("DataDome", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? DetectBotBlockProvider(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return null;
+        }
+
+        if (html.Contains("captcha-delivery.com", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("DataDome", StringComparison.OrdinalIgnoreCase))
+        {
+            return "DataDome";
+        }
+
+        if (html.Contains("_Incapsula_Resource", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("Incapsula incident ID", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Incapsula";
+        }
+
+        if (html.Contains("cf-chl", StringComparison.OrdinalIgnoreCase)
+            || html.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Cloudflare";
+        }
+
+        return IsLikelyWafBlock(html) ? "bot-protection" : null;
+    }
+
+    private static bool GetEnvBool(string name, bool defaultValue)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return defaultValue;
+        }
+
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "0" or "false" or "no" or "off" => false,
+            "1" or "true" or "yes" or "on" => true,
+            _ => defaultValue
+        };
+    }
+
+    private static int GetEnvInt(string name, int defaultValue)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return int.TryParse(value, out var parsed) ? parsed : defaultValue;
     }
 
     private static Task<bool> IsDebugEnabledAsync()
