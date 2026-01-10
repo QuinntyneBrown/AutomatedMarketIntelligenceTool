@@ -348,7 +348,7 @@ public class TabangiMotorsScraper : BaseScraper
         }
     }
 
-    private static string ExtractExternalId(string url)
+    protected override string ExtractExternalId(string url)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -397,7 +397,7 @@ public class TabangiMotorsScraper : BaseScraper
         return url.GetHashCode().ToString();
     }
 
-    private static decimal ParsePrice(string priceText)
+    protected override decimal ParsePrice(string priceText)
     {
         if (string.IsNullOrWhiteSpace(priceText))
         {
@@ -423,7 +423,7 @@ public class TabangiMotorsScraper : BaseScraper
         return 0;
     }
 
-    private static int? ParseMileage(string mileageText)
+    protected override int? ParseMileage(string mileageText)
     {
         if (string.IsNullOrWhiteSpace(mileageText))
         {
@@ -451,7 +451,7 @@ public class TabangiMotorsScraper : BaseScraper
         return null;
     }
 
-    private static (string Make, string Model, int Year) ParseTitle(string title)
+    protected override (string Make, string Model, int Year) ParseTitle(string title)
     {
         if (string.IsNullOrWhiteSpace(title))
         {

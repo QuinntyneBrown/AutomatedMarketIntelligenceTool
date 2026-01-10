@@ -1,4 +1,5 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Utilities;
 
 namespace AutomatedMarketIntelligenceTool.Core.Models.ScheduledReportAggregate;
 
@@ -421,7 +422,7 @@ public class ScheduledReport
         var now = DateTime.UtcNow;
 
         var filename = template
-            .Replace("{name}", SanitizeFilename(Name))
+            .Replace("{name}", StringUtilities.SanitizeFileName(Name))
             .Replace("{date:yyyyMMdd-HHmmss}", now.ToString("yyyyMMdd-HHmmss"))
             .Replace("{date:yyyyMMdd}", now.ToString("yyyyMMdd"))
             .Replace("{date}", now.ToString("yyyy-MM-dd"));
@@ -435,12 +436,6 @@ public class ScheduledReport
         };
 
         return filename + extension;
-    }
-
-    private static string SanitizeFilename(string name)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        return string.Join("_", name.Split(invalid, StringSplitOptions.RemoveEmptyEntries));
     }
 
     public bool IsDue()

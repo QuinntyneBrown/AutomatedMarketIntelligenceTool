@@ -680,4 +680,136 @@ public abstract class BaseScraper : ISiteScraper
             _logger.LogWarning(ex, "[DebugDump] Failed writing debug artifacts");
         }
     }
+
+    #region Shared Parsing Helpers
+
+    /// <summary>
+    /// Parses a price string by removing currency symbols and formatting.
+    /// Override in derived classes for site-specific handling.
+    /// </summary>
+    protected virtual decimal ParsePrice(string priceText)
+    {
+        if (string.IsNullOrWhiteSpace(priceText))
+        {
+            return 0;
+        }
+
+        var cleanPrice = priceText
+            .Replace("$", string.Empty)
+            .Replace(",", string.Empty)
+            .Replace("CAD", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("USD", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        return decimal.TryParse(cleanPrice, out var price) ? price : 0;
+    }
+
+    /// <summary>
+    /// Parses a mileage string by removing units and formatting.
+    /// Override in derived classes for site-specific handling.
+    /// </summary>
+    protected virtual int? ParseMileage(string mileageText)
+    {
+        if (string.IsNullOrWhiteSpace(mileageText))
+        {
+            return null;
+        }
+
+        var cleanMileage = mileageText
+            .Replace(",", string.Empty)
+            .Replace("km", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("kilometers", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("kilometres", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("mi", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("miles", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        return int.TryParse(cleanMileage, out var mileage) ? mileage : null;
+    }
+
+    /// <summary>
+    /// Parses a location string into city and province components.
+    /// Expects format "City, Province" or similar.
+    /// </summary>
+    protected virtual (string? City, string? Province) ParseLocation(string locationText)
+    {
+        if (string.IsNullOrWhiteSpace(locationText))
+        {
+            return (null, null);
+        }
+
+        var parts = locationText.Split(',');
+        if (parts.Length >= 2)
+        {
+            return (parts[0].Trim(), parts[1].Trim());
+        }
+
+        if (parts.Length == 1 && !string.IsNullOrWhiteSpace(parts[0]))
+        {
+            return (parts[0].Trim(), null);
+        }
+
+        return (null, null);
+    }
+
+    /// <summary>
+    /// Parses a vehicle title string into make, model, and year.
+    /// Expects format "Year Make Model [Trim]" (e.g., "2020 Toyota Camry LE").
+    /// </summary>
+    protected virtual (string Make, string Model, int Year) ParseTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return (string.Empty, string.Empty, 0);
+        }
+
+        var parts = title.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length < 3)
+        {
+            return (string.Empty, string.Empty, 0);
+        }
+
+        if (int.TryParse(parts[0], out var year) && year >= 1900 && year <= DateTime.Now.Year + 2)
+        {
+            var make = parts[1];
+            var model = string.Join(" ", parts.Skip(2));
+            return (make, model, year);
+        }
+
+        return (string.Empty, string.Empty, 0);
+    }
+
+    /// <summary>
+    /// Extracts an external ID from a listing URL.
+    /// Override in derived classes for site-specific URL patterns.
+    /// </summary>
+    protected virtual string ExtractExternalId(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            var uri = new Uri(url);
+            var lastSegment = uri.Segments
+                .Select(s => s.Trim('/'))
+                .LastOrDefault(s => !string.IsNullOrWhiteSpace(s));
+
+            if (!string.IsNullOrWhiteSpace(lastSegment))
+            {
+                return lastSegment;
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return url.GetHashCode().ToString();
+    }
+
+    #endregion
 }

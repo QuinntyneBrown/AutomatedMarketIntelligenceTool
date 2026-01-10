@@ -154,7 +154,7 @@ public class CarGurusScraper : BaseScraper
             // Parse mileage
             var mileageElement = await container.QuerySelectorAsync("[data-cg-ft='car-blade-mileage']");
             var mileageText = mileageElement != null ? await mileageElement.InnerTextAsync() : string.Empty;
-            var mileage = ParseMileageFromCarGurus(mileageText);
+            var mileage = ParseMileage(mileageText);
 
             // Parse location
             var locationElement = await container.QuerySelectorAsync("[data-cg-ft='car-blade-location']");
@@ -213,7 +213,7 @@ public class CarGurusScraper : BaseScraper
         }
     }
 
-    private static string ExtractExternalId(string url)
+    protected override string ExtractExternalId(string url)
     {
         // CarGurus URLs typically contain listingId parameter
         var match = Regex.Match(url, @"listingId=(\d+)", RegexOptions.IgnoreCase);
@@ -222,37 +222,31 @@ public class CarGurusScraper : BaseScraper
             return match.Groups[1].Value;
         }
 
-        // Fallback: use the full URL as ID
-        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(url)).Substring(0, 32);
+        // Fallback: use base implementation or URL hash
+        return base.ExtractExternalId(url);
     }
 
-    private static decimal ParsePrice(string priceText)
+    protected override decimal ParsePrice(string priceText)
     {
         if (string.IsNullOrWhiteSpace(priceText))
         {
             return 0;
         }
 
-        // Remove currency symbols, commas, and whitespace
+        // Remove currency symbols, commas, and whitespace using regex
         var cleaned = Regex.Replace(priceText, @"[^\d.]", string.Empty);
-        
-        if (decimal.TryParse(cleaned, out var price))
-        {
-            return price;
-        }
 
-        return 0;
+        return decimal.TryParse(cleaned, out var price) ? price : 0;
     }
 
-    private static int? ParseMileageFromCarGurus(string mileageText)
+    protected override int? ParseMileage(string mileageText)
     {
         if (string.IsNullOrWhiteSpace(mileageText))
         {
             return null;
         }
 
-        // CarGurus might show mileage in miles or km
-        // Extract just the number
+        // CarGurus might show mileage in miles or km - extract and convert
         var match = Regex.Match(mileageText, @"([\d,]+)\s*(km|mi|miles|kilometers)?", RegexOptions.IgnoreCase);
         if (match.Success)
         {
@@ -271,55 +265,5 @@ public class CarGurusScraper : BaseScraper
         }
 
         return null;
-    }
-
-    private static (string? city, string? province) ParseLocation(string locationText)
-    {
-        if (string.IsNullOrWhiteSpace(locationText))
-        {
-            return (null, null);
-        }
-
-        // Location format is typically "City, Province" or "City, AB"
-        var parts = locationText.Split(',', StringSplitOptions.TrimEntries);
-        if (parts.Length >= 2)
-        {
-            return (parts[0], parts[1]);
-        }
-
-        return (locationText, null);
-    }
-
-    private static (string make, string model, int year) ParseTitle(string title)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return (string.Empty, string.Empty, 0);
-        }
-
-        // CarGurus titles typically: "Year Make Model Trim"
-        // Example: "2023 Toyota Camry SE"
-        var match = Regex.Match(title, @"^(\d{4})\s+([A-Za-z\-]+)\s+([A-Za-z0-9\-\s]+?)(?:\s+\w{1,3})?$", RegexOptions.IgnoreCase);
-        if (match.Success)
-        {
-            var year = int.Parse(match.Groups[1].Value);
-            var make = match.Groups[2].Value.Trim();
-            var model = match.Groups[3].Value.Trim();
-            return (make, model, year);
-        }
-
-        // Fallback parsing
-        var parts = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 3)
-        {
-            if (int.TryParse(parts[0], out var year))
-            {
-                var make = parts[1];
-                var model = string.Join(" ", parts.Skip(2).Take(2)); // Take next 2 words as model
-                return (make, model, year);
-            }
-        }
-
-        return (string.Empty, string.Empty, 0);
     }
 }

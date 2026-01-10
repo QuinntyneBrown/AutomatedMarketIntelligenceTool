@@ -191,7 +191,7 @@ public class CarMaxScraper : BaseScraper
         }
     }
 
-    private static string ExtractExternalId(string url)
+    protected override string ExtractExternalId(string url)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -205,83 +205,12 @@ public class CarMaxScraper : BaseScraper
             {
                 return match.Groups[1].Value;
             }
-
-            var uri = new Uri(url);
-            var lastSegment = uri.Segments
-                .Select(s => s.Trim('/'))
-                .LastOrDefault(s => !string.IsNullOrWhiteSpace(s));
-
-            if (!string.IsNullOrWhiteSpace(lastSegment))
-            {
-                return lastSegment;
-            }
         }
         catch
         {
             // ignored
         }
 
-        return url.GetHashCode().ToString();
-    }
-
-    private static decimal ParsePrice(string priceText)
-    {
-        var cleanPrice = priceText.Replace("$", string.Empty)
-            .Replace(",", string.Empty)
-            .Replace("USD", string.Empty, StringComparison.OrdinalIgnoreCase)
-            .Trim();
-
-        if (decimal.TryParse(cleanPrice, out var price))
-        {
-            return price;
-        }
-
-        return 0;
-    }
-
-    private static int? ParseMileage(string mileageText)
-    {
-        var cleanMileage = mileageText.Replace(",", string.Empty)
-            .Replace("km", string.Empty, StringComparison.OrdinalIgnoreCase)
-            .Replace("mi", string.Empty, StringComparison.OrdinalIgnoreCase)
-            .Replace("miles", string.Empty, StringComparison.OrdinalIgnoreCase)
-            .Trim();
-
-        if (int.TryParse(cleanMileage, out var mileage))
-        {
-            return mileage;
-        }
-
-        return null;
-    }
-
-    private static (string? City, string? Province) ParseLocation(string locationText)
-    {
-        var parts = locationText.Split(',');
-        if (parts.Length >= 2)
-        {
-            return (parts[0].Trim(), parts[1].Trim());
-        }
-
-        return (null, null);
-    }
-
-    private static (string Make, string Model, int Year) ParseTitle(string title)
-    {
-        var parts = title.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        if (parts.Length < 3)
-        {
-            return (string.Empty, string.Empty, 0);
-        }
-
-        if (int.TryParse(parts[0], out var year))
-        {
-            var make = parts[1];
-            var model = string.Join(" ", parts.Skip(2));
-            return (make, model, year);
-        }
-
-        return (string.Empty, string.Empty, 0);
+        return base.ExtractExternalId(url);
     }
 }
