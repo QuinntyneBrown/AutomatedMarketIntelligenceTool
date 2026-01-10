@@ -1,5 +1,4 @@
 <Project>
-  <PropertyGroup>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
+  <!-- Intentionally empty - removed PlatformTarget to allow natural platform detection -->
+  <!-- QuestPDF library will work on supported platforms (x64/x86) and report clear errors on unsupported ones (ARM64) -->
 </Project>
