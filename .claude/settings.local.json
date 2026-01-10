@@ -11,7 +11,14 @@
       "Bash(git checkout:*)",
       "Bash(git restore:*)",
       "Bash(Select-String \"error CS\")",
-      "Bash(Select-Object -First 10)"
+      "Bash(Select-Object -First 10)",
+      "Bash(dotnet run:*)",
+      "Bash($env:AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=\"1\")",
+      "Bash(AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=1 dotnet run:*)",
+      "Bash(AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=1 AMIT_SCRAPER_HEADLESS=0 dotnet run:*)",
+      "Bash(AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=1 AMIT_SCRAPER_INTERACTIVE_TIMEOUT_SECONDS=20 dotnet run:*)",
+      "Bash(AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=1 AMIT_SCRAPER_INTERACTIVE_TIMEOUT_SECONDS=20 AMIT_SCRAPER_DEBUG=1 dotnet run:*)",
+      "Bash(AMIT_SCRAPER_INTERACTIVE_ON_BOT_BLOCK=1 AMIT_SCRAPER_INTERACTIVE_TIMEOUT_SECONDS=30 AMIT_SCRAPER_DEBUG=1 dotnet run:*)"
     ],
     "deny": [],
     "ask": []

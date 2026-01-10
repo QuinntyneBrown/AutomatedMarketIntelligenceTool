@@ -422,6 +422,8 @@ public abstract class BaseScraper : ISiteScraper
                 provider,
                 timeoutSeconds);
 
+            Console.WriteLine("Press SPACEBAR if no CAPTCHA is shown and you want to continue immediately.");
+
             await page.GotoAsync(url, new PageGotoOptions
             {
                 WaitUntil = WaitUntilState.DOMContentLoaded,
@@ -432,6 +434,24 @@ public abstract class BaseScraper : ISiteScraper
             while (DateTimeOffset.UtcNow < deadline)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                // Check if user pressed spacebar to skip waiting
+                try
+                {
+                    if (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(intercept: true);
+                        if (key.Key == ConsoleKey.Spacebar)
+                        {
+                            _logger.LogInformation("Spacebar pressed; continuing without waiting for bot-protection detection.");
+                            break;
+                        }
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // Console input may not be available in all environments; ignore
+                }
 
                 try
                 {

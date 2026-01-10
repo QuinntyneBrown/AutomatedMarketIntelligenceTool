@@ -78,18 +78,95 @@ public class TabangiMotorsScraper : BaseScraper
 
         try
         {
-            // Wait for vehicle listings to load
-            await page.WaitForSelectorAsync(
-                ".vehicle-card, .inventory-item, [data-vehicle-id], .vehicle-listing, .car-card, article.vehicle",
-                new PageWaitForSelectorOptions
+            // Log the page URL and title for debugging
+            _logger.LogInformation("Current page URL: {Url}", page.Url);
+            _logger.LogInformation("Current page title: {Title}", await page.TitleAsync());
+
+            // This site uses JavaScript to load vehicles dynamically after the initial page load
+            // Vehicles load approximately 5+ seconds after page load
+            _logger.LogInformation("Waiting for JavaScript to load vehicles dynamically (this can take 5-10 seconds)...");
+
+            // Try multiple selector strategies - this site appears to use Convertus theme
+            var selectorStrategies = new[]
+            {
+                ".card__content", // Convertus theme vehicle cards
+                ".inventory__grid article",
+                "[class*='card__']",
+                ".vehicle-card",
+                ".inventory-item",
+                "[data-vehicle-id]",
+                ".vehicle-listing",
+                ".car-card",
+                "article[class*='card']",
+                ".inventory-list article",
+                ".search-result",
+                ".vehicle-item",
+                "div[class*='vehicle']",
+                "div[class*='inventory']"
+            };
+
+            IReadOnlyList<IElementHandle> listingElements = Array.Empty<IElementHandle>();
+            string? successfulSelector = null;
+
+            // Wait for vehicles to load - try each selector with a longer timeout
+            // Since vehicles load 5+ seconds after page load, we need to wait patiently
+            foreach (var selector in selectorStrategies)
+            {
+                try
                 {
-                    Timeout = 15000
-                });
+                    _logger.LogDebug("Trying selector: {Selector}", selector);
 
-            var listingElements = await page.QuerySelectorAllAsync(
-                ".vehicle-card, .inventory-item, [data-vehicle-id], .vehicle-listing, .car-card, article.vehicle");
+                    // Wait up to 15 seconds for vehicles to appear (5 seconds for load + buffer)
+                    await page.WaitForSelectorAsync(selector, new PageWaitForSelectorOptions
+                    {
+                        Timeout = 15000
+                    });
 
-            _logger.LogDebug("Found {Count} listing elements on page", listingElements.Count);
+                    var elements = await page.QuerySelectorAllAsync(selector);
+                    if (elements.Count > 0)
+                    {
+                        listingElements = elements;
+                        successfulSelector = selector;
+                        _logger.LogInformation("Found {Count} listing elements using selector: {Selector}", elements.Count, selector);
+                        break;
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    // Try next selector
+                    _logger.LogDebug("Selector {Selector} timed out, trying next", selector);
+                }
+            }
+
+            if (listingElements.Count == 0)
+            {
+                _logger.LogWarning("No listing elements found with any selector strategy");
+
+                // Save full page HTML for debugging
+                try
+                {
+                    var fullHtml = await page.ContentAsync();
+                    var debugPath = Path.Combine(Path.GetTempPath(), "tabangimotors_debug.html");
+                    await File.WriteAllTextAsync(debugPath, fullHtml);
+                    _logger.LogWarning("Saved page HTML to: {Path}", debugPath);
+
+                    // Also take a screenshot
+                    var screenshotPath = Path.Combine(Path.GetTempPath(), "tabangimotors_debug.png");
+                    await page.ScreenshotAsync(new PageScreenshotOptions { Path = screenshotPath, FullPage = true });
+                    _logger.LogWarning("Saved screenshot to: {Path}", screenshotPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to save debug files");
+                }
+
+                // Log page body for debugging
+                var bodyHtml = await page.InnerHTMLAsync("body");
+                _logger.LogDebug("Page body (first 1000 chars): {BodyHtml}", bodyHtml.Substring(0, Math.Min(1000, bodyHtml.Length)));
+                return listings;
+            }
+
+            _logger.LogDebug("Found {Count} listing elements on page using selector: {Selector}", listingElements.Count, successfulSelector);
 
             foreach (var element in listingElements)
             {
@@ -452,7 +529,7 @@ public class TabangiMotorsScraper : BaseScraper
 
         if (lower.Contains("cvt"))
         {
-            return Transmission.Cvt;
+            return Transmission.CVT;
         }
 
         return null;
@@ -469,22 +546,22 @@ public class TabangiMotorsScraper : BaseScraper
 
         if (lower.Contains("awd") || lower.Contains("all-wheel") || lower.Contains("all wheel"))
         {
-            return Drivetrain.Awd;
+            return Drivetrain.AllWheelDrive;
         }
 
         if (lower.Contains("4wd") || lower.Contains("4x4") || lower.Contains("four-wheel"))
         {
-            return Drivetrain.FourWd;
+            return Drivetrain.FourWheelDrive;
         }
 
         if (lower.Contains("fwd") || lower.Contains("front-wheel") || lower.Contains("front wheel"))
         {
-            return Drivetrain.Fwd;
+            return Drivetrain.FrontWheelDrive;
         }
 
         if (lower.Contains("rwd") || lower.Contains("rear-wheel") || lower.Contains("rear wheel"))
         {
-            return Drivetrain.Rwd;
+            return Drivetrain.RearWheelDrive;
         }
 
         return null;
