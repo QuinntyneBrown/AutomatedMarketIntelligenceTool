@@ -24,7 +24,7 @@ var searchParams = new SearchParameters
 {
     Make = "Volkswagen",
     Model = "Jetta",
-    YearMin = 2000,
+    YearMin = 2025,
     YearMax = 2025,
     Province = CanadianProvince.ON,
     PostalCode = "M5V", // Toronto area
@@ -77,8 +77,8 @@ if (allListings.Count == 0)
 }
 else
 {
-    // Sort by price
-    var sortedListings = allListings 
+    // Sort by price and filter by year
+    var sortedListings = allListings
         .Where(x => x.Year >= searchParams.YearMin && x.Year <= searchParams.YearMax)
         .OrderBy(l => l.Price).ToList();
 
