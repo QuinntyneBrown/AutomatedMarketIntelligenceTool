@@ -1,4 +1,5 @@
 using AutomatedMarketIntelligenceTool.Core.Models.ReportAggregate;
+using AutomatedMarketIntelligenceTool.Core.Services;
 using AutomatedMarketIntelligenceTool.Core.Services.Reporting;
 using Microsoft.Extensions.Logging;
 using PdfSharp.Drawing;
