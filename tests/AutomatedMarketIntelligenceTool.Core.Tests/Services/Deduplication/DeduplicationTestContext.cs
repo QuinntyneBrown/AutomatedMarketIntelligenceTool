@@ -72,6 +72,30 @@ public class DeduplicationTestContext : DbContext, IAutomatedMarketIntelligenceT
                 .HasConversion(id => id.Value, value => new DeduplicationConfigId(value));
         });
 
+        // Configure CustomMarket entity
+        modelBuilder.Entity<CustomMarket>(entity =>
+        {
+            entity.HasKey(cm => cm.CustomMarketId);
+            entity.Property(cm => cm.CustomMarketId)
+                .HasConversion(id => id.Value, value => new CustomMarketId(value));
+        });
+
+        // Configure ScheduledReport entity
+        modelBuilder.Entity<ScheduledReport>(entity =>
+        {
+            entity.HasKey(sr => sr.ScheduledReportId);
+            entity.Property(sr => sr.ScheduledReportId)
+                .HasConversion(id => id.Value, value => new ScheduledReportId(value));
+        });
+
+        // Configure ResourceThrottle entity
+        modelBuilder.Entity<ResourceThrottle>(entity =>
+        {
+            entity.HasKey(rt => rt.ResourceThrottleId);
+            entity.Property(rt => rt.ResourceThrottleId)
+                .HasConversion(id => id.Value, value => new ResourceThrottleId(value));
+        });
+
         // Configure other entities with minimal setup
         modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
         {

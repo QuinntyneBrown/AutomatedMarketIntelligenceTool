@@ -294,6 +294,42 @@ public class ListingDeactivationServiceTests
                         value => new ListingId(value));
             });
 
+            modelBuilder.Entity<Core.Models.CustomMarketAggregate.CustomMarket>(entity =>
+            {
+                entity.HasKey(cm => cm.CustomMarketId);
+                entity.Property(cm => cm.CustomMarketId).HasConversion(id => id.Value, value => new Core.Models.CustomMarketAggregate.CustomMarketId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ScheduledReportAggregate.ScheduledReport>(entity =>
+            {
+                entity.HasKey(sr => sr.ScheduledReportId);
+                entity.Property(sr => sr.ScheduledReportId).HasConversion(id => id.Value, value => new Core.Models.ScheduledReportAggregate.ScheduledReportId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ResourceThrottleAggregate.ResourceThrottle>(entity =>
+            {
+                entity.HasKey(rt => rt.ResourceThrottleId);
+                entity.Property(rt => rt.ResourceThrottleId).HasConversion(id => id.Value, value => new Core.Models.ResourceThrottleAggregate.ResourceThrottleId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DeduplicationAuditAggregate.AuditEntry>(entity =>
+            {
+                entity.HasKey(ae => ae.AuditEntryId);
+                entity.Property(ae => ae.AuditEntryId).HasConversion(id => id.Value, value => new Core.Models.DeduplicationAuditAggregate.AuditEntryId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DeduplicationConfigAggregate.DeduplicationConfig>(entity =>
+            {
+                entity.HasKey(dc => dc.ConfigId);
+                entity.Property(dc => dc.ConfigId).HasConversion(id => id.Value, value => new Core.Models.DeduplicationConfigAggregate.DeduplicationConfigId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ReportAggregate.Report>(entity =>
+            {
+                entity.HasKey(r => r.ReportId);
+                entity.Property(r => r.ReportId).HasConversion(id => id.Value, value => new Core.Models.ReportAggregate.ReportId(value));
+            });
+
             modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
             {
                 entity.HasKey(ss => ss.SearchSessionId);

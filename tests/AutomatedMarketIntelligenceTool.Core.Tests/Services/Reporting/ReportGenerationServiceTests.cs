@@ -261,6 +261,8 @@ public class ReportGenerationServiceTests
             // Ignore strongly-typed ID value objects
             modelBuilder.Ignore<ListingId>();
             modelBuilder.Ignore<ReportId>();
+            modelBuilder.Ignore<Core.Models.VehicleAggregate.VehicleId>();
+            modelBuilder.Ignore<Core.Models.AlertAggregate.AlertId>();
 
             modelBuilder.Entity<Report>(entity =>
             {
@@ -276,6 +278,83 @@ public class ReportGenerationServiceTests
                 entity.Ignore(l => l.Location);
                 entity.Ignore(l => l.Dealer);
                 entity.Ignore(l => l.DealerId);
+            });
+
+            modelBuilder.Entity<Core.Models.VehicleAggregate.Vehicle>(entity =>
+            {
+                entity.HasKey(v => v.VehicleId);
+                entity.Property(v => v.VehicleId).HasConversion(id => id.Value, value => new Core.Models.VehicleAggregate.VehicleId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.CustomMarketAggregate.CustomMarket>(entity =>
+            {
+                entity.HasKey(cm => cm.CustomMarketId);
+                entity.Property(cm => cm.CustomMarketId).HasConversion(id => id.Value, value => new Core.Models.CustomMarketAggregate.CustomMarketId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ScheduledReportAggregate.ScheduledReport>(entity =>
+            {
+                entity.HasKey(sr => sr.ScheduledReportId);
+                entity.Property(sr => sr.ScheduledReportId).HasConversion(id => id.Value, value => new Core.Models.ScheduledReportAggregate.ScheduledReportId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ResourceThrottleAggregate.ResourceThrottle>(entity =>
+            {
+                entity.HasKey(rt => rt.ResourceThrottleId);
+                entity.Property(rt => rt.ResourceThrottleId).HasConversion(id => id.Value, value => new Core.Models.ResourceThrottleAggregate.ResourceThrottleId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DeduplicationAuditAggregate.AuditEntry>(entity =>
+            {
+                entity.HasKey(ae => ae.AuditEntryId);
+                entity.Property(ae => ae.AuditEntryId).HasConversion(id => id.Value, value => new Core.Models.DeduplicationAuditAggregate.AuditEntryId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DeduplicationConfigAggregate.DeduplicationConfig>(entity =>
+            {
+                entity.HasKey(dc => dc.ConfigId);
+                entity.Property(dc => dc.ConfigId).HasConversion(id => id.Value, value => new Core.Models.DeduplicationConfigAggregate.DeduplicationConfigId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.AlertAggregate.Alert>(entity =>
+            {
+                entity.HasKey(a => a.AlertId);
+                entity.Property(a => a.AlertId).HasConversion(id => id.Value, value => new Core.Models.AlertAggregate.AlertId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.AlertAggregate.AlertNotification>(entity =>
+            {
+                entity.HasKey(an => an.NotificationId);
+                entity.Property(an => an.AlertId).HasConversion(id => id.Value, value => new Core.Models.AlertAggregate.AlertId(value));
+                entity.Property(an => an.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.CacheAggregate.ResponseCacheEntry>(entity =>
+            {
+                entity.HasKey(rce => rce.CacheEntryId);
+                entity.Property(rce => rce.CacheEntryId).HasConversion(id => id.Value, value => Core.Models.CacheAggregate.ResponseCacheEntryId.FromGuid(value));
+            });
+
+            modelBuilder.Entity<Core.Models.DealerAggregate.Dealer>(entity =>
+            {
+                entity.HasKey(d => d.DealerId);
+                entity.Property(d => d.DealerId).HasConversion(id => id.Value, value => new Core.Models.DealerAggregate.DealerId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.PriceHistoryAggregate.PriceHistory>(entity =>
+            {
+                entity.HasKey(ph => ph.PriceHistoryId);
+                entity.Property(ph => ph.PriceHistoryId).HasConversion(id => id.Value, value => new Core.Models.PriceHistoryAggregate.PriceHistoryId(value));
+                entity.Property(ph => ph.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.ReviewQueueAggregate.ReviewItem>(entity =>
+            {
+                entity.HasKey(ri => ri.ReviewItemId);
+                entity.Property(ri => ri.ReviewItemId).HasConversion(id => id.Value, value => new Core.Models.ReviewQueueAggregate.ReviewItemId(value));
+                entity.Property(ri => ri.Listing1Id).HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Property(ri => ri.Listing2Id).HasConversion(id => id.Value, value => new ListingId(value));
+                entity.Ignore(ri => ri.DomainEvents);
             });
         }
     }
