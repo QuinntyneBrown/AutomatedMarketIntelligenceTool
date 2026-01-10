@@ -1,4 +1,3 @@
 <Project>
-  <!-- Intentionally empty - removed PlatformTarget to allow natural platform detection -->
-  <!-- QuestPDF library will work on supported platforms (x64/x86) and report clear errors on unsupported ones (ARM64) -->
+  <!-- PDFsharp Core library is used for PDF generation - it has no native dependencies and works on all platforms including win-arm64 -->
 </Project>

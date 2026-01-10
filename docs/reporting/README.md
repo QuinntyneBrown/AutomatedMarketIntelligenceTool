@@ -9,7 +9,7 @@ The Phase 5 Reporting feature provides comprehensive report generation capabilit
 ### Report Formats
 
 - **HTML Reports**: Responsive, print-friendly web pages
-- **PDF Reports**: Professional PDF documents with QuestPDF
+- **PDF Reports**: Professional PDF documents with PDFsharp
 - **Excel Reports**: Multi-sheet workbooks with ClosedXML
 
 ### Report Content
@@ -36,7 +36,7 @@ car-search report -t <tenant-id> -f excel -o market-report.xlsx
 ## Dependencies
 
 - **Scriban** (5.10.0): HTML template engine
-- **QuestPDF** (2024.12.3): PDF generation
+- **PDFsharp** (6.2.0): PDF generation (cross-platform, win-arm64 compatible)
 - **ClosedXML** (0.104.2): Excel file generation
 
 ## Testing
