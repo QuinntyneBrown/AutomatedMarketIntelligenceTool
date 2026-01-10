@@ -39,6 +39,7 @@ public class ScraperFactory : IScraperFactory
             "vroom" or "vroom.com" => new VroomScraper(_loggerFactory.CreateLogger<VroomScraper>()),
             "truecar" or "truecar.com" => new TrueCarScraper(_loggerFactory.CreateLogger<TrueCarScraper>()),
             "carfax" or "carfax.ca" => new CarFaxScraper(_loggerFactory.CreateLogger<CarFaxScraper>()),
+            "tabangimotors" or "tabangimotors.com" => new TabangiMotorsScraper(_loggerFactory.CreateLogger<TabangiMotorsScraper>()),
             _ => throw new ArgumentException($"Unsupported site: {siteName}", nameof(siteName))
         };
 
@@ -70,6 +71,7 @@ public class ScraperFactory : IScraperFactory
         yield return CreateScraper("vroom");
         yield return CreateScraper("truecar");
         yield return CreateScraper("carfax");
+        yield return CreateScraper("tabangimotors");
     }
 
     public IEnumerable<string> GetSupportedSites()
@@ -85,7 +87,8 @@ public class ScraperFactory : IScraperFactory
             "Carvana.com",
             "Vroom.com",
             "TrueCar.com",
-            "CarFax.ca"
+            "CarFax.ca",
+            "TabangiMotors.com"
         };
     }
 }

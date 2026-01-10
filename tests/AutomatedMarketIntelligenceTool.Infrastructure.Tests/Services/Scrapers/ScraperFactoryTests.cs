@@ -206,6 +206,36 @@ public class ScraperFactoryTests
     }
 
     [Fact]
+    public void CreateScraper_WithTabangiMotors_ShouldReturnTabangiMotorsScraper()
+    {
+        // Arrange
+        var factory = new ScraperFactory(_loggerFactory);
+
+        // Act
+        var scraper = factory.CreateScraper("tabangimotors");
+
+        // Assert
+        Assert.NotNull(scraper);
+        Assert.IsType<TabangiMotorsScraper>(scraper);
+        Assert.Equal("TabangiMotors.com", scraper.SiteName);
+    }
+
+    [Fact]
+    public void CreateScraper_WithTabangiMotorsDotCom_ShouldReturnTabangiMotorsScraper()
+    {
+        // Arrange
+        var factory = new ScraperFactory(_loggerFactory);
+
+        // Act
+        var scraper = factory.CreateScraper("tabangimotors.com");
+
+        // Assert
+        Assert.NotNull(scraper);
+        Assert.IsType<TabangiMotorsScraper>(scraper);
+        Assert.Equal("TabangiMotors.com", scraper.SiteName);
+    }
+
+    [Fact]
     public void CreateAllScrapers_ShouldReturnAllSupportedScrapers()
     {
         // Arrange
@@ -216,7 +246,7 @@ public class ScraperFactoryTests
 
         // Assert
         Assert.NotEmpty(scrapers);
-        Assert.Equal(10, scrapers.Count);
+        Assert.Equal(11, scrapers.Count);
         Assert.Contains(scrapers, s => s is AutotraderScraper);
         Assert.Contains(scrapers, s => s is KijijiScraper);
         Assert.Contains(scrapers, s => s is CarGurusScraper);
@@ -227,6 +257,7 @@ public class ScraperFactoryTests
         Assert.Contains(scrapers, s => s is VroomScraper);
         Assert.Contains(scrapers, s => s is TrueCarScraper);
         Assert.Contains(scrapers, s => s is CarFaxScraper);
+        Assert.Contains(scrapers, s => s is TabangiMotorsScraper);
     }
 
     [Fact]
@@ -240,7 +271,7 @@ public class ScraperFactoryTests
 
         // Assert
         Assert.NotEmpty(sites);
-        Assert.Equal(10, sites.Count);
+        Assert.Equal(11, sites.Count);
         Assert.Contains("Autotrader.ca", sites);
         Assert.Contains("Kijiji.ca", sites);
         Assert.Contains("CarGurus.ca", sites);
@@ -251,6 +282,7 @@ public class ScraperFactoryTests
         Assert.Contains("Vroom.com", sites);
         Assert.Contains("TrueCar.com", sites);
         Assert.Contains("CarFax.ca", sites);
+        Assert.Contains("TabangiMotors.com", sites);
     }
 
     [Fact]

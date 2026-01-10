@@ -31,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolkswagonJettaSearch", "playground\VolkswagonJettaSearch\VolkswagonJettaSearch.csproj", "{A84F6632-185A-4328-8B62-14C1EEEECC8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tabangimotors", "playground\Tabangimotors\Tabangimotors.csproj", "{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,6 +175,18 @@ Global
 		{A84F6632-185A-4328-8B62-14C1EEEECC8C}.Release|x64.Build.0 = Release|Any CPU
 		{A84F6632-185A-4328-8B62-14C1EEEECC8C}.Release|x86.ActiveCfg = Release|Any CPU
 		{A84F6632-185A-4328-8B62-14C1EEEECC8C}.Release|x86.Build.0 = Release|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Debug|x64.Build.0 = Debug|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Debug|x86.Build.0 = Debug|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Release|x64.ActiveCfg = Release|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Release|x64.Build.0 = Release|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Release|x86.ActiveCfg = Release|Any CPU
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -189,5 +203,6 @@ Global
 		{4EDF8A5B-6AAB-4B7F-A1DF-9593FC333DD9} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{9F71CC47-F63F-40A4-937F-CC8121C19948} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{A84F6632-185A-4328-8B62-14C1EEEECC8C} = {12E5C810-18C6-BE57-4EA6-3F3BE821652E}
+		{2E8660D2-6CB3-44AD-83C3-64C07B2C8048} = {12E5C810-18C6-BE57-4EA6-3F3BE821652E}
 	EndGlobalSection
 EndGlobal
