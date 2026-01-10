@@ -192,19 +192,19 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 #### Option A: Delete Unregistered Commands
 
-- [ ] **2.1.1** Delete `AlertCommand.cs`
+- [x] **2.1.1** Delete `AlertCommand.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Commands/AlertCommand.cs`
   - Reason: Not registered in Program.cs, not required for MVP
-- [ ] **2.1.2** Delete `CompareCommand.cs`
+- [x] **2.1.2** Delete `CompareCommand.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Commands/CompareCommand.cs`
   - Reason: No requirement ID found, not registered
-- [ ] **2.1.3** Delete `DashboardCommand.cs`
+- [x] **2.1.3** Delete `DashboardCommand.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Commands/DashboardCommand.cs`
   - Reason: Phase 5 feature, not registered
-- [ ] **2.1.4** Delete `ReviewCommand.cs`
+- [x] **2.1.4** Delete `ReviewCommand.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Commands/ReviewCommand.cs`
   - Reason: Phase 4 feature, not registered
-- [ ] **2.1.5** Delete `WatchCommand.cs`
+- [x] **2.1.5** Delete `WatchCommand.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Commands/WatchCommand.cs`
   - Reason: Phase 3-4 feature, not registered
 
@@ -225,22 +225,22 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 #### Option A: Delete Unregistered Services
 
-- [ ] **2.2.1** Delete `NewListingDetectionService.cs`
+- [x] **2.2.1** Delete `NewListingDetectionService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Core/Services/NewListingDetectionService.cs`
   - Interface: `INewListingDetectionService`
-- [ ] **2.2.2** Delete `PriceChangeDetectionService.cs`
+- [x] **2.2.2** Delete `PriceChangeDetectionService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Core/Services/PriceChangeDetectionService.cs`
   - Interface: `IPriceChangeDetectionService`
-- [ ] **2.2.3** Delete `ListingDeactivationService.cs`
+- [x] **2.2.3** Delete `ListingDeactivationService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Core/Services/ListingDeactivationService.cs`
   - Interface: `IListingDeactivationService`
-- [ ] **2.2.4** Delete `DealerTrackingService.cs`
+- [x] **2.2.4** Delete `DealerTrackingService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Core/Services/DealerTrackingService.cs`
   - Interface: `IDealerTrackingService`
-- [ ] **2.2.5** Delete `VehicleLinkingService.cs`
+- [x] **2.2.5** Delete `VehicleLinkingService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Core/Services/VehicleLinkingService.cs`
   - Interface: `IVehicleLinkingService`
-- [ ] **2.2.6** Delete corresponding interface files for each service
+- [x] **2.2.6** Delete corresponding interface files for each service
 
 ---
 
@@ -251,22 +251,22 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 #### Option A: Delete Unregistered Services
 
-- [ ] **2.3.1** Delete `ResponseCacheService.cs`
+- [x] **2.3.1** Delete `ResponseCacheService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Cache/ResponseCacheService.cs`
   - Reason: Phase 5 feature (REQ-WS-014)
-- [ ] **2.3.2** Delete `DebugCaptureService.cs`
+- [x] **2.3.2** Delete `DebugCaptureService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Debug/DebugCaptureService.cs`
   - Reason: Not registered, debugging feature
-- [ ] **2.3.3** Delete `HeaderConfigurationService.cs`
+- [x] **2.3.3** Delete `HeaderConfigurationService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Headers/HeaderConfigurationService.cs`
   - Reason: Phase 5 feature (REQ-WS-013)
-- [ ] **2.3.4** Delete `ProxyRotationService.cs`
+- [x] **2.3.4** Delete `ProxyRotationService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Proxy/ProxyRotationService.cs`
   - Reason: Phase 3 feature (REQ-WS-007)
-- [ ] **2.3.5** Delete `ProxyService.cs`
+- [x] **2.3.5** Delete `ProxyService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Proxy/ProxyService.cs`
   - Reason: Phase 3 feature (REQ-WS-007)
-- [ ] **2.3.6** Delete `BatchDeduplicationService.cs`
+- [x] **2.3.6** Delete `BatchDeduplicationService.cs`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Deduplication/BatchDeduplicationService.cs`
   - Reason: Phase 5 feature
 
@@ -276,14 +276,14 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 **Priority:** Critical (Blocking)
 
-- [ ] **2.4.1** Create `IScraperHealthService` interface if missing
-- [ ] **2.4.2** Create `ScraperHealthService` implementation if missing
-- [ ] **2.4.3** Register in `Program.cs`:
+- [x] **2.4.1** Create `IScraperHealthService` interface if missing
+- [x] **2.4.2** Create `ScraperHealthService` implementation if missing
+- [x] **2.4.3** Register in `Program.cs`:
   ```csharp
   services.AddScoped<IScraperHealthService, ScraperHealthService>();
   ```
-- [ ] **2.4.4** Verify `DashboardCommand.cs` compiles (line 15, 21)
-- [ ] **2.4.5** Verify `StatusCommand.cs` compiles (line 15, 21)
+- [x] **2.4.4** Verify `DashboardCommand.cs` compiles (line 15, 21) - N/A (deleted in 2.1)
+- [x] **2.4.5** Verify `StatusCommand.cs` compiles (line 15, 21)
 
 ---
 
@@ -294,12 +294,12 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 #### Option A: Remove Unimplemented Notification Methods
 
-- [ ] **2.5.1** Remove `Email` case from AlertService (lines 167-171)
-- [ ] **2.5.2** Remove `Webhook` case from AlertService (lines 173-177)
-- [ ] **2.5.3** Remove `Email` from `NotificationMethod` enum
+- [x] **2.5.1** Remove `Email` case from AlertService (lines 167-171)
+- [x] **2.5.2** Remove `Webhook` case from AlertService (lines 173-177)
+- [x] **2.5.3** Remove `Email` from `NotificationMethod` enum
   - File: `src/AutomatedMarketIntelligenceTool.Core/Models/AlertAggregate/NotificationMethod.cs`
-- [ ] **2.5.4** Remove `Webhook` from `NotificationMethod` enum
-- [ ] **2.5.5** Search codebase for any references to removed enum values and update
+- [x] **2.5.4** Remove `Webhook` from `NotificationMethod` enum
+- [x] **2.5.5** Search codebase for any references to removed enum values and update
 
 #### Option B: Implement Notification Methods (Alternative)
 

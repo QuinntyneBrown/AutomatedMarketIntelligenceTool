@@ -14,6 +14,7 @@ using AutomatedMarketIntelligenceTool.Infrastructure.Services.Backup;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Import;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.RateLimiting;
 using AutomatedMarketIntelligenceTool.Infrastructure.Services.Scrapers;
+using AutomatedMarketIntelligenceTool.Infrastructure.Services.Health;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -114,6 +115,7 @@ services.AddDbContext<IAutomatedMarketIntelligenceToolContext, AutomatedMarketIn
     });
     services.AddSingleton<IRateLimiter, RateLimiter>();
     services.AddSingleton<IScraperFactory, ScraperFactory>();
+    services.AddSingleton<IScraperHealthService, ScraperHealthService>();
 
     // Phase 4: Image Analysis Services
     services.AddHttpClient<IImageDownloadService, ImageDownloadService>();

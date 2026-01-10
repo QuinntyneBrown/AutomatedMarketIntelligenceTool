@@ -163,18 +163,6 @@ public class AlertService : IAlertService
                     SendConsoleNotification(alert, listing);
                     notification.MarkAsSent();
                     break;
-
-                case NotificationMethod.Email:
-                    // TODO: Implement email notification
-                    _logger.LogWarning("Email notifications not yet implemented");
-                    notification.MarkAsFailed("Email notifications not implemented");
-                    break;
-
-                case NotificationMethod.Webhook:
-                    // TODO: Implement webhook notification
-                    _logger.LogWarning("Webhook notifications not yet implemented");
-                    notification.MarkAsFailed("Webhook notifications not implemented");
-                    break;
             }
 
             // Record trigger
