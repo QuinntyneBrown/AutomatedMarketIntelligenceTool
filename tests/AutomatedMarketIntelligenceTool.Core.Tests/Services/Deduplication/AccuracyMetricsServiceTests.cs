@@ -393,7 +393,7 @@ public class AccuracyMetricsServiceTests
         // Act & Assert - Should not throw and return default values
         Assert.Equal(1.0, metrics.Precision); // No FP means perfect precision
         Assert.Equal(1.0, metrics.Recall); // No FN means perfect recall
-        Assert.Equal(0, metrics.F1Score); // Actually 1.0 since P&R are 1
+        Assert.Equal(1.0, metrics.F1Score); // 2 * (1.0 * 1.0) / (1.0 + 1.0) = 1.0
         Assert.Equal(1.0, metrics.Accuracy); // No decisions = no errors
     }
 

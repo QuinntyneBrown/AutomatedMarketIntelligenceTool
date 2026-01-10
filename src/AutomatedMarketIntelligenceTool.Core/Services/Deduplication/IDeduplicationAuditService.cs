@@ -130,7 +130,7 @@ public class AuditQueryResult
     public int TotalCount { get; init; }
     public int Skip { get; init; }
     public int Take { get; init; }
-    public bool HasMore => Skip + Items.Count < TotalCount;
+    public bool HasMore => Skip + Take < TotalCount;
 }
 
 /// <summary>

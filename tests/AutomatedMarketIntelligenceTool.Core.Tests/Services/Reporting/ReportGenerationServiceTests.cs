@@ -356,6 +356,31 @@ public class ReportGenerationServiceTests
                 entity.Property(ri => ri.Listing2Id).HasConversion(id => id.Value, value => new ListingId(value));
                 entity.Ignore(ri => ri.DomainEvents);
             });
+
+            modelBuilder.Entity<Core.Models.ScraperHealthAggregate.ScraperHealthRecord>(entity =>
+            {
+                entity.HasKey(shr => shr.ScraperHealthRecordId);
+                entity.Property(shr => shr.ScraperHealthRecordId).HasConversion(id => id.Value, value => new Core.Models.ScraperHealthAggregate.ScraperHealthRecordId(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchProfileAggregate.SearchProfile>(entity =>
+            {
+                entity.HasKey(sp => sp.SearchProfileId);
+                entity.Property(sp => sp.SearchProfileId).HasConversion(id => id.Value, value => Core.Models.SearchProfileAggregate.SearchProfileId.From(value));
+            });
+
+            modelBuilder.Entity<Core.Models.SearchSessionAggregate.SearchSession>(entity =>
+            {
+                entity.HasKey(ss => ss.SearchSessionId);
+                entity.Property(ss => ss.SearchSessionId).HasConversion(id => id.Value, value => Core.Models.SearchSessionAggregate.SearchSessionId.From(value));
+            });
+
+            modelBuilder.Entity<Core.Models.WatchListAggregate.WatchedListing>(entity =>
+            {
+                entity.HasKey(wl => wl.WatchedListingId);
+                entity.Property(wl => wl.WatchedListingId).HasConversion(id => id.Value, value => new Core.Models.WatchListAggregate.WatchedListingId(value));
+                entity.Property(wl => wl.ListingId).HasConversion(id => id.Value, value => new ListingId(value));
+            });
         }
     }
 }

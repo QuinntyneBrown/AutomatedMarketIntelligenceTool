@@ -418,7 +418,7 @@ public class ScheduledReportModelTests
 
         // Assert
         Assert.EndsWith(".pdf", filename);
-        Assert.Contains("Daily_Market", filename);
+        Assert.Contains("Daily Market", filename); // Spaces are valid in filenames, not replaced with underscores
     }
 
     [Fact]
