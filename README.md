@@ -2,21 +2,23 @@
 
 [![PR Validation](https://github.com/QuinntyneBrown/AutomatedMarketIntelligenceTool/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/QuinntyneBrown/AutomatedMarketIntelligenceTool/actions/workflows/pr-validation.yml)
 
-A comprehensive market intelligence solution for automated car listing search, web scraping, and analysis across Canadian automotive markets. This tool provides a CLI interface, REST API, and web application for gathering and analyzing automotive market data from Canadian platforms.
+A comprehensive, production-ready market intelligence solution for automated car listing search, web scraping, and analysis across Canadian and North American automotive markets. This enterprise-grade tool provides a feature-rich CLI interface, REST API, and web application for gathering, deduplicating, and analyzing automotive market data from 10+ platforms.
+
+**Current Status:** Phase 5 - Production Maturity (Performance Optimization & Advanced Features)
 
 ## Overview
 
-AutomatedMarketIntelligenceTool is a Canada-focused multi-tier application that enables users to:
+AutomatedMarketIntelligenceTool is a multi-tier application designed for Canadian and North American automotive markets that enables users to:
 
-- Search and scrape automotive listings from Canadian sources (Autotrader.ca, Kijiji.ca, and more)
-- Configure search parameters with postal codes and location-based queries across Canada
-- Detect and filter duplicate listings
-- Store and persist listing data with multi-tenant support
-- Export data in multiple formats (JSON, CSV)
-- View real-time scraping statistics and health metrics
-- Access data through CLI, REST API, or web interface
+- **Comprehensive Scraping:** Search and scrape automotive listings from 10+ platforms (Autotrader.ca, Kijiji.ca, CarGurus, Clutch, Auto123, CarFax, CarMax, Carvana, TrueCar, Vroom, and Tabangimotors)
+- **Smart Deduplication:** Advanced duplicate detection using VIN matching, fuzzy logic, and configurable thresholds
+- **Flexible Search:** Configure search parameters with postal codes, cities, provinces, and custom market regions
+- **Multi-Format Export:** Export data in JSON, CSV, HTML, and PDF formats with professional report generation
+- **Real-Time Monitoring:** View scraping statistics, health metrics, and dashboard analytics
+- **Enterprise Features:** Multi-tenant architecture, response caching, batch operations, and resource throttling
+- **Multiple Interfaces:** Access via CLI, REST API, or Angular web application
 
-**Note:** This tool is specifically designed for the Canadian automotive market, supporting Canadian postal codes, provinces, and local listing platforms.
+**Primary Focus:** Canadian automotive market with support for US platforms where relevant.
 
 ## Architecture
 
@@ -48,50 +50,100 @@ The project follows Clean Architecture principles with a clear separation of con
 - Graceful signal handling
 
 ### Web Scraping
-- Support for 10+ automotive sites:
-  - Canadian: Autotrader.ca, Kijiji.ca, CarGurus.ca, Clutch.ca, Auto123.com, CarFax.ca
+- **10+ Automotive Platforms:**
+  - Canadian: Autotrader.ca, Kijiji.ca, CarGurus.ca, Clutch.ca, Auto123.com, CarFax.ca, Tabangimotors
   - US/North America: CarMax.com, Carvana.com, Vroom.com, TrueCar.com
-- Multi-browser support (Chromium, Firefox, WebKit)
-- Proxy support (HTTP/HTTPS/SOCKS5) with authentication
-- User agent rotation for improved scraping reliability
-- Rate limiting and retry logic
-- Browser automation for dynamic content
-- Intelligent duplicate detection
-- Real-time progress tracking
+- **Advanced Scraping Features:**
+  - Multi-browser support (Chromium, Firefox, WebKit)
+  - Proxy support (HTTP/HTTPS/SOCKS5) with authentication
+  - User agent rotation with mobile UA support
+  - Configurable request headers (Accept, Accept-Language, Referer, DNT)
+  - Rate limiting, retry logic, and exponential backoff
+  - Browser automation for JavaScript-rendered content
+  - Response caching with configurable TTL
+  - Real-time progress tracking and health monitoring
+  - Interactive mode for bot detection challenges
 
-### Data Management
-- SQL Server Express database
-- Multi-tenant architecture with row-level isolation
-- Entity Framework Core with migrations
-- Structured logging with Serilog
-- Data export capabilities
+### Data Management & Deduplication
+- **Database Support:**
+  - SQLite (default, zero-configuration)
+  - SQL Server Express
+  - PostgreSQL
+- **Multi-Tenant Architecture:**
+  - Row-level tenant isolation
+  - Tenant-specific configuration
+  - Secure data separation
+- **Advanced Deduplication:**
+  - VIN-based exact matching
+  - Fuzzy matching (make, model, year, price, mileage, location)
+  - Image-based similarity detection
+  - Configurable thresholds and weights
+  - Batch processing with <20% overhead
+  - Audit trail for all deduplication decisions
+  - Manual override support
+- **Data Operations:**
+  - Entity Framework Core with migrations
+  - Structured logging with Serilog
+  - Export to JSON, CSV, HTML, PDF
+  - Backup and restore capabilities
 
-### Configuration
+### Monitoring & Analytics
+- **Real-Time Dashboard:**
+  - Market trends and statistics
+  - Active scraping sessions
+  - System health metrics
+  - Watch mode with auto-refresh
+- **Dealer Analytics:**
+  - Reliability scoring
+  - Inventory tracking
+  - Relisting pattern detection
+  - Historical performance metrics
+- **Reporting:**
+  - Professional HTML reports
+  - PDF generation
+  - Excel export with multiple sheets
+  - Custom report templates
+  - Scheduled report generation
+
+### Configuration & Customization
 - Search profile management
-- Location-based configuration
+- Custom market region definitions
+- Location-based configuration (postal codes, cities, provinces)
+- Deduplication threshold tuning
+- Cache configuration and TTL settings
+- Resource throttling limits
 - Environment-specific settings
 - Persistent user preferences
 
 ## Technology Stack
 
 ### Backend
-- .NET 8+
-- Entity Framework Core
-- MediatR for CQRS
-- Serilog for structured logging
-- StyleCop & Roslyn analyzers for code quality
+- **.NET 8+** - Modern, cross-platform framework
+- **Entity Framework Core** - ORM with multi-database support
+- **MediatR** - CQRS pattern implementation
+- **Playwright** - Browser automation for scraping
+- **Serilog** - Structured logging
+- **StyleCop & Roslyn** - Code quality and consistency
+- **PDFsharp** - PDF report generation
+- **ClosedXML** - Excel export functionality
 
 ### Frontend
-- Angular (latest stable)
-- Angular Material
-- RxJS for reactive programming
-- Jest for unit testing
-- Playwright for e2e testing
+- **Angular** (latest stable) - SPA framework
+- **Angular Material** - Material Design components
+- **RxJS** - Reactive programming
+- **Jest** - Unit testing
+- **Playwright** - E2E testing
 
-### Database
-- SQLite (default, zero-configuration)
-- SQL Server Express
-- PostgreSQL (Phase 3)
+### Database & Caching
+- **SQLite** - Default, zero-configuration
+- **SQL Server Express** - Enterprise-ready option
+- **PostgreSQL** - Open-source database option
+- **In-Memory Caching** - Response caching with TTL
+
+### Infrastructure
+- **Clean Architecture** - Clear separation of concerns
+- **Multi-Tenancy** - Isolated data per tenant
+- **Performance Optimization** - Indexing, batch operations, caching
 
 ## Getting Started
 
