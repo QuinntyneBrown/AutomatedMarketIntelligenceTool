@@ -1,4 +1,5 @@
 using System.Text;
+using AutomatedMarketIntelligenceTool.Core.Utilities;
 
 namespace AutomatedMarketIntelligenceTool.Cli.Formatters;
 
@@ -21,7 +22,7 @@ public class CsvFormatter : IOutputFormatter
         var csv = new StringBuilder();
         
         // Add header row
-        csv.AppendLine(string.Join(",", properties.Select(p => EscapeCsvValue(p.Name))));
+        csv.AppendLine(string.Join(",", properties.Select(p => StringUtilities.EscapeCsvValue(p.Name))));
         
         // Add data rows
         foreach (var item in dataList)
@@ -29,28 +30,12 @@ public class CsvFormatter : IOutputFormatter
             var values = properties.Select(p =>
             {
                 var value = p.GetValue(item);
-                return EscapeCsvValue(value?.ToString() ?? string.Empty);
+                return StringUtilities.EscapeCsvValue(value?.ToString() ?? string.Empty);
             });
             
             csv.AppendLine(string.Join(",", values));
         }
         
         Console.Write(csv.ToString());
-    }
-
-    private static string EscapeCsvValue(string value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-
-        // Escape values that contain commas, quotes, or newlines
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
-        {
-            return $"\"{value.Replace("\"", "\"\"")}\"";
-        }
-
-        return value;
     }
 }

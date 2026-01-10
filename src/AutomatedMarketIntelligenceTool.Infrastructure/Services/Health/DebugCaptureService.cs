@@ -1,5 +1,6 @@
 using Microsoft.Playwright;
 using Microsoft.Extensions.Logging;
+using AutomatedMarketIntelligenceTool.Core.Utilities;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Health;
 
@@ -55,8 +56,8 @@ public class DebugCaptureService : IDebugCaptureService
         try
         {
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-            var reasonSuffix = reason != null ? $"-{SanitizeFileName(reason)}" : string.Empty;
-            var fileName = $"screenshot-{SanitizeFileName(siteName)}-{timestamp}{reasonSuffix}.png";
+            var reasonSuffix = reason != null ? $"-{StringUtilities.SanitizeFileName(reason)}" : string.Empty;
+            var fileName = $"screenshot-{StringUtilities.SanitizeFileName(siteName)}-{timestamp}{reasonSuffix}.png";
             var filePath = Path.Combine(_debugArtifactsPath, fileName);
 
             await page.ScreenshotAsync(new PageScreenshotOptions
@@ -85,8 +86,8 @@ public class DebugCaptureService : IDebugCaptureService
         try
         {
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-            var reasonSuffix = reason != null ? $"-{SanitizeFileName(reason)}" : string.Empty;
-            var fileName = $"html-{SanitizeFileName(siteName)}-{timestamp}{reasonSuffix}.html";
+            var reasonSuffix = reason != null ? $"-{StringUtilities.SanitizeFileName(reason)}" : string.Empty;
+            var fileName = $"html-{StringUtilities.SanitizeFileName(siteName)}-{timestamp}{reasonSuffix}.html";
             var filePath = Path.Combine(_debugArtifactsPath, fileName);
 
             var htmlContent = await page.ContentAsync();
@@ -105,11 +106,5 @@ public class DebugCaptureService : IDebugCaptureService
             _logger.LogError(ex, "Failed to save HTML for {SiteName}", siteName);
             return null;
         }
-    }
-
-    private static string SanitizeFileName(string fileName)
-    {
-        var invalidChars = Path.GetInvalidFileNameChars();
-        return string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries));
     }
 }

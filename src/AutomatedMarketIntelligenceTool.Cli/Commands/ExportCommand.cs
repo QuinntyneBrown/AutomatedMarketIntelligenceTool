@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AutomatedMarketIntelligenceTool.Core.Models.ListingAggregate.Enums;
 using AutomatedMarketIntelligenceTool.Core.Services;
+using AutomatedMarketIntelligenceTool.Core.Utilities;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -281,9 +282,9 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
             var row = string.Join(",", new[]
             {
                 lr.Listing.Year.ToString(),
-                EscapeCsv(lr.Listing.Make),
-                EscapeCsv(lr.Listing.Model),
-                EscapeCsv(lr.Listing.Trim),
+                StringUtilities.EscapeCsvValue(lr.Listing.Make),
+                StringUtilities.EscapeCsvValue(lr.Listing.Model),
+                StringUtilities.EscapeCsvValue(lr.Listing.Trim),
                 lr.Listing.Price.ToString("F2"),
                 lr.Listing.Currency,
                 lr.Listing.Mileage?.ToString() ?? "",
@@ -292,19 +293,19 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
                 lr.Listing.FuelType?.ToString() ?? "",
                 lr.Listing.BodyStyle?.ToString() ?? "",
                 lr.Listing.Drivetrain?.ToString() ?? "",
-                EscapeCsv(lr.Listing.ExteriorColor),
-                EscapeCsv(lr.Listing.InteriorColor),
-                EscapeCsv(lr.Listing.City),
-                EscapeCsv(lr.Listing.Province),
-                EscapeCsv(lr.Listing.PostalCode),
+                StringUtilities.EscapeCsvValue(lr.Listing.ExteriorColor),
+                StringUtilities.EscapeCsvValue(lr.Listing.InteriorColor),
+                StringUtilities.EscapeCsvValue(lr.Listing.City),
+                StringUtilities.EscapeCsvValue(lr.Listing.Province),
+                StringUtilities.EscapeCsvValue(lr.Listing.PostalCode),
                 lr.DistanceKilometers?.ToString("F1") ?? "",
                 lr.Listing.SellerType?.ToString() ?? "",
-                EscapeCsv(lr.Listing.SellerName),
-                EscapeCsv(lr.Listing.SellerPhone),
-                EscapeCsv(lr.Listing.Vin),
-                EscapeCsv(lr.Listing.ExternalId),
-                EscapeCsv(lr.Listing.SourceSite),
-                EscapeCsv(lr.Listing.ListingUrl),
+                StringUtilities.EscapeCsvValue(lr.Listing.SellerName),
+                StringUtilities.EscapeCsvValue(lr.Listing.SellerPhone),
+                StringUtilities.EscapeCsvValue(lr.Listing.Vin),
+                StringUtilities.EscapeCsvValue(lr.Listing.ExternalId),
+                StringUtilities.EscapeCsvValue(lr.Listing.SourceSite),
+                StringUtilities.EscapeCsvValue(lr.Listing.ListingUrl),
                 lr.Listing.ListingDate?.ToString("yyyy-MM-dd") ?? "",
                 lr.Listing.DaysOnMarket?.ToString() ?? "",
                 lr.Listing.FirstSeenDate.ToString("yyyy-MM-dd"),
@@ -318,19 +319,6 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
             
             await writer.WriteLineAsync(row);
         }
-    }
-
-    private string EscapeCsv(string? value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return "";
-
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
-        {
-            return $"\"{value.Replace("\"", "\"\"")}\"";
-        }
-
-        return value;
     }
 
     private T[]? ParseEnums<T>(string[] values, string fieldName) where T : struct, Enum

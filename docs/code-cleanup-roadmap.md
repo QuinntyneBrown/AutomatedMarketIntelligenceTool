@@ -34,24 +34,24 @@ Tasks are organized by priority and include detailed steps with file locations.
 **Priority:** High
 **Estimated Impact:** Removes 4 duplicate methods
 
-- [ ] **1.1.1** Create new file `src/AutomatedMarketIntelligenceTool.Core/Utilities/StringUtilities.cs`
-- [ ] **1.1.2** Implement `EscapeCsvValue()` method in StringUtilities
+- [x] **1.1.1** Create new file `src/AutomatedMarketIntelligenceTool.Core/Utilities/StringUtilities.cs`
+- [x] **1.1.2** Implement `EscapeCsvValue()` method in StringUtilities
   - Source reference: `src/AutomatedMarketIntelligenceTool.Cli/Formatters/CsvFormatter.cs:41`
-- [ ] **1.1.3** Implement `SanitizeFileName()` method in StringUtilities
+- [x] **1.1.3** Implement `SanitizeFileName()` method in StringUtilities
   - Source reference: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Health/DebugCaptureService.cs:110`
-- [ ] **1.1.4** Update `CsvFormatter.cs` to use `StringUtilities.EscapeCsvValue()`
+- [x] **1.1.4** Update `CsvFormatter.cs` to use `StringUtilities.EscapeCsvValue()`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Formatters/CsvFormatter.cs`
   - Remove local `EscapeCsvValue()` method at line 41
-- [ ] **1.1.5** Update `ExportCommand.cs` to use `StringUtilities.EscapeCsvValue()`
+- [x] **1.1.5** Update `ExportCommand.cs` to use `StringUtilities.EscapeCsvValue()`
   - File: `src/AutomatedMarketIntelligenceTool.Cli/Commands/ExportCommand.cs`
   - Remove local `EscapeCsv()` method at line 323
-- [ ] **1.1.6** Update `DebugCaptureService.cs` to use `StringUtilities.SanitizeFileName()`
+- [x] **1.1.6** Update `DebugCaptureService.cs` to use `StringUtilities.SanitizeFileName()`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Health/DebugCaptureService.cs`
   - Remove local `SanitizeFileName()` method at line 110
-- [ ] **1.1.7** Update `ScheduledReport.cs` to use `StringUtilities.SanitizeFileName()`
+- [x] **1.1.7** Update `ScheduledReport.cs` to use `StringUtilities.SanitizeFileName()`
   - File: `src/AutomatedMarketIntelligenceTool.Core/Models/ScheduledReportAggregate/ScheduledReport.cs`
   - Remove local `SanitizeFilename()` method at line 440
-- [ ] **1.1.8** Verify all usages compile and tests pass
+- [x] **1.1.8** Verify all usages compile and tests pass
 
 ---
 
