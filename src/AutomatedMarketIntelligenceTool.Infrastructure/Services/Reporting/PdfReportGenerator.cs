@@ -4,12 +4,16 @@ using AutomatedMarketIntelligenceTool.Core.Services.Reporting;
 using Microsoft.Extensions.Logging;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using PdfSharp.Fonts;
+using PdfSharp.Snippets.Font;
 
 namespace AutomatedMarketIntelligenceTool.Infrastructure.Services.Reporting;
 
 public class PdfReportGenerator : IReportGenerator
 {
     private readonly ILogger<PdfReportGenerator> _logger;
+    private static bool _fontResolverInitialized = false;
+    private static readonly object _fontResolverLock = new object();
 
     // Colors
     private static readonly XColor BlueMedium = XColor.FromArgb(33, 150, 243);
@@ -30,6 +34,23 @@ public class PdfReportGenerator : IReportGenerator
     public PdfReportGenerator(ILogger<PdfReportGenerator> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        EnsureFontResolverInitialized();
+    }
+
+    private static void EnsureFontResolverInitialized()
+    {
+        if (!_fontResolverInitialized)
+        {
+            lock (_fontResolverLock)
+            {
+                if (!_fontResolverInitialized)
+                {
+                    // Use FailsafeFontResolver which provides Segoe fonts regardless of requested font
+                    GlobalFontSettings.FontResolver = new FailsafeFontResolver();
+                    _fontResolverInitialized = true;
+                }
+            }
+        }
     }
 
     public Task<string> GenerateReportAsync(ReportData data, string outputPath, CancellationToken cancellationToken = default)
@@ -91,6 +112,7 @@ public class PdfReportGenerator : IReportGenerator
                     if (currentY + 25 > PageHeight - Margin - 30)
                     {
                         DrawFooter(gfx, pageNumber, -1); // -1 means we don't know total pages yet
+                        gfx.Dispose(); // Dispose before creating new graphics object
                         page = document.AddPage();
                         page.Width = PageWidth;
                         page.Height = PageHeight;
@@ -127,11 +149,14 @@ public class PdfReportGenerator : IReportGenerator
                     XStringFormats.TopCenter);
             }
 
-            // Draw footer on last page and update all page footers
+            // Dispose the current graphics object before creating new ones
+            gfx.Dispose();
+
+            // Draw footer on all pages with page numbers
             var totalPages = document.PageCount;
             for (int i = 0; i < totalPages; i++)
             {
-                var pageGfx = XGraphics.FromPdfPage(document.Pages[i]);
+                using var pageGfx = XGraphics.FromPdfPage(document.Pages[i]);
                 DrawFooter(pageGfx, i + 1, totalPages);
             }
 
