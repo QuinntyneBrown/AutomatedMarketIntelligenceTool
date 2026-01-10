@@ -383,56 +383,56 @@ public class KijijiScraper : BaseScraper
         }
     }
 
-    private static string ExtractExternalId(string url)
+    protected override string ExtractExternalId(string url)
     {
         var parts = url.Split('/');
-        for (int i = 0; i < parts.Length; i++)
+        foreach (var part in parts)
         {
             // Kijiji URLs often have IDs starting with "v-" or numeric IDs
-            if (i < parts.Length && (parts[i].StartsWith("v-") || (long.TryParse(parts[i], out _) && parts[i].Length > 5)))
+            if (part.StartsWith("v-") || (long.TryParse(part, out _) && part.Length > 5))
             {
-                return parts[i];
+                return part;
             }
         }
 
-        // Fallback to hash if no valid ID found
-        return url.GetHashCode().ToString();
+        return base.ExtractExternalId(url);
     }
 
-    private static decimal ParsePrice(string priceText)
+    protected override decimal ParsePrice(string priceText)
     {
-        var cleanPrice = priceText.Replace("$", string.Empty)
-            .Replace(",", string.Empty)
-            .Replace("CAD", string.Empty)
-            .Trim();
-
-        // Handle various "contact for price" phrases (English and French)
-        if (cleanPrice.Contains("Contact", StringComparison.OrdinalIgnoreCase) ||
-            cleanPrice.Contains("Call", StringComparison.OrdinalIgnoreCase) ||
-            cleanPrice.Contains("Please", StringComparison.OrdinalIgnoreCase) ||
-            cleanPrice.Contains("demande", StringComparison.OrdinalIgnoreCase) ||
-            cleanPrice.Contains("Contactez", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(priceText))
         {
             return 0;
         }
 
-        if (decimal.TryParse(cleanPrice, out var price))
+        // Handle various "contact for price" phrases (English and French)
+        if (priceText.Contains("Contact", StringComparison.OrdinalIgnoreCase) ||
+            priceText.Contains("Call", StringComparison.OrdinalIgnoreCase) ||
+            priceText.Contains("Please", StringComparison.OrdinalIgnoreCase) ||
+            priceText.Contains("demande", StringComparison.OrdinalIgnoreCase) ||
+            priceText.Contains("Contactez", StringComparison.OrdinalIgnoreCase))
         {
-            return price;
+            return 0;
         }
 
-        return 0;
+        return base.ParsePrice(priceText);
     }
 
-    private static int? ParseMileage(string detailsText)
+    protected override int? ParseMileage(string detailsText)
     {
-        // Kijiji shows mileage in km format like "100,000 km"
-        var cleanMileage = detailsText.Replace(",", string.Empty)
+        if (string.IsNullOrWhiteSpace(detailsText))
+        {
+            return null;
+        }
+
+        // Kijiji shows mileage in km format like "100,000 km" - try to extract from multi-word text
+        var cleanMileage = detailsText
+            .Replace(",", string.Empty)
             .Replace("km", string.Empty, StringComparison.OrdinalIgnoreCase)
             .Replace("kilometers", string.Empty, StringComparison.OrdinalIgnoreCase)
             .Trim();
 
-        // Try to extract just the number
+        // Try to extract just the number from the parts
         var parts = cleanMileage.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         foreach (var part in parts)
         {
@@ -443,41 +443,5 @@ public class KijijiScraper : BaseScraper
         }
 
         return null;
-    }
-
-    private static (string? City, string? Province) ParseLocation(string locationText)
-    {
-        var parts = locationText.Split(',');
-        if (parts.Length >= 2)
-        {
-            return (parts[0].Trim(), parts[1].Trim());
-        }
-
-        // Sometimes just city or province
-        if (parts.Length == 1 && !string.IsNullOrWhiteSpace(parts[0]))
-        {
-            return (parts[0].Trim(), null);
-        }
-
-        return (null, null);
-    }
-
-    private static (string Make, string Model, int Year) ParseTitle(string title)
-    {
-        var parts = title.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        if (parts.Length < 3)
-        {
-            return (string.Empty, string.Empty, 0);
-        }
-
-        if (int.TryParse(parts[0], out var year))
-        {
-            var make = parts[1];
-            var model = string.Join(" ", parts.Skip(2));
-            return (make, model, year);
-        }
-
-        return (string.Empty, string.Empty, 0);
     }
 }

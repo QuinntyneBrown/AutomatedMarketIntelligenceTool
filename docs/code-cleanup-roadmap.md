@@ -62,9 +62,9 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 #### 1.2.1 Create Base Class
 
-- [ ] **1.2.1.1** Create `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/BaseScraper.cs`
-- [ ] **1.2.1.2** Add abstract class structure with common interface implementation
-- [ ] **1.2.1.3** Implement shared `ParsePrice()` method
+- [x] **1.2.1.1** Create `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/BaseScraper.cs`
+- [x] **1.2.1.2** Add abstract class structure with common interface implementation
+- [x] **1.2.1.3** Implement shared `ParsePrice()` method
   ```csharp
   protected static decimal ParsePrice(string priceText)
   {
@@ -74,112 +74,112 @@ Tasks are organized by priority and include detailed steps with file locations.
       return decimal.TryParse(cleanPrice, out var price) ? price : 0;
   }
   ```
-- [ ] **1.2.1.4** Implement shared `ParseMileage()` method
-- [ ] **1.2.1.5** Implement shared `ParseLocation()` method
-- [ ] **1.2.1.6** Implement shared `ParseTitle()` method
-- [ ] **1.2.1.7** Implement shared `ExtractExternalId()` method (virtual for override)
+- [x] **1.2.1.4** Implement shared `ParseMileage()` method
+- [x] **1.2.1.5** Implement shared `ParseLocation()` method
+- [x] **1.2.1.6** Implement shared `ParseTitle()` method
+- [x] **1.2.1.7** Implement shared `ExtractExternalId()` method (virtual for override)
 
 #### 1.2.2 Update Auto123Scraper
 
-- [ ] **1.2.2.1** Update `Auto123Scraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.2.1** Update `Auto123Scraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/Auto123Scraper.cs`
-- [ ] **1.2.2.2** Remove `ExtractExternalId()` at line 190 (use base)
-- [ ] **1.2.2.3** Remove `ParsePrice()` at line 223 (use base)
-- [ ] **1.2.2.4** Remove `ParseMileage()` at line 238 (use base)
-- [ ] **1.2.2.5** Remove `ParseLocation()` at line 254 (use base)
-- [ ] **1.2.2.6** Remove `ParseTitle()` at line 265 (use base)
+- [x] **1.2.2.2** Remove `ExtractExternalId()` at line 190 (override with site-specific logic)
+- [x] **1.2.2.3** Remove `ParsePrice()` at line 223 (use base)
+- [x] **1.2.2.4** Remove `ParseMileage()` at line 238 (use base)
+- [x] **1.2.2.5** Remove `ParseLocation()` at line 254 (use base)
+- [x] **1.2.2.6** Remove `ParseTitle()` at line 265 (use base)
 
 #### 1.2.3 Update AutotraderScraper
 
-- [ ] **1.2.3.1** Update `AutotraderScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.3.1** Update `AutotraderScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/AutotraderScraper.cs`
-- [ ] **1.2.3.2** Remove `ExtractExternalId()` at line 230 (use base)
-- [ ] **1.2.3.3** Remove `ParsePrice()` at line 257 (use base)
-- [ ] **1.2.3.4** Remove `ParseMileage()` at line 271 (use base)
-- [ ] **1.2.3.5** Remove `ParseLocation()` at line 289 (use base)
-- [ ] **1.2.3.6** Remove `ParseTitle()` at line 300 (use base)
+- [x] **1.2.3.2** Remove `ExtractExternalId()` at line 230 (use base)
+- [x] **1.2.3.3** Remove `ParsePrice()` at line 257 (use base)
+- [x] **1.2.3.4** Remove `ParseMileage()` at line 271 (use base)
+- [x] **1.2.3.5** Remove `ParseLocation()` at line 289 (use base)
+- [x] **1.2.3.6** Remove `ParseTitle()` at line 300 (use base)
 
 #### 1.2.4 Update CarFaxScraper
 
-- [ ] **1.2.4.1** Update `CarFaxScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.4.1** Update `CarFaxScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/CarFaxScraper.cs`
-- [ ] **1.2.4.2** Remove `ExtractExternalId()` at line 198 (use base)
-- [ ] **1.2.4.3** Remove `ParsePrice()` at line 231 (use base)
-- [ ] **1.2.4.4** Remove `ParseMileage()` at line 246 (use base)
-- [ ] **1.2.4.5** Remove `ParseLocation()` at line 262 (use base)
-- [ ] **1.2.4.6** Remove `ParseTitle()` at line 273 (use base)
+- [x] **1.2.4.2** Remove `ExtractExternalId()` at line 198 (override with site-specific logic)
+- [x] **1.2.4.3** Remove `ParsePrice()` at line 231 (use base)
+- [x] **1.2.4.4** Remove `ParseMileage()` at line 246 (use base)
+- [x] **1.2.4.5** Remove `ParseLocation()` at line 262 (use base)
+- [x] **1.2.4.6** Remove `ParseTitle()` at line 273 (use base)
 
 #### 1.2.5 Update CarGurusScraper
 
-- [ ] **1.2.5.1** Update `CarGurusScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.5.1** Update `CarGurusScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/CarGurusScraper.cs`
-- [ ] **1.2.5.2** Remove `ExtractExternalId()` at line 216 (use base)
-- [ ] **1.2.5.3** Remove `ParsePrice()` at line 229 (use base)
-- [ ] **1.2.5.4** Remove `ParseMileage()` at line 247 (use base)
+- [x] **1.2.5.2** Remove `ExtractExternalId()` at line 216 (override with site-specific logic)
+- [x] **1.2.5.3** Remove `ParsePrice()` at line 229 (override with site-specific logic)
+- [x] **1.2.5.4** Remove `ParseMileage()` at line 247 (override with miles-to-km conversion)
 
 #### 1.2.6 Update CarMaxScraper
 
-- [ ] **1.2.6.1** Update `CarMaxScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.6.1** Update `CarMaxScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/CarMaxScraper.cs`
-- [ ] **1.2.6.2** Remove `ExtractExternalId()` at line 194 (use base)
-- [ ] **1.2.6.3** Remove `ParsePrice()` at line 227 (use base)
-- [ ] **1.2.6.4** Remove `ParseMileage()` at line 242 (use base)
-- [ ] **1.2.6.5** Remove `ParseLocation()` at line 258 (use base)
-- [ ] **1.2.6.6** Remove `ParseTitle()` at line 269 (use base)
+- [x] **1.2.6.2** Remove `ExtractExternalId()` at line 194 (override with site-specific logic)
+- [x] **1.2.6.3** Remove `ParsePrice()` at line 227 (use base)
+- [x] **1.2.6.4** Remove `ParseMileage()` at line 242 (use base)
+- [x] **1.2.6.5** Remove `ParseLocation()` at line 258 (use base)
+- [x] **1.2.6.6** Remove `ParseTitle()` at line 269 (use base)
 
 #### 1.2.7 Update CarvanaScraper
 
-- [ ] **1.2.7.1** Update `CarvanaScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.7.1** Update `CarvanaScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/CarvanaScraper.cs`
-- [ ] **1.2.7.2** Remove `ExtractExternalId()` at line 187 (use base)
-- [ ] **1.2.7.3** Remove `ParsePrice()` at line 220 (use base)
-- [ ] **1.2.7.4** Remove `ParseMileage()` at line 235 (use base)
-- [ ] **1.2.7.5** Remove `ParseTitle()` at line 251 (use base)
+- [x] **1.2.7.2** Remove `ExtractExternalId()` at line 187 (override with site-specific logic)
+- [x] **1.2.7.3** Remove `ParsePrice()` at line 220 (use base)
+- [x] **1.2.7.4** Remove `ParseMileage()` at line 235 (use base)
+- [x] **1.2.7.5** Remove `ParseTitle()` at line 251 (use base)
 
 #### 1.2.8 Update ClutchScraper
 
-- [ ] **1.2.8.1** Update `ClutchScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.8.1** Update `ClutchScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/ClutchScraper.cs`
-- [ ] **1.2.8.2** Remove `ExtractExternalId()` at line 276 (use base)
-- [ ] **1.2.8.3** Remove `ParsePrice()` at line 309 (use base)
-- [ ] **1.2.8.4** Remove `ParseMileage()` at line 324 (use base)
-- [ ] **1.2.8.5** Remove `ParseLocation()` at line 340 (use base)
-- [ ] **1.2.8.6** Remove `ParseTitle()` at line 351 (use base)
+- [x] **1.2.8.2** Remove `ExtractExternalId()` at line 276 (override with site-specific logic)
+- [x] **1.2.8.3** Remove `ParsePrice()` at line 309 (use base)
+- [x] **1.2.8.4** Remove `ParseMileage()` at line 324 (use base)
+- [x] **1.2.8.5** Remove `ParseLocation()` at line 340 (use base)
+- [x] **1.2.8.6** Remove `ParseTitle()` at line 351 (use base)
 
 #### 1.2.9 Update KijijiScraper
 
-- [ ] **1.2.9.1** Update `KijijiScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.9.1** Update `KijijiScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/KijijiScraper.cs`
-- [ ] **1.2.9.2** Remove `ExtractExternalId()` at line 386 (use base)
-- [ ] **1.2.9.3** Remove `ParsePrice()` at line 402 (use base)
-- [ ] **1.2.9.4** Remove `ParseMileage()` at line 427 (use base)
-- [ ] **1.2.9.5** Remove `ParseLocation()` at line 448 (use base)
-- [ ] **1.2.9.6** Remove `ParseTitle()` at line 465 (use base)
+- [x] **1.2.9.2** Remove `ExtractExternalId()` at line 386 (override with site-specific logic)
+- [x] **1.2.9.3** Remove `ParsePrice()` at line 402 (override with site-specific logic)
+- [x] **1.2.9.4** Remove `ParseMileage()` at line 427 (override with site-specific logic)
+- [x] **1.2.9.5** Remove `ParseLocation()` at line 448 (use base)
+- [x] **1.2.9.6** Remove `ParseTitle()` at line 465 (use base)
 
 #### 1.2.10 Update TrueCarScraper
 
-- [ ] **1.2.10.1** Update `TrueCarScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.10.1** Update `TrueCarScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/TrueCarScraper.cs`
-- [ ] **1.2.10.2** Remove `ExtractExternalId()` at line 191 (use base)
-- [ ] **1.2.10.3** Remove `ParsePrice()` at line 224 (use base)
-- [ ] **1.2.10.4** Remove `ParseMileage()` at line 239 (use base)
-- [ ] **1.2.10.5** Remove `ParseLocation()` at line 255 (use base)
-- [ ] **1.2.10.6** Remove `ParseTitle()` at line 266 (use base)
+- [x] **1.2.10.2** Remove `ExtractExternalId()` at line 191 (override with site-specific logic)
+- [x] **1.2.10.3** Remove `ParsePrice()` at line 224 (use base)
+- [x] **1.2.10.4** Remove `ParseMileage()` at line 239 (use base)
+- [x] **1.2.10.5** Remove `ParseLocation()` at line 255 (use base)
+- [x] **1.2.10.6** Remove `ParseTitle()` at line 266 (use base)
 
 #### 1.2.11 Update VroomScraper
 
-- [ ] **1.2.11.1** Update `VroomScraper.cs` to inherit from `BaseScraper`
+- [x] **1.2.11.1** Update `VroomScraper.cs` to inherit from `BaseScraper`
   - File: `src/AutomatedMarketIntelligenceTool.Infrastructure/Services/Scrapers/VroomScraper.cs`
-- [ ] **1.2.11.2** Remove `ExtractExternalId()` at line 176 (use base)
-- [ ] **1.2.11.3** Remove `ParsePrice()` at line 209 (use base)
-- [ ] **1.2.11.4** Remove `ParseMileage()` at line 224 (use base)
-- [ ] **1.2.11.5** Remove `ParseTitle()` at line 240 (use base)
+- [x] **1.2.11.2** Remove `ExtractExternalId()` at line 176 (override with site-specific logic)
+- [x] **1.2.11.3** Remove `ParsePrice()` at line 209 (use base)
+- [x] **1.2.11.4** Remove `ParseMileage()` at line 224 (use base)
+- [x] **1.2.11.5** Remove `ParseTitle()` at line 240 (use base)
 
 #### 1.2.12 Verification
 
-- [ ] **1.2.12.1** Run all scraper unit tests
-- [ ] **1.2.12.2** Verify compilation with no errors
-- [ ] **1.2.12.3** Run integration tests for at least 2 scrapers
+- [x] **1.2.12.1** Run all scraper unit tests
+- [x] **1.2.12.2** Verify compilation with no errors
+- [x] **1.2.12.3** Run integration tests for at least 2 scrapers
 
 ---
 
