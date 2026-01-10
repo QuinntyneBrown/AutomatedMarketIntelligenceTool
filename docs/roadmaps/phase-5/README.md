@@ -782,7 +782,7 @@ public class BatchDeduplicationService : IBatchDeduplicationService
 | S3-03 | Create HTML template | S3-02 | P0 |
 | S3-04 | Add search criteria section | S3-02 | P0 |
 | S3-05 | Add statistics section | S3-02 | P0 |
-| S3-06 | Add QuestPDF NuGet package | None | P1 |
+| S3-06 | Add PDFsharp NuGet package | None | P1 |
 | S3-07 | Implement PdfReportGenerator | S3-06 | P1 |
 | S3-08 | Add ClosedXML NuGet package | None | P2 |
 | S3-09 | Implement ExcelReportGenerator | S3-08 | P2 |

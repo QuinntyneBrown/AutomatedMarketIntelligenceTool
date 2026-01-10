@@ -44,7 +44,7 @@ case (HTML)
 
 case (PDF)
     :PdfReportGenerator;
-    :Create QuestPDF document;
+    :Create PDFsharp document;
     :Add header/footer;
     :Generate charts;
     :Render tables;
