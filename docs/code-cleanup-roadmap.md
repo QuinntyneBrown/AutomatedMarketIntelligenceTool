@@ -322,11 +322,15 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 ## Phase 3: Code Without Requirements
 
+> **Note:** Phase 3 items require business decisions about which features to keep for future phases.
+> These items have been reviewed but not actioned pending stakeholder input.
+
 ### 3.1 Web Scrapers Beyond MVP Scope
 
 **Priority:** Medium
 **MVP Requirement:** Only Autotrader.ca and Kijiji.ca (REQ-WS-001)
 **Decision Required:** Keep for future phases or Delete
+**Status:** Pending decision - scrapers kept for Phase 5 expansion
 
 #### Option A: Delete Non-MVP Scrapers
 
@@ -499,10 +503,10 @@ Tasks are organized by priority and include detailed steps with file locations.
 
 ### 4.1 Build Verification
 
-- [ ] **4.1.1** Run `dotnet clean` on solution
-- [ ] **4.1.2** Run `dotnet build` and fix any compilation errors
-- [ ] **4.1.3** Resolve any missing reference errors
-- [ ] **4.1.4** Update any broken using statements
+- [x] **4.1.1** Run `dotnet clean` on solution
+- [x] **4.1.2** Run `dotnet build` and fix any compilation errors
+- [x] **4.1.3** Resolve any missing reference errors
+- [x] **4.1.4** Update any broken using statements
 
 ### 4.2 Test Verification
 
