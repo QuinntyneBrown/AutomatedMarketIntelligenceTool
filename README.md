@@ -148,9 +148,10 @@ The project follows Clean Architecture principles with a clear separation of con
 ## Getting Started
 
 ### Prerequisites
-- .NET 8 SDK or later
-- Node.js and npm (for frontend)
-- SQL Server Express
+- **.NET 8 SDK** or later
+- **Node.js 18+** and npm (for frontend)
+- **Playwright browsers** (installed automatically)
+- **Database** (optional): SQL Server Express or PostgreSQL
 
 ### Installation
 
@@ -166,13 +167,20 @@ dotnet restore
 dotnet build
 ```
 
-3. Apply database migrations:
+3. Install Playwright browsers (required for scraping):
+```bash
+pwsh bin/Debug/net8.0/playwright.ps1 install
+# Or on Linux/Mac:
+# ./bin/Debug/net8.0/playwright.sh install
+```
+
+4. Apply database migrations (optional - SQLite is auto-created):
 ```bash
 cd src/AutomatedMarketIntelligenceTool.Infrastructure
 dotnet ef database update
 ```
 
-4. Install frontend dependencies:
+5. Install frontend dependencies:
 ```bash
 cd src/AutomatedMarketIntelligenceTool.WebApp
 npm install
