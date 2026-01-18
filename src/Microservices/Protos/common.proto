@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package ami.common;
+
+option csharp_namespace = "AutomatedMarketIntelligenceTool.Protos.Common";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// Common enumerations
+enum Condition {
+  CONDITION_UNSPECIFIED = 0;
+  NEW = 1;
+  USED = 2;
+  CERTIFIED_PRE_OWNED = 3;
+}
+
+enum Transmission {
+  TRANSMISSION_UNSPECIFIED = 0;
+  AUTOMATIC = 1;
+  MANUAL = 2;
+  CVT = 3;
+}
+
+enum FuelType {
+  FUEL_TYPE_UNSPECIFIED = 0;
+  GASOLINE = 1;
+  DIESEL = 2;
+  ELECTRIC = 3;
+  HYBRID = 4;
+  PLUG_IN_HYBRID = 5;
+}
+
+enum BodyStyle {
+  BODY_STYLE_UNSPECIFIED = 0;
+  SEDAN = 1;
+  SUV = 2;
+  TRUCK = 3;
+  COUPE = 4;
+  HATCHBACK = 5;
+  WAGON = 6;
+  CONVERTIBLE = 7;
+  VAN = 8;
+  MINIVAN = 9;
+}
+
+enum Drivetrain {
+  DRIVETRAIN_UNSPECIFIED = 0;
+  FWD = 1;
+  RWD = 2;
+  AWD = 3;
+  FOUR_WD = 4;
+}
+
+enum SellerType {
+  SELLER_TYPE_UNSPECIFIED = 0;
+  DEALER = 1;
+  PRIVATE = 2;
+}
+
+enum SortDirection {
+  SORT_ASCENDING = 0;
+  SORT_DESCENDING = 1;
+}
+
+enum SortField {
+  SORT_FIELD_UNSPECIFIED = 0;
+  PRICE = 1;
+  YEAR = 2;
+  MILEAGE = 3;
+  DISTANCE = 4;
+  CREATED_AT = 5;
+}
+
+// Common messages
+message Listing {
+  string listing_id = 1;
+  string tenant_id = 2;
+  string external_id = 3;
+  string source_site = 4;
+  string listing_url = 5;
+  string make = 6;
+  string model = 7;
+  int32 year = 8;
+  google.protobuf.StringValue trim = 9;
+  double price = 10;
+  google.protobuf.Int32Value mileage = 11;
+  google.protobuf.StringValue vin = 12;
+  google.protobuf.StringValue city = 13;
+  google.protobuf.StringValue province = 14;
+  google.protobuf.StringValue postal_code = 15;
+  string currency = 16;
+  Condition condition = 17;
+  Transmission transmission = 18;
+  FuelType fuel_type = 19;
+  BodyStyle body_style = 20;
+  Drivetrain drivetrain = 21;
+  google.protobuf.StringValue exterior_color = 22;
+  google.protobuf.StringValue interior_color = 23;
+  SellerType seller_type = 24;
+  google.protobuf.StringValue seller_name = 25;
+  google.protobuf.StringValue seller_phone = 26;
+  google.protobuf.StringValue description = 27;
+  repeated string image_urls = 28;
+  google.protobuf.Timestamp listing_date = 29;
+  google.protobuf.Int32Value days_on_market = 30;
+  google.protobuf.Timestamp first_seen_date = 31;
+  google.protobuf.Timestamp last_seen_date = 32;
+  bool is_new_listing = 33;
+  bool is_active = 34;
+  google.protobuf.Timestamp created_at = 35;
+  google.protobuf.Timestamp updated_at = 36;
+  google.protobuf.DoubleValue latitude = 37;
+  google.protobuf.DoubleValue longitude = 38;
+  google.protobuf.StringValue dealer_id = 39;
+}
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PaginationResponse {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total_count = 3;
+  int32 total_pages = 4;
+}
+
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+  map<string, string> metadata = 3;
+}
+
+message ServiceResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ErrorDetail errors = 3;
+  string correlation_id = 4;
+}

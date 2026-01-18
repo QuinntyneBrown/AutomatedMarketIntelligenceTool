@@ -1,0 +1,178 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/Microservices/ApiGateway/Dockerfile
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Services__ScrapingService=http://scraping-service:80
+      - Services__SearchService=http://search-service:80
+      - Services__ReportingService=http://reporting-service:80
+      - Services__DeduplicationService=http://deduplication-service:80
+      - Services__AlertService=http://alert-service:80
+      - OpenTelemetry__Endpoint=http://jaeger:4317
+    depends_on:
+      - scraping-service
+      - search-service
+      - reporting-service
+      - deduplication-service
+      - alert-service
+    networks:
+      - ami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Scraping Service
+  scraping-service:
+    build:
+      context: .
+      dockerfile: src/Microservices/ScrapingService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ScrapingDb=Data Source=/data/scraping-service.db
+      - OpenTelemetry__Endpoint=http://jaeger:4317
+    volumes:
+      - scraping-data:/data
+    networks:
+      - ami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Search Service
+  search-service:
+    build:
+      context: .
+      dockerfile: src/Microservices/SearchService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__SearchDb=Data Source=/data/search-service.db
+      - OpenTelemetry__Endpoint=http://jaeger:4317
+    volumes:
+      - search-data:/data
+    networks:
+      - ami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Reporting Service
+  reporting-service:
+    build:
+      context: .
+      dockerfile: src/Microservices/ReportingService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ReportingDb=Data Source=/data/reporting-service.db
+      - OpenTelemetry__Endpoint=http://jaeger:4317
+    volumes:
+      - reporting-data:/data
+      - reports:/reports
+    networks:
+      - ami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Deduplication Service
+  deduplication-service:
+    build:
+      context: .
+      dockerfile: src/Microservices/DeduplicationService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DeduplicationDb=Data Source=/data/deduplication-service.db
+      - OpenTelemetry__Endpoint=http://jaeger:4317
+    volumes:
+      - deduplication-data:/data
+    networks:
+      - ami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Alert Service
+  alert-service:
+    build:
+      context: .
+      dockerfile: src/Microservices/AlertService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__AlertDb=Data Source=/data/alert-service.db
+      - OpenTelemetry__Endpoint=http://jaeger:4317
+    volumes:
+      - alert-data:/data
+    networks:
+      - ami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - ami-network
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - ami-network
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - jaeger
+    networks:
+      - ami-network
+
+networks:
+  ami-network:
+    driver: bridge
+
+volumes:
+  scraping-data:
+  search-data:
+  reporting-data:
+  deduplication-data:
+  alert-data:
+  reports:
+  grafana-data:

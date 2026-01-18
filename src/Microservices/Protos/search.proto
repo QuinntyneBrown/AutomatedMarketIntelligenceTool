@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+package ami.search;
+
+option csharp_namespace = "AutomatedMarketIntelligenceTool.Protos.Search";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common.proto";
+
+// Search Service - handles listing search and retrieval
+service SearchService {
+  // Search listings with criteria
+  rpc SearchListings(SearchListingsRequest) returns (SearchListingsResponse);
+
+  // Get a single listing by ID
+  rpc GetListing(GetListingRequest) returns (GetListingResponse);
+
+  // Get listings by IDs
+  rpc GetListingsByIds(GetListingsByIdsRequest) returns (GetListingsByIdsResponse);
+
+  // Get listing statistics
+  rpc GetStatistics(GetStatisticsRequest) returns (GetStatisticsResponse);
+
+  // Get auto-complete suggestions
+  rpc GetAutoComplete(GetAutoCompleteRequest) returns (GetAutoCompleteResponse);
+
+  // Get price history for a listing
+  rpc GetPriceHistory(GetPriceHistoryRequest) returns (GetPriceHistoryResponse);
+
+  // Save a listing to watchlist
+  rpc AddToWatchlist(AddToWatchlistRequest) returns (AddToWatchlistResponse);
+
+  // Remove from watchlist
+  rpc RemoveFromWatchlist(RemoveFromWatchlistRequest) returns (RemoveFromWatchlistResponse);
+
+  // Get watchlist
+  rpc GetWatchlist(GetWatchlistRequest) returns (GetWatchlistResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message SearchListingsRequest {
+  string tenant_id = 1;
+  repeated string makes = 2;
+  repeated string models = 3;
+  google.protobuf.Int32Value year_min = 4;
+  google.protobuf.Int32Value year_max = 5;
+  google.protobuf.DoubleValue price_min = 6;
+  google.protobuf.DoubleValue price_max = 7;
+  google.protobuf.Int32Value mileage_min = 8;
+  google.protobuf.Int32Value mileage_max = 9;
+  repeated ami.common.Condition conditions = 10;
+  repeated ami.common.Transmission transmissions = 11;
+  repeated ami.common.FuelType fuel_types = 12;
+  repeated ami.common.BodyStyle body_styles = 13;
+  google.protobuf.StringValue city = 14;
+  google.protobuf.StringValue province = 15;
+  google.protobuf.StringValue postal_code = 16;
+  google.protobuf.DoubleValue radius_km = 17;
+  google.protobuf.DoubleValue search_latitude = 18;
+  google.protobuf.DoubleValue search_longitude = 19;
+  ami.common.SortField sort_by = 20;
+  ami.common.SortDirection sort_direction = 21;
+  ami.common.PaginationRequest pagination = 22;
+  bool active_only = 23;
+}
+
+message SearchListingsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ListingSearchResult listings = 2;
+  ami.common.PaginationResponse pagination = 3;
+  int32 new_listings_count = 4;
+  int32 price_changes_count = 5;
+}
+
+message ListingSearchResult {
+  ami.common.Listing listing = 1;
+  google.protobuf.DoubleValue distance_km = 2;
+  PriceChangeInfo price_change = 3;
+}
+
+message PriceChangeInfo {
+  double previous_price = 1;
+  double current_price = 2;
+  double price_change = 3;
+  double change_percentage = 4;
+  google.protobuf.Timestamp changed_at = 5;
+}
+
+message GetListingRequest {
+  string tenant_id = 1;
+  string listing_id = 2;
+}
+
+message GetListingResponse {
+  ami.common.ServiceResponse response = 1;
+  ami.common.Listing listing = 2;
+}
+
+message GetListingsByIdsRequest {
+  string tenant_id = 1;
+  repeated string listing_ids = 2;
+}
+
+message GetListingsByIdsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ami.common.Listing listings = 2;
+}
+
+message GetStatisticsRequest {
+  string tenant_id = 1;
+  google.protobuf.StringValue make = 2;
+  google.protobuf.StringValue model = 3;
+  google.protobuf.Int32Value year_min = 4;
+  google.protobuf.Int32Value year_max = 5;
+}
+
+message GetStatisticsResponse {
+  ami.common.ServiceResponse response = 1;
+  int32 total_listings = 2;
+  int32 active_listings = 3;
+  int32 new_listings_today = 4;
+  int32 price_changes_today = 5;
+  double average_price = 6;
+  double median_price = 7;
+  double min_price = 8;
+  double max_price = 9;
+  double average_mileage = 10;
+  repeated MakeCount makes_breakdown = 11;
+  repeated SourceCount sources_breakdown = 12;
+}
+
+message MakeCount {
+  string make = 1;
+  int32 count = 2;
+}
+
+message SourceCount {
+  string source = 1;
+  int32 count = 2;
+}
+
+message GetAutoCompleteRequest {
+  string tenant_id = 1;
+  string field = 2;
+  string query = 3;
+  int32 limit = 4;
+}
+
+message GetAutoCompleteResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated string suggestions = 2;
+}
+
+message GetPriceHistoryRequest {
+  string tenant_id = 1;
+  string listing_id = 2;
+}
+
+message GetPriceHistoryResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated PriceHistoryEntry entries = 2;
+}
+
+message PriceHistoryEntry {
+  double price = 1;
+  google.protobuf.Timestamp recorded_at = 2;
+  google.protobuf.DoubleValue change_from_previous = 3;
+}
+
+message AddToWatchlistRequest {
+  string tenant_id = 1;
+  string listing_id = 2;
+  google.protobuf.StringValue notes = 3;
+}
+
+message AddToWatchlistResponse {
+  ami.common.ServiceResponse response = 1;
+  string watchlist_entry_id = 2;
+}
+
+message RemoveFromWatchlistRequest {
+  string tenant_id = 1;
+  string listing_id = 2;
+}
+
+message RemoveFromWatchlistResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message GetWatchlistRequest {
+  string tenant_id = 1;
+  ami.common.PaginationRequest pagination = 2;
+}
+
+message GetWatchlistResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated WatchlistEntry entries = 2;
+  ami.common.PaginationResponse pagination = 3;
+}
+
+message WatchlistEntry {
+  string entry_id = 1;
+  ami.common.Listing listing = 2;
+  google.protobuf.StringValue notes = 3;
+  google.protobuf.Timestamp added_at = 4;
+  bool has_price_change = 5;
+  PriceChangeInfo price_change = 6;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string status = 2;
+  map<string, string> components = 3;
+}

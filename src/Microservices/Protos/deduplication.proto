@@ -1,0 +1,257 @@
+syntax = "proto3";
+
+package ami.deduplication;
+
+option csharp_namespace = "AutomatedMarketIntelligenceTool.Protos.Deduplication";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common.proto";
+
+// Deduplication Service - handles duplicate detection and fuzzy matching
+service DeduplicationService {
+  // Check if a listing is a duplicate
+  rpc CheckDuplicate(CheckDuplicateRequest) returns (CheckDuplicateResponse);
+
+  // Batch check for duplicates
+  rpc BatchCheckDuplicates(BatchCheckDuplicatesRequest) returns (BatchCheckDuplicatesResponse);
+
+  // Get duplicate detection configuration
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse);
+
+  // Update duplicate detection configuration
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse);
+
+  // Get deduplication audit trail
+  rpc GetAuditTrail(GetAuditTrailRequest) returns (GetAuditTrailResponse);
+
+  // Get accuracy metrics
+  rpc GetAccuracyMetrics(GetAccuracyMetricsRequest) returns (GetAccuracyMetricsResponse);
+
+  // Review queue operations
+  rpc GetReviewQueue(GetReviewQueueRequest) returns (GetReviewQueueResponse);
+
+  // Resolve review item
+  rpc ResolveReviewItem(ResolveReviewItemRequest) returns (ResolveReviewItemResponse);
+
+  // Stream duplicate checks for real-time processing
+  rpc StreamDuplicateCheck(stream CheckDuplicateRequest) returns (stream CheckDuplicateResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message CheckDuplicateRequest {
+  string tenant_id = 1;
+  ScrapedListingInfo scraped_listing = 2;
+  DuplicateDetectionOptions options = 3;
+}
+
+message ScrapedListingInfo {
+  string external_id = 1;
+  string source_site = 2;
+  google.protobuf.StringValue vin = 3;
+  google.protobuf.StringValue make = 4;
+  google.protobuf.StringValue model = 5;
+  google.protobuf.Int32Value year = 6;
+  google.protobuf.Int32Value mileage = 7;
+  google.protobuf.DoubleValue price = 8;
+  google.protobuf.StringValue city = 9;
+  repeated string image_urls = 10;
+}
+
+message DuplicateDetectionOptions {
+  bool enable_fuzzy_matching = 1;
+  bool enable_image_matching = 2;
+  double auto_match_threshold = 3;
+  double review_threshold = 4;
+  int32 mileage_tolerance = 5;
+  double price_tolerance = 6;
+}
+
+message CheckDuplicateResponse {
+  ami.common.ServiceResponse response = 1;
+  bool is_duplicate = 2;
+  DuplicateMatchType match_type = 3;
+  google.protobuf.StringValue existing_listing_id = 4;
+  double confidence_score = 5;
+  bool requires_review = 6;
+  FuzzyMatchDetails fuzzy_match_details = 7;
+}
+
+enum DuplicateMatchType {
+  DUPLICATE_MATCH_TYPE_NONE = 0;
+  VIN_MATCH = 1;
+  EXTERNAL_ID_MATCH = 2;
+  FUZZY_MATCH = 3;
+  IMAGE_MATCH = 4;
+  COMBINED_MATCH = 5;
+}
+
+message FuzzyMatchDetails {
+  double make_model_score = 1;
+  double year_score = 2;
+  double mileage_score = 3;
+  double price_score = 4;
+  double location_score = 5;
+  double image_score = 6;
+  double overall_score = 7;
+}
+
+message BatchCheckDuplicatesRequest {
+  string tenant_id = 1;
+  repeated ScrapedListingInfo scraped_listings = 2;
+  DuplicateDetectionOptions options = 3;
+}
+
+message BatchCheckDuplicatesResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated CheckDuplicateResponse results = 2;
+  int32 total_checked = 3;
+  int32 duplicates_found = 4;
+  int32 review_required = 5;
+}
+
+message GetConfigurationRequest {
+  string tenant_id = 1;
+}
+
+message GetConfigurationResponse {
+  ami.common.ServiceResponse response = 1;
+  DeduplicationConfiguration configuration = 2;
+}
+
+message DeduplicationConfiguration {
+  string config_id = 1;
+  string tenant_id = 2;
+  bool enable_fuzzy_matching = 3;
+  bool enable_image_matching = 4;
+  double auto_match_threshold = 5;
+  double review_threshold = 6;
+  int32 mileage_tolerance = 7;
+  double price_tolerance = 8;
+  double make_model_weight = 9;
+  double year_weight = 10;
+  double mileage_weight = 11;
+  double price_weight = 12;
+  double location_weight = 13;
+  double image_weight = 14;
+  google.protobuf.Timestamp updated_at = 15;
+}
+
+message UpdateConfigurationRequest {
+  string tenant_id = 1;
+  DeduplicationConfiguration configuration = 2;
+}
+
+message UpdateConfigurationResponse {
+  ami.common.ServiceResponse response = 1;
+  DeduplicationConfiguration configuration = 2;
+}
+
+message GetAuditTrailRequest {
+  string tenant_id = 1;
+  google.protobuf.Timestamp from_date = 2;
+  google.protobuf.Timestamp to_date = 3;
+  ami.common.PaginationRequest pagination = 4;
+}
+
+message GetAuditTrailResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated AuditEntry entries = 2;
+  ami.common.PaginationResponse pagination = 3;
+}
+
+message AuditEntry {
+  string entry_id = 1;
+  string tenant_id = 2;
+  string listing_id = 3;
+  google.protobuf.StringValue matched_listing_id = 4;
+  DuplicateMatchType match_type = 5;
+  double confidence_score = 6;
+  string decision = 7;
+  google.protobuf.StringValue decided_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+  FuzzyMatchDetails match_details = 10;
+}
+
+message GetAccuracyMetricsRequest {
+  string tenant_id = 1;
+  google.protobuf.Timestamp from_date = 2;
+  google.protobuf.Timestamp to_date = 3;
+}
+
+message GetAccuracyMetricsResponse {
+  ami.common.ServiceResponse response = 1;
+  int32 total_checks = 2;
+  int32 auto_matched = 3;
+  int32 review_items = 4;
+  int32 confirmed_duplicates = 5;
+  int32 false_positives = 6;
+  int32 false_negatives = 7;
+  double precision = 8;
+  double recall = 9;
+  double f1_score = 10;
+  repeated MatchTypeMetrics match_type_breakdown = 11;
+}
+
+message MatchTypeMetrics {
+  DuplicateMatchType match_type = 1;
+  int32 count = 2;
+  double accuracy = 3;
+}
+
+message GetReviewQueueRequest {
+  string tenant_id = 1;
+  ami.common.PaginationRequest pagination = 2;
+  ReviewQueueFilter filter = 3;
+}
+
+message ReviewQueueFilter {
+  repeated DuplicateMatchType match_types = 1;
+  google.protobuf.DoubleValue min_confidence = 2;
+  google.protobuf.DoubleValue max_confidence = 3;
+}
+
+message GetReviewQueueResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ReviewQueueItem items = 2;
+  ami.common.PaginationResponse pagination = 3;
+}
+
+message ReviewQueueItem {
+  string item_id = 1;
+  ami.common.Listing new_listing = 2;
+  ami.common.Listing existing_listing = 3;
+  DuplicateMatchType match_type = 4;
+  double confidence_score = 5;
+  FuzzyMatchDetails match_details = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message ResolveReviewItemRequest {
+  string tenant_id = 1;
+  string item_id = 2;
+  ReviewDecision decision = 3;
+  google.protobuf.StringValue notes = 4;
+}
+
+enum ReviewDecision {
+  REVIEW_DECISION_UNSPECIFIED = 0;
+  CONFIRM_DUPLICATE = 1;
+  NOT_DUPLICATE = 2;
+  MERGE_LISTINGS = 3;
+  SKIP = 4;
+}
+
+message ResolveReviewItemResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string status = 2;
+  map<string, string> components = 3;
+}
