@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package ami.scraping;
+
+option csharp_namespace = "AutomatedMarketIntelligenceTool.Protos.Scraping";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common.proto";
+
+// Scraping Service - handles web scraping operations
+service ScrapingService {
+  // Start a new scraping job
+  rpc StartScrapeJob(StartScrapeJobRequest) returns (StartScrapeJobResponse);
+
+  // Get status of a scraping job
+  rpc GetJobStatus(GetJobStatusRequest) returns (GetJobStatusResponse);
+
+  // Cancel a running scraping job
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse);
+
+  // Stream scraping progress updates
+  rpc StreamJobProgress(StreamJobProgressRequest) returns (stream JobProgressUpdate);
+
+  // Get available scrapers
+  rpc GetAvailableScrapers(GetAvailableScrapersRequest) returns (GetAvailableScrapersResponse);
+
+  // Get scraper health status
+  rpc GetScraperHealth(GetScraperHealthRequest) returns (GetScraperHealthResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message StartScrapeJobRequest {
+  string tenant_id = 1;
+  repeated string scrapers = 2;
+  SearchParameters search_params = 3;
+  ScrapeOptions options = 4;
+}
+
+message SearchParameters {
+  repeated string makes = 1;
+  repeated string models = 2;
+  google.protobuf.Int32Value year_min = 3;
+  google.protobuf.Int32Value year_max = 4;
+  google.protobuf.DoubleValue price_min = 5;
+  google.protobuf.DoubleValue price_max = 6;
+  google.protobuf.Int32Value mileage_max = 7;
+  google.protobuf.StringValue postal_code = 8;
+  google.protobuf.Int32Value radius_km = 9;
+  repeated ami.common.Condition conditions = 10;
+}
+
+message ScrapeOptions {
+  bool enable_fuzzy_matching = 1;
+  bool enable_image_matching = 2;
+  int32 max_pages_per_source = 3;
+  int32 delay_between_requests_ms = 4;
+  bool use_proxy = 5;
+  string browser_type = 6;
+}
+
+message StartScrapeJobResponse {
+  ami.common.ServiceResponse response = 1;
+  string job_id = 2;
+  google.protobuf.Timestamp started_at = 3;
+}
+
+message GetJobStatusRequest {
+  string job_id = 1;
+}
+
+message GetJobStatusResponse {
+  ami.common.ServiceResponse response = 1;
+  string job_id = 2;
+  JobStatus status = 3;
+  int32 total_scrapers = 4;
+  int32 completed_scrapers = 5;
+  int32 listings_found = 6;
+  int32 duplicates_detected = 7;
+  int32 errors_count = 8;
+  google.protobuf.Timestamp started_at = 9;
+  google.protobuf.Timestamp completed_at = 10;
+  repeated ScraperStatus scraper_statuses = 11;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  RUNNING = 2;
+  COMPLETED = 3;
+  FAILED = 4;
+  CANCELLED = 5;
+}
+
+message ScraperStatus {
+  string scraper_name = 1;
+  JobStatus status = 2;
+  int32 listings_found = 3;
+  int32 pages_scraped = 4;
+  string error_message = 5;
+}
+
+message CancelJobRequest {
+  string job_id = 1;
+}
+
+message CancelJobResponse {
+  ami.common.ServiceResponse response = 1;
+  bool cancelled = 2;
+}
+
+message StreamJobProgressRequest {
+  string job_id = 1;
+}
+
+message JobProgressUpdate {
+  string job_id = 1;
+  string scraper_name = 2;
+  int32 current_page = 3;
+  int32 listings_found = 4;
+  JobStatus status = 5;
+  string message = 6;
+  google.protobuf.Timestamp timestamp = 7;
+}
+
+message GetAvailableScrapersRequest {
+  bool include_health_status = 1;
+}
+
+message GetAvailableScrapersResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ScraperInfo scrapers = 2;
+}
+
+message ScraperInfo {
+  string name = 1;
+  string display_name = 2;
+  string category = 3;
+  bool is_healthy = 4;
+  google.protobuf.Timestamp last_successful_scrape = 5;
+  double success_rate = 6;
+}
+
+message GetScraperHealthRequest {
+  repeated string scraper_names = 1;
+}
+
+message GetScraperHealthResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ScraperHealthInfo health_info = 2;
+}
+
+message ScraperHealthInfo {
+  string scraper_name = 1;
+  bool is_healthy = 2;
+  google.protobuf.Timestamp last_check = 3;
+  int32 consecutive_failures = 4;
+  double average_response_time_ms = 5;
+  double success_rate_24h = 6;
+  string last_error = 7;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string status = 2;
+  map<string, string> components = 3;
+}

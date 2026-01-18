@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+package ami.alert;
+
+option csharp_namespace = "AutomatedMarketIntelligenceTool.Protos.Alert";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common.proto";
+
+// Alert Service - handles alert creation and notification
+service AlertService {
+  // Create a new alert
+  rpc CreateAlert(CreateAlertRequest) returns (CreateAlertResponse);
+
+  // Get alert by ID
+  rpc GetAlert(GetAlertRequest) returns (GetAlertResponse);
+
+  // List all alerts for tenant
+  rpc ListAlerts(ListAlertsRequest) returns (ListAlertsResponse);
+
+  // Update alert criteria
+  rpc UpdateAlert(UpdateAlertRequest) returns (UpdateAlertResponse);
+
+  // Activate an alert
+  rpc ActivateAlert(ActivateAlertRequest) returns (ActivateAlertResponse);
+
+  // Deactivate an alert
+  rpc DeactivateAlert(DeactivateAlertRequest) returns (DeactivateAlertResponse);
+
+  // Delete an alert
+  rpc DeleteAlert(DeleteAlertRequest) returns (DeleteAlertResponse);
+
+  // Check listing against alerts
+  rpc CheckListingAgainstAlerts(CheckListingAgainstAlertsRequest) returns (CheckListingAgainstAlertsResponse);
+
+  // Get alert notifications
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse);
+
+  // Mark notification as read
+  rpc MarkNotificationRead(MarkNotificationReadRequest) returns (MarkNotificationReadResponse);
+
+  // Stream notifications in real-time
+  rpc StreamNotifications(StreamNotificationsRequest) returns (stream NotificationEvent);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message CreateAlertRequest {
+  string tenant_id = 1;
+  string name = 2;
+  AlertCriteria criteria = 3;
+  NotificationMethod notification_method = 4;
+  google.protobuf.StringValue notification_target = 5;
+}
+
+message AlertCriteria {
+  repeated string makes = 1;
+  repeated string models = 2;
+  google.protobuf.Int32Value year_min = 3;
+  google.protobuf.Int32Value year_max = 4;
+  google.protobuf.DoubleValue price_min = 5;
+  google.protobuf.DoubleValue price_max = 6;
+  google.protobuf.Int32Value mileage_max = 7;
+  repeated ami.common.Condition conditions = 8;
+  repeated ami.common.Transmission transmissions = 9;
+  repeated ami.common.FuelType fuel_types = 10;
+  repeated ami.common.BodyStyle body_styles = 11;
+  google.protobuf.StringValue city = 12;
+  google.protobuf.StringValue province = 13;
+  google.protobuf.DoubleValue radius_km = 14;
+  repeated string keywords = 15;
+  bool notify_on_price_drop = 16;
+  google.protobuf.DoubleValue price_drop_threshold = 17;
+}
+
+enum NotificationMethod {
+  NOTIFICATION_METHOD_UNSPECIFIED = 0;
+  CONSOLE = 1;
+  EMAIL = 2;
+  SMS = 3;
+  WEBHOOK = 4;
+  PUSH = 5;
+}
+
+message CreateAlertResponse {
+  ami.common.ServiceResponse response = 1;
+  string alert_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message GetAlertRequest {
+  string tenant_id = 1;
+  string alert_id = 2;
+}
+
+message GetAlertResponse {
+  ami.common.ServiceResponse response = 1;
+  AlertInfo alert = 2;
+}
+
+message AlertInfo {
+  string alert_id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  AlertCriteria criteria = 4;
+  NotificationMethod notification_method = 5;
+  google.protobuf.StringValue notification_target = 6;
+  bool is_active = 7;
+  int32 match_count = 8;
+  google.protobuf.Timestamp last_triggered = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message ListAlertsRequest {
+  string tenant_id = 1;
+  google.protobuf.BoolValue active_only = 2;
+  ami.common.PaginationRequest pagination = 3;
+}
+
+message ListAlertsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated AlertInfo alerts = 2;
+  ami.common.PaginationResponse pagination = 3;
+}
+
+message UpdateAlertRequest {
+  string tenant_id = 1;
+  string alert_id = 2;
+  AlertCriteria criteria = 3;
+  NotificationMethod notification_method = 4;
+  google.protobuf.StringValue notification_target = 5;
+}
+
+message UpdateAlertResponse {
+  ami.common.ServiceResponse response = 1;
+  AlertInfo alert = 2;
+}
+
+message ActivateAlertRequest {
+  string tenant_id = 1;
+  string alert_id = 2;
+}
+
+message ActivateAlertResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message DeactivateAlertRequest {
+  string tenant_id = 1;
+  string alert_id = 2;
+}
+
+message DeactivateAlertResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message DeleteAlertRequest {
+  string tenant_id = 1;
+  string alert_id = 2;
+}
+
+message DeleteAlertResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message CheckListingAgainstAlertsRequest {
+  string tenant_id = 1;
+  ami.common.Listing listing = 2;
+}
+
+message CheckListingAgainstAlertsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated MatchedAlert matched_alerts = 2;
+}
+
+message MatchedAlert {
+  string alert_id = 1;
+  string alert_name = 2;
+  repeated string matched_criteria = 3;
+}
+
+message GetNotificationsRequest {
+  string tenant_id = 1;
+  google.protobuf.BoolValue unread_only = 2;
+  ami.common.PaginationRequest pagination = 3;
+}
+
+message GetNotificationsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated NotificationInfo notifications = 2;
+  ami.common.PaginationResponse pagination = 3;
+  int32 unread_count = 4;
+}
+
+message NotificationInfo {
+  string notification_id = 1;
+  string alert_id = 2;
+  string alert_name = 3;
+  string listing_id = 4;
+  string title = 5;
+  string message = 6;
+  bool is_read = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp read_at = 9;
+}
+
+message MarkNotificationReadRequest {
+  string tenant_id = 1;
+  string notification_id = 2;
+}
+
+message MarkNotificationReadResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message StreamNotificationsRequest {
+  string tenant_id = 1;
+}
+
+message NotificationEvent {
+  NotificationInfo notification = 1;
+  NotificationEventType event_type = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+enum NotificationEventType {
+  NOTIFICATION_EVENT_TYPE_UNSPECIFIED = 0;
+  NEW_MATCH = 1;
+  PRICE_DROP = 2;
+  LISTING_SOLD = 3;
+  ALERT_TRIGGERED = 4;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string status = 2;
+  map<string, string> components = 3;
+}

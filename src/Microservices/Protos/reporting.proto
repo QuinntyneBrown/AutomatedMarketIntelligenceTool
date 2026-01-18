@@ -1,0 +1,236 @@
+syntax = "proto3";
+
+package ami.reporting;
+
+option csharp_namespace = "AutomatedMarketIntelligenceTool.Protos.Reporting";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common.proto";
+
+// Reporting Service - handles report generation and management
+service ReportingService {
+  // Generate a new report
+  rpc GenerateReport(GenerateReportRequest) returns (GenerateReportResponse);
+
+  // Generate report and stream progress
+  rpc GenerateReportWithProgress(GenerateReportRequest) returns (stream ReportProgressUpdate);
+
+  // Get report by ID
+  rpc GetReport(GetReportRequest) returns (GetReportResponse);
+
+  // List all reports for tenant
+  rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
+
+  // Download report file
+  rpc DownloadReport(DownloadReportRequest) returns (stream ReportChunk);
+
+  // Delete report
+  rpc DeleteReport(DeleteReportRequest) returns (DeleteReportResponse);
+
+  // Schedule a recurring report
+  rpc ScheduleReport(ScheduleReportRequest) returns (ScheduleReportResponse);
+
+  // Get scheduled reports
+  rpc GetScheduledReports(GetScheduledReportsRequest) returns (GetScheduledReportsResponse);
+
+  // Cancel scheduled report
+  rpc CancelScheduledReport(CancelScheduledReportRequest) returns (CancelScheduledReportResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+enum ReportFormat {
+  REPORT_FORMAT_UNSPECIFIED = 0;
+  HTML = 1;
+  PDF = 2;
+  EXCEL = 3;
+  CSV = 4;
+  JSON = 5;
+}
+
+enum ReportType {
+  REPORT_TYPE_UNSPECIFIED = 0;
+  SEARCH_RESULTS = 1;
+  MARKET_ANALYSIS = 2;
+  PRICE_TRENDS = 3;
+  DEALER_ANALYSIS = 4;
+  WATCHLIST_SUMMARY = 5;
+}
+
+message GenerateReportRequest {
+  string tenant_id = 1;
+  string name = 2;
+  ReportFormat format = 3;
+  ReportType report_type = 4;
+  ReportData data = 5;
+  ReportOptions options = 6;
+}
+
+message ReportData {
+  repeated string listing_ids = 1;
+  SearchCriteriaJson search_criteria = 2;
+  google.protobuf.Timestamp date_from = 3;
+  google.protobuf.Timestamp date_to = 4;
+  repeated string makes = 5;
+  repeated string models = 6;
+}
+
+message SearchCriteriaJson {
+  string json = 1;
+}
+
+message ReportOptions {
+  bool include_images = 1;
+  bool include_price_history = 2;
+  bool include_market_comparison = 3;
+  bool include_statistics = 4;
+  google.protobuf.StringValue custom_header = 5;
+  google.protobuf.StringValue custom_footer = 6;
+}
+
+message GenerateReportResponse {
+  ami.common.ServiceResponse response = 1;
+  string report_id = 2;
+  string file_path = 3;
+  int64 file_size_bytes = 4;
+  google.protobuf.Timestamp generated_at = 5;
+}
+
+message ReportProgressUpdate {
+  string report_id = 1;
+  int32 progress_percent = 2;
+  string current_step = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  bool is_complete = 5;
+  GenerateReportResponse final_result = 6;
+}
+
+message GetReportRequest {
+  string tenant_id = 1;
+  string report_id = 2;
+}
+
+message GetReportResponse {
+  ami.common.ServiceResponse response = 1;
+  ReportInfo report = 2;
+}
+
+message ReportInfo {
+  string report_id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  ReportFormat format = 4;
+  ReportType report_type = 5;
+  string file_path = 6;
+  int64 file_size_bytes = 7;
+  google.protobuf.Timestamp created_at = 8;
+  int32 listings_count = 9;
+}
+
+message ListReportsRequest {
+  string tenant_id = 1;
+  ami.common.PaginationRequest pagination = 2;
+  ReportFormat format_filter = 3;
+  ReportType type_filter = 4;
+}
+
+message ListReportsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ReportInfo reports = 2;
+  ami.common.PaginationResponse pagination = 3;
+}
+
+message DownloadReportRequest {
+  string tenant_id = 1;
+  string report_id = 2;
+}
+
+message ReportChunk {
+  bytes data = 1;
+  int64 offset = 2;
+  int64 total_size = 3;
+  bool is_last = 4;
+}
+
+message DeleteReportRequest {
+  string tenant_id = 1;
+  string report_id = 2;
+}
+
+message DeleteReportResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message ScheduleReportRequest {
+  string tenant_id = 1;
+  string name = 2;
+  ReportFormat format = 3;
+  ReportType report_type = 4;
+  ReportData data = 5;
+  ReportOptions options = 6;
+  ScheduleConfig schedule = 7;
+}
+
+message ScheduleConfig {
+  ScheduleFrequency frequency = 1;
+  int32 day_of_week = 2;
+  int32 day_of_month = 3;
+  int32 hour = 4;
+  int32 minute = 5;
+  string timezone = 6;
+}
+
+enum ScheduleFrequency {
+  SCHEDULE_FREQUENCY_UNSPECIFIED = 0;
+  DAILY = 1;
+  WEEKLY = 2;
+  MONTHLY = 3;
+}
+
+message ScheduleReportResponse {
+  ami.common.ServiceResponse response = 1;
+  string schedule_id = 2;
+  google.protobuf.Timestamp next_run = 3;
+}
+
+message GetScheduledReportsRequest {
+  string tenant_id = 1;
+  ami.common.PaginationRequest pagination = 2;
+}
+
+message GetScheduledReportsResponse {
+  ami.common.ServiceResponse response = 1;
+  repeated ScheduledReportInfo scheduled_reports = 2;
+  ami.common.PaginationResponse pagination = 3;
+}
+
+message ScheduledReportInfo {
+  string schedule_id = 1;
+  string name = 2;
+  ReportFormat format = 3;
+  ReportType report_type = 4;
+  ScheduleConfig schedule = 5;
+  bool is_active = 6;
+  google.protobuf.Timestamp last_run = 7;
+  google.protobuf.Timestamp next_run = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message CancelScheduledReportRequest {
+  string tenant_id = 1;
+  string schedule_id = 2;
+}
+
+message CancelScheduledReportResponse {
+  ami.common.ServiceResponse response = 1;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string status = 2;
+  map<string, string> components = 3;
+}
