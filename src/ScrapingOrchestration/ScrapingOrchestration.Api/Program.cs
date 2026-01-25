@@ -1,8 +1,11 @@
 using ScrapingOrchestration.Infrastructure.Extensions;
 using Shared.Contracts.Events;
 using Shared.Messaging;
+using Shared.ServiceDefaults.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Add services
 builder.Services.AddControllers();
@@ -18,9 +21,6 @@ builder.Services.AddScrapingOrchestrationInfrastructure(connectionString);
 // Add messaging (placeholder - will be configured with RabbitMQ)
 builder.Services.AddSingleton<IEventPublisher, NullEventPublisher>();
 
-// Health checks
-builder.Services.AddHealthChecks();
-
 var app = builder.Build();
 
 // Configure pipeline
@@ -33,13 +33,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapDefaultEndpoints();
 
 app.Run();
 
-/// <summary>
-/// Null event publisher for when messaging is not configured.
-/// </summary>
 internal sealed class NullEventPublisher : IEventPublisher
 {
     public Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)

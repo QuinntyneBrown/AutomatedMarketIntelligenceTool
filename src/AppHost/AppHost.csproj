@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- API Services -->
+    <ProjectReference Include="..\Identity\Identity.Api\Identity.Api.csproj" />
+    <ProjectReference Include="..\Listing\Listing.Api\Listing.Api.csproj" />
+    <ProjectReference Include="..\VehicleAggregation\VehicleAggregation.Api\VehicleAggregation.Api.csproj" />
+    <ProjectReference Include="..\Search\Search.Api\Search.Api.csproj" />
+    <ProjectReference Include="..\Alert\Alert.Api\Alert.Api.csproj" />
+    <ProjectReference Include="..\WatchList\WatchList.Api\WatchList.Api.csproj" />
+    <ProjectReference Include="..\Reporting\Reporting.Api\Reporting.Api.csproj" />
+    <ProjectReference Include="..\Dashboard\Dashboard.Api\Dashboard.Api.csproj" />
+    <ProjectReference Include="..\Dealer\Dealer.Api\Dealer.Api.csproj" />
+    <ProjectReference Include="..\Image\Image.Api\Image.Api.csproj" />
+    <ProjectReference Include="..\ScrapingOrchestration\ScrapingOrchestration.Api\ScrapingOrchestration.Api.csproj" />
+    <ProjectReference Include="..\Geographic\Geographic.Api\Geographic.Api.csproj" />
+    <ProjectReference Include="..\Notification\Notification.Api\Notification.Api.csproj" />
+    <ProjectReference Include="..\Configuration\Configuration.Api\Configuration.Api.csproj" />
+    <ProjectReference Include="..\Deduplication\Deduplication.Api\Deduplication.Api.csproj" />
+    <ProjectReference Include="..\Backup\Backup.Api\Backup.Api.csproj" />
+
+    <!-- API Gateway -->
+    <ProjectReference Include="..\ApiGateway\ApiGateway.csproj" />
+
+    <!-- Worker Services -->
+    <ProjectReference Include="..\Backup\Backup.Service\Backup.Service.csproj" />
+    <ProjectReference Include="..\ScrapingWorker\ScrapingWorker.Service\ScrapingWorker.Service.csproj" />
+  </ItemGroup>
+
+</Project>

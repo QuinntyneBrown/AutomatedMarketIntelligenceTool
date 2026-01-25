@@ -1,8 +1,11 @@
 using Reporting.Infrastructure;
 using Shared.Contracts.Events;
 using Shared.Messaging;
+using Shared.ServiceDefaults.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -29,12 +32,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 app.Run();
 
-/// <summary>
-/// Null event publisher for standalone operation.
-/// </summary>
 public sealed class NullEventPublisher : IEventPublisher
 {
     public Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)

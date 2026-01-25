@@ -1,6 +1,9 @@
 using Search.Infrastructure;
+using Shared.ServiceDefaults.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -21,4 +24,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapDefaultEndpoints();
+
 app.Run();

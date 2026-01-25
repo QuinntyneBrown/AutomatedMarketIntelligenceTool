@@ -1,6 +1,9 @@
 using Dashboard.Infrastructure;
+using Shared.ServiceDefaults.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Add services
 builder.Services.AddControllers();
@@ -9,9 +12,6 @@ builder.Services.AddSwaggerGen();
 
 // Add Dashboard infrastructure
 builder.Services.AddDashboardInfrastructure();
-
-// Health checks
-builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -25,6 +25,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapDefaultEndpoints();
 
 app.Run();

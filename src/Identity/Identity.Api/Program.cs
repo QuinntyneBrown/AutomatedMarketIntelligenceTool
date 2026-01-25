@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Shared.Contracts.Events;
 using Shared.Messaging;
+using Shared.ServiceDefaults.Extensions;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -16,6 +17,8 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    builder.AddServiceDefaults();
 
     // Serilog configuration
     builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -130,7 +133,7 @@ try
     app.UseSerilogRequestLogging();
 
     app.MapControllers();
-    app.MapHealthChecks("/health");
+    app.MapDefaultEndpoints();
 
     Log.Information("Starting Identity.Api");
     app.Run();
