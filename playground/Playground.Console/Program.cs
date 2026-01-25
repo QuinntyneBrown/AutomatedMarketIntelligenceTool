@@ -6,7 +6,7 @@ using ScrapingWorker.Core.Services;
 using ScrapingWorker.Infrastructure.Extensions;
 
 Console.WriteLine("=== Automated Market Intelligence Tool - Playground ===");
-Console.WriteLine("Direct scraping test for: 2007 Toyota Camry");
+Console.WriteLine("Kijiji Autos scraping test for: 2007 Toyota Camry");
 Console.WriteLine();
 
 // Set up dependency injection
@@ -25,13 +25,13 @@ var serviceProvider = services.BuildServiceProvider();
 // Get the scraper
 var scraperFactory = serviceProvider.GetRequiredService<IScraperFactory>();
 
-if (!scraperFactory.HasScraper(ScrapingOrchestration.Core.Enums.ScrapingSource.Autotrader))
+if (!scraperFactory.HasScraper(ScrapingOrchestration.Core.Enums.ScrapingSource.Kijiji))
 {
-    Console.WriteLine("Error: Autotrader scraper not available");
+    Console.WriteLine("Error: Kijiji scraper not available");
     return 1;
 }
 
-var scraper = scraperFactory.GetScraper(ScrapingOrchestration.Core.Enums.ScrapingSource.Autotrader);
+var scraper = scraperFactory.GetScraper(ScrapingOrchestration.Core.Enums.ScrapingSource.Kijiji);
 
 // Define search parameters for 2007 Toyota Camry
 var parameters = new SearchParameters

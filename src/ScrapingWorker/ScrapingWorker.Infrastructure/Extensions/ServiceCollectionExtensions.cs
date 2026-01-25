@@ -28,8 +28,8 @@ public static class ServiceCollectionExtensions
 
         // Register scrapers
         services.AddSingleton<ISiteScraper, AutotraderScraper>();
+        services.AddSingleton<ISiteScraper, KijijiScraper>();
         // Add more scrapers here as they are implemented:
-        // services.AddSingleton<ISiteScraper, KijijiScraper>();
         // services.AddSingleton<ISiteScraper, CarGurusScraper>();
         // etc.
 
