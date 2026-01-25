@@ -12,7 +12,7 @@ namespace ScrapingOrchestration.Infrastructure.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds ScrapingOrchestration service infrastructure dependencies.
+    /// Adds ScrapingOrchestration service infrastructure dependencies with SQL Server.
     /// </summary>
     public static IServiceCollection AddScrapingOrchestrationInfrastructure(
         this IServiceCollection services,
@@ -21,6 +21,25 @@ public static class ServiceCollectionExtensions
         // Database
         services.AddDbContext<ScrapingOrchestrationDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        // Services
+        services.AddSingleton<IJobScheduler, InMemoryJobScheduler>();
+        services.AddScoped<ISearchSessionService, SearchSessionService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds ScrapingOrchestration service infrastructure dependencies with in-memory database.
+    /// Useful for testing and development scenarios.
+    /// </summary>
+    public static IServiceCollection AddScrapingOrchestrationInfrastructureInMemory(
+        this IServiceCollection services,
+        string databaseName = "ScrapingOrchestrationDb")
+    {
+        // In-memory database
+        services.AddDbContext<ScrapingOrchestrationDbContext>(options =>
+            options.UseInMemoryDatabase(databaseName));
 
         // Services
         services.AddSingleton<IJobScheduler, InMemoryJobScheduler>();

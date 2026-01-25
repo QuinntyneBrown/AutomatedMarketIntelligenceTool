@@ -10,13 +10,22 @@ builder.AddServiceDefaults();
 // Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Swagger disabled due to .NET 10.0 incompatibility
+// builder.Services.AddSwaggerGen();
 
 // Add ScrapingOrchestration infrastructure
-var connectionString = builder.Configuration.GetConnectionString("ScrapingDb")
-    ?? "Server=localhost;Database=ScrapingOrchestrationService;Trusted_Connection=True;TrustServerCertificate=True;";
+var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
+var connectionString = builder.Configuration.GetConnectionString("ScrapingDb");
 
-builder.Services.AddScrapingOrchestrationInfrastructure(connectionString);
+if (useInMemoryDb || string.IsNullOrEmpty(connectionString))
+{
+    builder.Services.AddScrapingOrchestrationInfrastructureInMemory();
+}
+else
+{
+    builder.Services.AddScrapingOrchestrationInfrastructure(connectionString);
+}
 
 // Add messaging (placeholder - will be configured with RabbitMQ)
 builder.Services.AddSingleton<IEventPublisher, NullEventPublisher>();
@@ -24,11 +33,12 @@ builder.Services.AddSingleton<IEventPublisher, NullEventPublisher>();
 var app = builder.Build();
 
 // Configure pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger disabled due to .NET 10.0 incompatibility
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
