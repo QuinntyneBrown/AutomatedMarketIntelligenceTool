@@ -1,0 +1,80 @@
+@startuml scheduled-reports
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Scheduled Report Execution Flow
+
+participant "Scheduler" as scheduler
+participant "Reporting Service" as reporting
+database "Reporting DB" as db
+participant "Notification Service" as notif
+participant "Blob Storage" as blob
+
+== Scheduler Check ==
+
+scheduler -> reporting: Check scheduled reports\n(every minute)
+
+reporting -> db: Get due ScheduledReports\nWHERE nextRunAt <= NOW() AND isActive
+db --> reporting: List<ScheduledReport>
+
+loop For each scheduled report
+    reporting -> reporting: Validate schedule is still active
+
+    reporting -> db: Create Report\n{scheduledReportId, status: Pending}
+    db --> reporting: Report created
+
+    reporting -> reporting: Generate report\n(same as on-demand)
+
+    reporting -> blob: Upload report
+    blob --> reporting: Storage path
+
+    reporting -> db: Update Report\n{status: Completed, filePath}
+    db --> reporting: Updated
+
+    reporting -> db: Update ScheduledReport\n{lastRunAt: NOW(), nextRunAt: calculated}
+    db --> reporting: Updated
+
+    alt Has email recipients
+        reporting -> notif: Send report email\n{recipients, attachmentUrl}
+        notif --> reporting: Sent
+    end
+end
+
+== Create Scheduled Report ==
+
+actor "User" as user
+participant "API Gateway" as gateway
+
+user -> gateway: POST /api/reports/scheduled\n{name, reportType, cronExpression, format, parameters}
+gateway -> reporting: Forward request
+
+reporting -> reporting: Validate cron expression
+reporting -> reporting: Calculate nextRunAt
+
+reporting -> db: Create ScheduledReport
+db --> reporting: Created
+
+reporting --> gateway: 201 Created\n{scheduledReportId, nextRunAt}
+gateway --> user: Schedule created
+
+== Manage Schedule ==
+
+user -> gateway: POST /api/reports/scheduled/{id}/deactivate
+gateway -> reporting: Forward request
+
+reporting -> db: Set isActive = false
+db --> reporting: Updated
+
+reporting --> gateway: 200 OK
+gateway --> user: Schedule deactivated
+
+note over user
+  CRON Expression Examples:
+  "0 8 * * 1"     = Every Monday at 8 AM
+  "0 0 1 * *"     = First of each month at midnight
+  "0 */6 * * *"   = Every 6 hours
+  "0 9 * * 1-5"   = Weekdays at 9 AM
+end note
+
+@enduml

@@ -1,0 +1,90 @@
+@startuml health-monitoring
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Health Monitoring Flow
+
+actor "Operations" as ops
+participant "API Gateway" as gateway
+participant "Dashboard Service" as dashboard
+
+participant "Identity Service" as identity
+participant "Listing Service" as listing
+participant "Search Service" as search
+participant "Scraping Service" as scraping
+participant "Image Service" as image
+
+== Health Check ==
+
+ops -> gateway: GET /api/dashboard/health
+gateway -> dashboard: Forward request
+
+par Parallel health checks
+    dashboard -> identity: GET /health
+    identity --> dashboard: {status: Healthy}
+
+    dashboard -> listing: GET /health
+    listing --> dashboard: {status: Healthy}
+
+    dashboard -> search: GET /health
+    search --> dashboard: {status: Degraded, message: "High latency"}
+
+    dashboard -> scraping: GET /health
+    scraping --> dashboard: {status: Healthy}
+
+    dashboard -> image: GET /health
+    image --> dashboard: {status: Healthy}
+end
+
+dashboard -> dashboard: Aggregate health status
+note right of dashboard
+  Overall Status:
+  - All Healthy = Healthy
+  - Any Degraded = Degraded
+  - Any Unhealthy = Unhealthy
+
+  Priority: Unhealthy > Degraded > Healthy
+end note
+
+dashboard --> gateway: AggregatedHealth
+gateway --> ops: System health status
+
+note over ops
+  Response:
+  {
+    "overallStatus": "Degraded",
+    "services": [
+      {"name": "Identity", "status": "Healthy"},
+      {"name": "Listing", "status": "Healthy"},
+      {"name": "Search", "status": "Degraded",
+       "message": "High latency"},
+      {"name": "Scraping", "status": "Healthy"},
+      {"name": "Image", "status": "Healthy"}
+    ],
+    "checkedAt": "2026-01-25T10:30:00Z"
+  }
+end note
+
+== Scraping Status ==
+
+ops -> gateway: GET /api/dashboard/scraping-status
+gateway -> dashboard: Forward request
+
+dashboard -> scraping: Get job statistics
+scraping --> dashboard: Job stats
+
+dashboard -> dashboard: Build ScrapingStatus
+note right of dashboard
+  Per source:
+  - Active jobs
+  - Completed today
+  - Failed today
+  - Error rate
+  - Last successful scrape
+end note
+
+dashboard --> gateway: ScrapingStatus
+gateway --> ops: Scraping health
+
+@enduml

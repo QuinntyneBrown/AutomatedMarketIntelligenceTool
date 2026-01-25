@@ -1,0 +1,95 @@
+@startuml feature-flag-toggle
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Feature Flag Management Flow
+
+actor "Admin" as admin
+participant "API Gateway" as gateway
+participant "Configuration Service" as config
+database "Configuration DB" as db
+participant "Consuming Service" as service
+
+== Create Feature Flag ==
+
+admin -> gateway: POST /api/config/features\n{name: "EnableNewScraper", description: "...", isEnabled: false}
+gateway -> config: Forward request
+
+config -> db: Create FeatureFlag
+db --> config: Created
+
+config --> gateway: 201 Created\n{flagId, name, isEnabled}
+gateway --> admin: Flag created
+
+== Check Feature Flag ==
+
+service -> config: GET /api/config/features/EnableNewScraper
+
+config -> db: Get feature flag
+db --> config: FeatureFlag
+
+config --> service: {name, isEnabled: false}
+
+service -> service: Use feature flag in code
+note right of service
+  if (featureFlags.EnableNewScraper) {
+    useNewScraper();
+  } else {
+    useLegacyScraper();
+  }
+end note
+
+== Toggle Feature Flag ==
+
+admin -> gateway: POST /api/config/features/EnableNewScraper/toggle
+gateway -> config: Forward request
+
+config -> db: Get current state
+db --> config: {isEnabled: false}
+
+config -> db: Update to opposite\n{isEnabled: true}
+db --> config: Updated
+
+config --> gateway: 200 OK\n{isEnabled: true}
+gateway --> admin: Flag toggled
+
+note over admin
+  Feature is now enabled!
+  Services will pick up change
+  on next refresh.
+end note
+
+== List All Flags ==
+
+admin -> gateway: GET /api/config/features
+gateway -> config: Forward request
+
+config -> db: Get all feature flags
+db --> config: List<FeatureFlag>
+
+config --> gateway: Feature flags list
+gateway --> admin: All flags with states
+
+note over admin
+  Response:
+  [
+    {"name": "EnableNewScraper", "isEnabled": true},
+    {"name": "MaintenanceMode", "isEnabled": false},
+    {"name": "EnableEmailAlerts", "isEnabled": true}
+  ]
+end note
+
+== Service Caches Flags ==
+
+service -> config: GET /api/config/features
+
+config -> db: Get all flags
+db --> config: List<FeatureFlag>
+
+config --> service: All feature flags
+
+service -> service: Cache flags locally
+service -> service: Refresh periodically
+
+@enduml

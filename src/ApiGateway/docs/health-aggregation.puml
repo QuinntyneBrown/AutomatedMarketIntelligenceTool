@@ -1,0 +1,101 @@
+@startuml health-aggregation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title API Gateway Health Aggregation Flow
+
+actor "Load Balancer\nor Monitoring" as monitor
+participant "API Gateway" as gateway
+
+participant "Identity\n:5001" as identity
+participant "Listing\n:5002" as listing
+participant "Vehicle\n:5003" as vehicle
+participant "Search\n:5004" as search
+participant "Alert\n:5005" as alert
+participant "Other Services\n..." as others
+
+== Basic Health Check ==
+
+monitor -> gateway: GET /health
+
+gateway -> gateway: Self-check
+note right of gateway
+  Check:
+  - Memory usage
+  - Request queue
+  - Error rate
+end note
+
+gateway --> monitor: 200 OK\n{status: "Healthy"}
+
+== Detailed Services Health ==
+
+monitor -> gateway: GET /health/services
+
+par Parallel health checks (with timeout)
+    gateway -> identity: GET /health
+    identity --> gateway: {status: "Healthy"}
+
+    gateway -> listing: GET /health
+    listing --> gateway: {status: "Healthy"}
+
+    gateway -> vehicle: GET /health
+    vehicle --> gateway: {status: "Healthy"}
+
+    gateway -> search: GET /health
+    search --> gateway: {status: "Degraded",\nmessage: "Slow queries"}
+
+    gateway -> alert: GET /health
+    alert --> gateway: TIMEOUT
+
+    gateway -> others: GET /health
+    others --> gateway: Various statuses
+end
+
+gateway -> gateway: Aggregate results
+note right of gateway
+  Aggregation rules:
+  1. Timeout = Unhealthy
+  2. Any Unhealthy = Overall Unhealthy
+  3. Any Degraded = Overall Degraded
+  4. All Healthy = Overall Healthy
+end note
+
+gateway --> monitor: ServiceHealth
+
+note over monitor
+  Response:
+  {
+    "overall": "Unhealthy",
+    "gateway": "Healthy",
+    "services": [
+      {"name": "Identity", "status": "Healthy", "port": 5001},
+      {"name": "Listing", "status": "Healthy", "port": 5002},
+      {"name": "Vehicle", "status": "Healthy", "port": 5003},
+      {"name": "Search", "status": "Degraded", "port": 5004,
+       "message": "Slow queries"},
+      {"name": "Alert", "status": "Unhealthy", "port": 5005,
+       "message": "Health check timeout"}
+    ],
+    "checkedAt": "2026-01-25T10:30:00Z"
+  }
+end note
+
+== Kubernetes Readiness ==
+
+monitor -> gateway: GET /health/ready
+
+gateway -> gateway: Check critical services only
+note right of gateway
+  Critical: Identity, Listing
+  Non-critical: Reporting, Dashboard
+end note
+
+alt Critical services healthy
+    gateway --> monitor: 200 OK
+else Critical service down
+    gateway --> monitor: 503 Service Unavailable
+end
+
+@enduml

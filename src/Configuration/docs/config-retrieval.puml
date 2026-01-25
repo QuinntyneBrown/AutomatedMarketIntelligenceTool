@@ -1,0 +1,79 @@
+@startuml config-retrieval
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Configuration Retrieval Flow
+
+participant "Microservice\n(e.g., Scraping)" as service
+participant "Configuration Service" as config
+database "Configuration DB" as db
+
+== Service Startup ==
+
+service -> config: GET /api/config/scraping
+config -> db: Get all config for service
+db --> config: List<ServiceConfiguration>
+
+config --> service: {configs, version}
+
+service -> service: Apply configuration
+service -> service: Cache locally
+
+== Periodic Refresh ==
+
+loop Every 60 seconds
+    service -> config: GET /api/config/scraping?version={currentVersion}
+
+    config -> db: Check version
+    db --> config: Current version
+
+    alt Version unchanged
+        config --> service: 304 Not Modified
+        service -> service: Keep cached config
+    else Version changed
+        config -> db: Get updated configs
+        db --> config: New configurations
+
+        config --> service: {configs, newVersion}
+        service -> service: Update cache
+        service -> service: Apply new configuration
+    end
+end
+
+== Set Configuration ==
+
+actor "Admin" as admin
+participant "API Gateway" as gateway
+
+admin -> gateway: PUT /api/config/scraping\n{key: "MaxConcurrentJobs", value: "10"}
+gateway -> config: Forward request
+
+config -> db: Upsert configuration
+config -> db: Increment version
+db --> config: Updated
+
+config --> gateway: 200 OK\n{version: newVersion}
+gateway --> admin: Configuration updated
+
+note over admin
+  Next time services check,
+  they'll get the new config
+end note
+
+== Bulk Update ==
+
+admin -> gateway: PUT /api/config/scraping/bulk\n{configs: [{key, value}, ...]}
+gateway -> config: Forward request
+
+config -> db: Begin transaction
+loop For each config
+    config -> db: Upsert configuration
+end
+config -> db: Increment version
+config -> db: Commit
+
+config --> gateway: 200 OK\n{updatedCount, version}
+gateway --> admin: Bulk update complete
+
+@enduml

@@ -1,0 +1,83 @@
+@startuml request-routing
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title API Gateway Request Routing Flow
+
+actor "Client" as client
+participant "API Gateway\n(YARP)" as gateway
+participant "Rate Limiter" as limiter
+participant "Auth Middleware" as auth
+participant "Identity Service" as identity
+participant "Target Service" as target
+
+== Authenticated Request ==
+
+client -> gateway: GET /api/listings/123\nAuthorization: Bearer {token}
+
+gateway -> limiter: Check rate limit\n(by IP)
+limiter --> gateway: Allowed
+
+gateway -> auth: Validate token
+auth -> identity: Validate JWT
+identity --> auth: Token valid\n{userId, roles}
+auth --> gateway: Authenticated
+
+gateway -> gateway: Match route to cluster
+note right of gateway
+  Route: /api/listings/*
+  Cluster: listing-cluster
+  Destination: http://localhost:5002
+end note
+
+gateway -> target: Forward request\nX-User-Id: {userId}
+target --> gateway: 200 OK\n{listing data}
+
+gateway --> client: 200 OK\n{listing data}
+
+== Rate Limited Request ==
+
+client -> gateway: GET /api/search\n(many requests)
+
+gateway -> limiter: Check rate limit
+limiter --> gateway: LIMIT EXCEEDED
+
+gateway --> client: 429 Too Many Requests\nRetry-After: 60
+
+== API Key Authentication ==
+
+client -> gateway: GET /api/listings\nX-API-Key: {apiKey}
+
+gateway -> auth: Validate API key
+auth -> identity: Validate API key
+identity --> auth: Key valid\n{userId, scopes}
+auth --> gateway: Authenticated
+
+gateway -> gateway: Check scopes
+alt Scope authorized
+    gateway -> target: Forward request
+    target --> gateway: Response
+    gateway --> client: Response
+else Scope not authorized
+    gateway --> client: 403 Forbidden
+end
+
+== Service Unavailable ==
+
+client -> gateway: GET /api/reports/123
+
+gateway -> target: Forward request
+
+target --> gateway: Connection refused
+
+gateway -> gateway: Check circuit breaker
+
+alt Circuit open
+    gateway --> client: 503 Service Unavailable
+else Circuit closed
+    gateway -> gateway: Record failure
+    gateway --> client: 502 Bad Gateway
+end
+
+@enduml

@@ -1,0 +1,59 @@
+@startuml geocoding
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Geocoding Flow
+
+actor "Service/User" as client
+participant "API Gateway" as gateway
+participant "Geographic Service" as geo
+database "Geographic DB" as db
+participant "External Geocoding\nAPI" as external
+
+== Geocode Address ==
+
+client -> gateway: POST /api/markets/geocode\n{address, city, province, postalCode}
+gateway -> geo: Forward request
+
+geo -> db: Check geocoding cache\n(by postal code)
+db --> geo: Cache result
+
+alt Cache hit
+    geo --> gateway: {latitude, longitude, city, province}
+    gateway --> client: Cached result
+
+else Cache miss
+    geo -> external: Geocode request\n{full address}
+    external --> geo: {lat, long, formatted}
+
+    geo -> db: Store in cache
+    db --> geo: Cached
+
+    geo --> gateway: {latitude, longitude, city, province}
+    gateway --> client: Geocoded location
+end
+
+== Reverse Geocode ==
+
+client -> gateway: POST /api/markets/reverse-geocode\n{latitude, longitude}
+gateway -> geo: Forward request
+
+geo -> external: Reverse geocode
+external --> geo: {address, city, province, postalCode}
+
+geo --> gateway: Location details
+gateway --> client: Address information
+
+== Postal Code Lookup ==
+
+client -> gateway: GET /api/markets/postal-code/{code}
+gateway -> geo: Forward request
+
+geo -> db: Find postal code
+db --> geo: {city, province, lat, long}
+
+geo --> gateway: Postal code details
+gateway --> client: Location for postal code
+
+@enduml

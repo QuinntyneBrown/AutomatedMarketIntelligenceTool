@@ -1,0 +1,71 @@
+@startuml distance-calculation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Distance Calculation Flow
+
+actor "Service" as client
+participant "Geographic Service" as geo
+
+== Calculate Distance ==
+
+client -> geo: POST /api/markets/distance\n{from: {lat, long}, to: {lat, long}}
+
+geo -> geo: Apply Haversine Formula
+note right of geo
+  a = sin²(Δlat/2) + cos(lat1) × cos(lat2) × sin²(Δlong/2)
+  c = 2 × atan2(√a, √(1−a))
+  distance = R × c
+
+  Where R = 6,371 km (Earth radius)
+end note
+
+geo --> client: {distanceKm: 45.2}
+
+== Check Within Radius ==
+
+client -> geo: POST /api/markets/within\n{center: {lat, long}, point: {lat, long}, radiusKm: 50}
+
+geo -> geo: Calculate distance
+geo -> geo: Compare with radius
+
+alt Distance <= radius
+    geo --> client: {isWithin: true, distanceKm: 45.2}
+else Distance > radius
+    geo --> client: {isWithin: false, distanceKm: 75.8}
+end
+
+== Get Postal Codes in Radius ==
+
+client -> geo: POST /api/markets/postal-codes-in-radius\n{center: {lat, long}, radiusKm: 100}
+
+database "Geographic DB" as db
+
+geo -> db: Get all postal codes
+db --> geo: List<PostalCode>
+
+geo -> geo: Filter by distance
+loop For each postal code
+    geo -> geo: Calculate distance from center
+    alt Within radius
+        geo -> geo: Add to result
+    end
+end
+
+geo --> client: List<PostalCode>\n{code, city, distance}
+
+== Custom Market Definition ==
+
+client -> geo: POST /api/markets\n{name, centerLat, centerLong, radiusKm}
+
+geo -> db: Create CustomMarket
+db --> geo: Market created
+
+geo -> geo: Calculate included postal codes
+geo -> db: Store postal codes list
+db --> geo: Updated
+
+geo --> client: {marketId, name, postalCodes}
+
+@enduml

@@ -1,0 +1,92 @@
+@startuml report-generation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Report Generation Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "Reporting Service" as reporting
+database "Reporting DB" as db
+participant "Dashboard Service" as dashboard
+participant "Listing Service" as listing
+queue "Background Queue" as queue
+participant "Blob Storage" as blob
+
+== Request Report ==
+
+user -> gateway: POST /api/reports\n{type: MarketOverview, format: Excel, parameters}
+gateway -> reporting: Forward request
+
+reporting -> db: Create Report\n{status: Pending}
+db --> reporting: Report created
+
+reporting -> queue: Queue report generation
+queue --> reporting: Queued
+
+reporting --> gateway: 202 Accepted\n{reportId, status: Pending}
+gateway --> user: Report queued
+
+== Background Generation ==
+
+queue -> reporting: Process report
+
+reporting -> db: Update status\n{status: Processing}
+db --> reporting: Updated
+
+alt Report type: MarketOverview
+    reporting -> dashboard: Get market overview
+    dashboard --> reporting: Overview data
+
+    reporting -> listing: Get listing statistics
+    listing --> reporting: Statistics
+
+    reporting -> reporting: Build report data
+end
+
+alt Format: Excel
+    reporting -> reporting: Generate Excel workbook
+    note right of reporting
+      - Create worksheets
+      - Add charts
+      - Format data
+    end note
+
+else Format: PDF
+    reporting -> reporting: Generate PDF document
+
+else Format: CSV
+    reporting -> reporting: Generate CSV file
+
+else Format: HTML
+    reporting -> reporting: Generate HTML report
+end
+
+reporting -> blob: Upload report file
+blob --> reporting: Storage path
+
+reporting -> db: Update Report\n{status: Completed, filePath}
+db --> reporting: Updated
+
+== Download Report ==
+
+user -> gateway: GET /api/reports/{id}/download
+gateway -> reporting: Forward request
+
+reporting -> db: Get Report
+db --> reporting: Report with filePath
+
+alt Report completed
+    reporting -> blob: Get download URL
+    blob --> reporting: Signed URL
+
+    reporting --> gateway: Redirect to download
+    gateway --> user: File download
+
+else Report not ready
+    reporting --> gateway: 202 Accepted\n{status: Processing}
+    gateway --> user: Report still processing
+end
+
+@enduml

@@ -1,0 +1,85 @@
+@startuml metrics-aggregation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Dashboard Metrics Aggregation Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "Dashboard Service" as dashboard
+participant "Listing Service" as listing
+participant "Alert Service" as alert
+participant "Deduplication Service" as dedup
+participant "Scraping Orchestration" as scraping
+database "Cache" as cache
+
+== Get Dashboard Overview ==
+
+user -> gateway: GET /api/dashboard/overview
+gateway -> dashboard: Forward request
+
+dashboard -> cache: Check cached overview
+cache --> dashboard: Cache result
+
+alt Cache valid (< 1 min old)
+    dashboard --> gateway: Cached overview
+    gateway --> user: Dashboard data
+
+else Cache miss/expired
+    par Parallel data fetch
+        dashboard -> listing: Get listing counts
+        listing --> dashboard: {total, active, newToday}
+
+        dashboard -> alert: Get alert counts
+        alert --> dashboard: {active, triggeredToday}
+
+        dashboard -> dedup: Get review queue count
+        dedup --> dashboard: {pendingReviews}
+
+        dashboard -> scraping: Get scraping stats
+        scraping --> dashboard: {scrapedToday}
+    end
+
+    dashboard -> dashboard: Build DashboardOverview
+    note right of dashboard
+      {
+        totalListings: 50000,
+        activeListings: 45000,
+        totalVehicles: 35000,
+        activeAlerts: 1200,
+        pendingReviews: 45,
+        newListingsToday: 850,
+        priceChangesToday: 320,
+        listingsRemovedToday: 150
+      }
+    end note
+
+    dashboard -> cache: Store with TTL
+    cache --> dashboard: Cached
+
+    dashboard --> gateway: DashboardOverview
+    gateway --> user: Dashboard data
+end
+
+== Get Market Trends ==
+
+user -> gateway: GET /api/dashboard/market-trends
+gateway -> dashboard: Forward request
+
+dashboard -> listing: Get price aggregations
+listing --> dashboard: Price data
+
+dashboard -> dashboard: Calculate trends
+note right of dashboard
+  - Average price by make
+  - Median price overall
+  - Price change % (30 day)
+  - Listings by source
+  - Listings by province
+end note
+
+dashboard --> gateway: MarketTrends
+gateway --> user: Trend data
+
+@enduml
