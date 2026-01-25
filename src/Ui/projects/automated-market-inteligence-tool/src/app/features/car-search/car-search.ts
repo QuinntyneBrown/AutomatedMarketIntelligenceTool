@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect } from '@angular/core';
+import { Component, signal, computed, effect, inject, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,33 +12,25 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject, takeUntil, interval, switchMap, catchError, of, filter, tap } from 'rxjs';
 
-interface CarListing {
-  id: string;
-  title: string;
-  price: number;
-  mileage: number;
-  location: string;
-  source: string;
-  sourceId: string;
-  listedDate: string;
-  transmission: string;
-  drivetrain: string;
-  fuelType: string;
-  exteriorColor: string;
-  url: string;
-}
+import {
+  ScrapingService,
+  ScrapingSource,
+  SearchSessionStatus,
+  ScrapingJobStatus,
+  ScrapingSessionResponse,
+  ScrapingJobResponse,
+  CarListing,
+  CreateScrapingJobRequest,
+} from './scraping.service';
 
-interface Scraper {
-  id: string;
+interface ScraperStatus {
+  id: ScrapingSource;
   name: string;
   status: 'pending' | 'running' | 'done' | 'error';
-}
-
-interface SearchCriteria {
-  make: string;
-  year: string;
-  model: string;
+  listingsFound: number;
 }
 
 @Component({
@@ -58,11 +50,16 @@ interface SearchCriteria {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatMenuModule,
+    MatSnackBarModule,
   ],
   templateUrl: './car-search.html',
   styleUrl: './car-search.scss',
 })
-export class CarSearchComponent {
+export class CarSearchComponent implements OnDestroy {
+  private readonly scrapingService = inject(ScrapingService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly destroy$ = new Subject<void>();
+
   // Form state
   protected readonly selectedMake = signal<string>('');
   protected readonly selectedYear = signal<string>('');
@@ -74,24 +71,26 @@ export class CarSearchComponent {
   protected readonly searchProgress = signal(0);
   protected readonly loadingMessage = signal('');
   protected readonly hasSearched = signal(false);
+  protected readonly currentSessionId = signal<string | null>(null);
 
   // Results
   protected readonly results = signal<CarListing[]>([]);
   protected readonly sortBy = signal<string>('price-asc');
+  protected readonly totalListingsFound = signal(0);
 
-  // Scrapers
-  protected readonly scrapers = signal<Scraper[]>([
-    { id: 'autotrader', name: 'Autotrader.ca', status: 'pending' },
-    { id: 'kijiji', name: 'Kijiji.ca', status: 'pending' },
-    { id: 'cargurus', name: 'CarGurus', status: 'pending' },
-    { id: 'clutch', name: 'Clutch.ca', status: 'pending' },
-    { id: 'auto123', name: 'Auto123', status: 'pending' },
-    { id: 'carfax', name: 'CarFax', status: 'pending' },
-    { id: 'carmax', name: 'CarMax', status: 'pending' },
-    { id: 'carvana', name: 'Carvana', status: 'pending' },
-    { id: 'truecar', name: 'TrueCar', status: 'pending' },
-    { id: 'vroom', name: 'Vroom', status: 'pending' },
-    { id: 'tabangi', name: 'Tabangi Motors', status: 'pending' },
+  // Scraper statuses
+  protected readonly scraperStatuses = signal<ScraperStatus[]>([
+    { id: ScrapingSource.Autotrader, name: 'Autotrader.ca', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.Kijiji, name: 'Kijiji.ca', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.CarGurus, name: 'CarGurus', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.Clutch, name: 'Clutch.ca', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.Auto123, name: 'Auto123', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.CarFax, name: 'CarFax', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.CarMax, name: 'CarMax', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.Carvana, name: 'Carvana', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.TrueCar, name: 'TrueCar', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.Vroom, name: 'Vroom', status: 'pending', listingsFound: 0 },
+    { id: ScrapingSource.TabangiMotors, name: 'Tabangi Motors', status: 'pending', listingsFound: 0 },
   ]);
 
   // Car makes
@@ -158,15 +157,15 @@ export class CarSearchComponent {
 
     switch (sort) {
       case 'price-asc':
-        return items.sort((a, b) => a.price - b.price);
+        return items.sort((a, b) => (a.price || 0) - (b.price || 0));
       case 'price-desc':
-        return items.sort((a, b) => b.price - a.price);
+        return items.sort((a, b) => (b.price || 0) - (a.price || 0));
       case 'mileage-asc':
-        return items.sort((a, b) => a.mileage - b.mileage);
+        return items.sort((a, b) => (a.mileage || 0) - (b.mileage || 0));
       case 'mileage-desc':
-        return items.sort((a, b) => b.mileage - a.mileage);
+        return items.sort((a, b) => (b.mileage || 0) - (a.mileage || 0));
       case 'date-desc':
-        return items.sort((a, b) => new Date(b.listedDate).getTime() - new Date(a.listedDate).getTime());
+        return items.sort((a, b) => new Date(b.scrapedAt).getTime() - new Date(a.scrapedAt).getTime());
       default:
         return items;
     }
@@ -185,6 +184,11 @@ export class CarSearchComponent {
         this.selectedModel.set('');
       }
     }, { allowSignalWrites: true });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   protected onMakeChange(value: string): void {
@@ -212,134 +216,179 @@ export class CarSearchComponent {
   protected async onSearch(): Promise<void> {
     if (!this.canSearch()) return;
 
-    const criteria: SearchCriteria = {
-      make: this.selectedMake(),
-      year: this.selectedYear(),
-      model: this.selectedModel(),
-    };
-
     this.isSearching.set(true);
     this.searchProgress.set(0);
-    this.loadingMessage.set('Initializing scraping job...');
-    this.resetScraperStatuses();
-
-    try {
-      // Step 1: Create scraping job via API Gateway
-      const jobId = await this.createScrapingJob(criteria);
-
-      // Step 2: Poll for job status and collect results
-      const results = await this.pollJobStatus(jobId, criteria);
-
-      // Step 3: Update results
-      this.results.set(results);
-      this.hasSearched.set(true);
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      this.isSearching.set(false);
-    }
-  }
-
-  private async createScrapingJob(criteria: SearchCriteria): Promise<string> {
-    // In production, this would call:
-    // POST /api/v1/scraping/jobs
-    // Body: { make, year, model, scrapers: this.scrapers().map(s => s.id) }
-
-    console.log('Creating scraping job:', criteria);
     this.loadingMessage.set('Creating scraping job...');
+    this.resetScraperStatuses();
+    this.results.set([]);
 
-    // Simulate API delay
-    await this.delay(500);
+    const year = parseInt(this.selectedYear(), 10);
+    const request: CreateScrapingJobRequest = {
+      make: this.selectedMake(),
+      model: this.selectedModel(),
+      yearFrom: isNaN(year) ? undefined : year,
+      yearTo: isNaN(year) ? undefined : year,
+      sources: Object.values(ScrapingSource),
+      maxResults: 500,
+    };
 
-    // Return mock job ID
-    return 'job-' + Date.now();
-  }
-
-  private async pollJobStatus(jobId: string, criteria: SearchCriteria): Promise<CarListing[]> {
-    // In production, this would poll:
-    // GET /api/v1/scraping/jobs/{jobId}
-
-    this.loadingMessage.set('Dispatching scrapers...');
-
-    const results: CarListing[] = [];
-    const scraperList = this.scrapers();
-    let completed = 0;
-
-    for (const scraper of scraperList) {
-      // Simulate running state
-      await this.delay(200 + Math.random() * 300);
-      this.updateScraperStatus(scraper.id, 'running');
-
-      // Simulate scraping
-      await this.delay(400 + Math.random() * 800);
-
-      // Generate mock results
-      const scraperResults = this.generateMockResults(scraper, criteria, 2 + Math.floor(Math.random() * 5));
-      results.push(...scraperResults);
-
-      // Mark as done
-      this.updateScraperStatus(scraper.id, 'done');
-      completed++;
-
-      // Update progress
-      const progress = (completed / scraperList.length) * 100;
-      this.searchProgress.set(progress);
-      this.loadingMessage.set(`Scraped ${completed}/${scraperList.length} sources (${results.length} listings found)`);
-    }
-
-    return results;
-  }
-
-  private generateMockResults(scraper: Scraper, criteria: SearchCriteria, count: number): CarListing[] {
-    const results: CarListing[] = [];
-    const locations = ['Toronto, ON', 'Vancouver, BC', 'Calgary, AB', 'Montreal, QC', 'Ottawa, ON'];
-    const transmissions = ['Automatic', 'Manual', 'CVT'];
-    const drivetrains = ['FWD', 'RWD', 'AWD', '4WD'];
-    const fuelTypes = ['Gasoline', 'Diesel', 'Hybrid', 'Electric'];
-    const colors = ['Black', 'White', 'Silver', 'Blue', 'Red', 'Gray'];
-
-    for (let i = 0; i < count; i++) {
-      results.push({
-        id: `${scraper.id}-${Date.now()}-${i}`,
-        title: `${criteria.year || '2023'} ${criteria.make} ${criteria.model}`,
-        price: 15000 + Math.floor(Math.random() * 40000),
-        mileage: 10000 + Math.floor(Math.random() * 150000),
-        location: locations[Math.floor(Math.random() * locations.length)],
-        source: scraper.name,
-        sourceId: scraper.id,
-        listedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        transmission: transmissions[Math.floor(Math.random() * transmissions.length)],
-        drivetrain: drivetrains[Math.floor(Math.random() * drivetrains.length)],
-        fuelType: fuelTypes[Math.floor(Math.random() * fuelTypes.length)],
-        exteriorColor: colors[Math.floor(Math.random() * colors.length)],
-        url: '#',
+    this.scrapingService.createScrapingJob(request)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Failed to create scraping job:', error);
+          this.snackBar.open('Failed to create scraping job. Please try again.', 'Close', { duration: 5000 });
+          this.isSearching.set(false);
+          return of(null);
+        })
+      )
+      .subscribe(session => {
+        if (session) {
+          this.currentSessionId.set(session.id);
+          this.loadingMessage.set('Scraping job created. Starting scrapers...');
+          this.pollSessionStatus(session.id);
+        }
       });
-    }
-
-    return results;
   }
 
-  private updateScraperStatus(scraperId: string, status: Scraper['status']): void {
-    this.scrapers.update(scrapers =>
-      scrapers.map(s => s.id === scraperId ? { ...s, status } : s)
+  private pollSessionStatus(sessionId: string): void {
+    const pollingInterval = 2000; // Poll every 2 seconds
+
+    interval(pollingInterval)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() => this.scrapingService.getSession(sessionId)),
+        tap(session => this.updateSessionProgress(session)),
+        filter(session => this.isSessionComplete(session)),
+        switchMap(() => {
+          // Session complete - fetch the listings
+          this.loadingMessage.set('Fetching results...');
+          return this.scrapingService.searchListings({
+            make: this.selectedMake(),
+            model: this.selectedModel(),
+            yearFrom: parseInt(this.selectedYear(), 10) || undefined,
+            yearTo: parseInt(this.selectedYear(), 10) || undefined,
+            pageSize: 500,
+            sortBy: 'price',
+            sortDirection: 'asc',
+          });
+        }),
+        catchError(error => {
+          console.error('Error during scraping:', error);
+          this.snackBar.open('An error occurred during scraping.', 'Close', { duration: 5000 });
+          this.isSearching.set(false);
+          return of(null);
+        })
+      )
+      .subscribe(listingsResponse => {
+        if (listingsResponse) {
+          this.results.set(listingsResponse.items);
+          this.totalListingsFound.set(listingsResponse.totalCount);
+          this.hasSearched.set(true);
+          this.isSearching.set(false);
+          this.loadingMessage.set('');
+
+          if (listingsResponse.items.length === 0) {
+            this.snackBar.open('No listings found matching your criteria.', 'Close', { duration: 3000 });
+          }
+        }
+      });
+
+    // Also poll for individual job statuses
+    this.pollJobStatuses(sessionId);
+  }
+
+  private pollJobStatuses(sessionId: string): void {
+    const pollingInterval = 1500;
+
+    interval(pollingInterval)
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(() => this.isSearching()),
+        switchMap(() => this.scrapingService.getSessionJobs(sessionId)),
+        catchError(() => of([]))
+      )
+      .subscribe(jobs => {
+        this.updateJobStatuses(jobs);
+      });
+  }
+
+  private updateSessionProgress(session: ScrapingSessionResponse): void {
+    const statusMap: Record<SearchSessionStatus, string> = {
+      [SearchSessionStatus.Pending]: 'Waiting to start...',
+      [SearchSessionStatus.Running]: `Scraping in progress... (${session.totalListingsFound} listings found)`,
+      [SearchSessionStatus.Completed]: 'Scraping completed!',
+      [SearchSessionStatus.Failed]: 'Scraping failed',
+      [SearchSessionStatus.Cancelled]: 'Scraping cancelled',
+      [SearchSessionStatus.Paused]: 'Scraping paused',
+    };
+
+    this.loadingMessage.set(statusMap[session.status] || 'Processing...');
+    this.totalListingsFound.set(session.totalListingsFound);
+
+    // Estimate progress based on status
+    if (session.status === SearchSessionStatus.Pending) {
+      this.searchProgress.set(5);
+    } else if (session.status === SearchSessionStatus.Running) {
+      // Progress based on listings found (rough estimate)
+      const estimatedProgress = Math.min(90, 10 + (session.totalListingsFound / 5));
+      this.searchProgress.set(estimatedProgress);
+    } else if (session.status === SearchSessionStatus.Completed) {
+      this.searchProgress.set(100);
+    }
+  }
+
+  private updateJobStatuses(jobs: ScrapingJobResponse[]): void {
+    this.scraperStatuses.update(statuses =>
+      statuses.map(scraper => {
+        const job = jobs.find(j => j.source === scraper.id);
+        if (!job) return scraper;
+
+        let status: ScraperStatus['status'] = 'pending';
+        if (job.status === ScrapingJobStatus.Running) {
+          status = 'running';
+        } else if (job.status === ScrapingJobStatus.Completed) {
+          status = 'done';
+        } else if (job.status === ScrapingJobStatus.Failed) {
+          status = 'error';
+        }
+
+        return {
+          ...scraper,
+          status,
+          listingsFound: job.listingsFound,
+        };
+      })
     );
+
+    // Update progress based on completed jobs
+    const completedJobs = jobs.filter(j =>
+      j.status === ScrapingJobStatus.Completed || j.status === ScrapingJobStatus.Failed
+    ).length;
+    const totalJobs = jobs.length || 1;
+    const jobProgress = (completedJobs / totalJobs) * 90 + 5;
+    this.searchProgress.set(Math.min(95, jobProgress));
+  }
+
+  private isSessionComplete(session: ScrapingSessionResponse): boolean {
+    return session.status === SearchSessionStatus.Completed ||
+           session.status === SearchSessionStatus.Failed ||
+           session.status === SearchSessionStatus.Cancelled;
   }
 
   private resetScraperStatuses(): void {
-    this.scrapers.update(scrapers =>
-      scrapers.map(s => ({ ...s, status: 'pending' as const }))
+    this.scraperStatuses.update(statuses =>
+      statuses.map(s => ({ ...s, status: 'pending' as const, listingsFound: 0 }))
     );
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  protected formatPrice(price: number): string {
+  protected formatPrice(price: number | undefined): string {
+    if (!price) return 'N/A';
     return '$' + price.toLocaleString();
   }
 
-  protected formatMileage(mileage: number): string {
+  protected formatMileage(mileage: number | undefined): string {
+    if (!mileage) return 'N/A';
     return mileage.toLocaleString() + ' km';
   }
 
@@ -356,7 +405,7 @@ export class CarSearchComponent {
     return date.toLocaleDateString();
   }
 
-  protected getScraperStatusClass(status: Scraper['status']): string {
+  protected getScraperStatusClass(status: ScraperStatus['status']): string {
     switch (status) {
       case 'pending': return 'scraper-chip--pending';
       case 'running': return 'scraper-chip--running';
@@ -367,31 +416,36 @@ export class CarSearchComponent {
   }
 
   protected onExport(): void {
-    if (this.results().length === 0) return;
+    const currentResults = this.results();
+    if (currentResults.length === 0) {
+      this.snackBar.open('No results to export.', 'Close', { duration: 3000 });
+      return;
+    }
 
-    // In production, this would call:
-    // POST /api/v1/reports/generate
-    // Body: { type: 'search-results', format: 'csv', data: this.results() }
-
-    const csv = this.convertToCSV(this.results());
+    const csv = this.convertToCSV(currentResults);
     this.downloadCSV(csv, 'car-search-results.csv');
   }
 
   private convertToCSV(results: CarListing[]): string {
-    const headers = ['Title', 'Price', 'Mileage', 'Location', 'Source', 'Transmission', 'Drivetrain', 'Fuel Type', 'Listed Date'];
+    const headers = ['Title', 'Make', 'Model', 'Year', 'Price', 'Mileage', 'Location', 'Source', 'Transmission', 'Drivetrain', 'Fuel Type', 'VIN', 'URL', 'Scraped At'];
     const rows = results.map(r => [
-      r.title,
-      r.price.toString(),
-      r.mileage.toString(),
-      r.location,
-      r.source,
-      r.transmission,
-      r.drivetrain,
-      r.fuelType,
-      new Date(r.listedDate).toLocaleDateString(),
+      r.title || '',
+      r.make || '',
+      r.model || '',
+      r.year?.toString() || '',
+      r.price?.toString() || '',
+      r.mileage?.toString() || '',
+      r.location || `${r.city || ''}, ${r.province || ''}`.trim(),
+      r.sourceSite || '',
+      r.transmission || '',
+      r.drivetrain || '',
+      r.fuelType || '',
+      r.vin || '',
+      r.listingUrl || '',
+      r.scrapedAt ? new Date(r.scrapedAt).toLocaleDateString() : '',
     ]);
 
-    return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    return [headers, ...rows].map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
   }
 
   private downloadCSV(csv: string, filename: string): void {
@@ -403,10 +457,31 @@ export class CarSearchComponent {
   }
 
   protected openListing(listing: CarListing): void {
-    // In production, this would open the actual listing URL
-    console.log('Opening listing:', listing);
-    if (listing.url && listing.url !== '#') {
-      window.open(listing.url, '_blank');
+    if (listing.listingUrl) {
+      window.open(listing.listingUrl, '_blank');
     }
+  }
+
+  protected onCancelSearch(): void {
+    const sessionId = this.currentSessionId();
+    if (sessionId) {
+      this.scrapingService.cancelSession(sessionId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.snackBar.open('Search cancelled.', 'Close', { duration: 3000 });
+            this.isSearching.set(false);
+          },
+          error: () => {
+            this.snackBar.open('Failed to cancel search.', 'Close', { duration: 3000 });
+          }
+        });
+    } else {
+      this.isSearching.set(false);
+    }
+  }
+
+  protected getListingImage(listing: CarListing): string | null {
+    return listing.imageUrls && listing.imageUrls.length > 0 ? listing.imageUrls[0] : null;
   }
 }

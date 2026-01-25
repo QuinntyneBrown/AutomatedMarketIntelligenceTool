@@ -83,7 +83,7 @@
     <div class="scraper-sources">
       <span class="scraper-sources__label">Searching across all sources:</span>
       <div class="scraper-chips">
-        @for (scraper of scrapers(); track scraper.id) {
+        @for (scraper of scraperStatuses(); track scraper.id) {
           <span class="scraper-chip">
             <mat-icon>check_circle</mat-icon>
             {{ scraper.name }}
@@ -103,7 +103,7 @@
           <mat-progress-bar mode="determinate" [value]="searchProgress()"></mat-progress-bar>
         </div>
         <div class="scraper-status">
-          @for (scraper of scrapers(); track scraper.id) {
+          @for (scraper of scraperStatuses(); track scraper.id) {
             <span class="scraper-status-chip" [class]="getScraperStatusClass(scraper.status)">
               @if (scraper.status === 'running') {
                 <mat-icon class="spinning">sync</mat-icon>
@@ -113,9 +113,16 @@
                 <mat-icon>error</mat-icon>
               }
               {{ scraper.name }}
+              @if (scraper.listingsFound > 0) {
+                <span class="listings-count">({{ scraper.listingsFound }})</span>
+              }
             </span>
           }
         </div>
+        <button mat-stroked-button color="warn" (click)="onCancelSearch()" class="cancel-button">
+          <mat-icon>cancel</mat-icon>
+          Cancel Search
+        </button>
       </mat-card>
     </div>
   }
@@ -152,11 +159,15 @@
           @for (listing of sortedResults(); track listing.id) {
             <mat-card class="listing-card" (click)="openListing(listing)">
               <div class="listing-card__image">
-                <mat-icon>directions_car</mat-icon>
+                @if (getListingImage(listing)) {
+                  <img [src]="getListingImage(listing)" [alt]="listing.title" loading="lazy" />
+                } @else {
+                  <mat-icon>directions_car</mat-icon>
+                }
               </div>
               <div class="listing-card__content">
-                <h3 class="listing-card__title">{{ listing.title }}</h3>
-                <p class="listing-card__location">{{ listing.location }}</p>
+                <h3 class="listing-card__title">{{ listing.title || (listing.year + ' ' + listing.make + ' ' + listing.model) }}</h3>
+                <p class="listing-card__location">{{ listing.city ? (listing.city + ', ' + listing.province) : listing.location }}</p>
                 <p class="listing-card__price">{{ formatPrice(listing.price) }}</p>
                 <div class="listing-card__details">
                   <div class="listing-detail">
@@ -165,20 +176,20 @@
                   </div>
                   <div class="listing-detail">
                     <mat-icon>settings</mat-icon>
-                    <span>{{ listing.transmission }}</span>
+                    <span>{{ listing.transmission || 'N/A' }}</span>
                   </div>
                   <div class="listing-detail">
                     <mat-icon>all_inclusive</mat-icon>
-                    <span>{{ listing.drivetrain }}</span>
+                    <span>{{ listing.drivetrain || 'N/A' }}</span>
                   </div>
                   <div class="listing-detail">
                     <mat-icon>local_gas_station</mat-icon>
-                    <span>{{ listing.fuelType }}</span>
+                    <span>{{ listing.fuelType || 'N/A' }}</span>
                   </div>
                 </div>
                 <div class="listing-card__footer">
-                  <span class="listing-source">{{ listing.source }}</span>
-                  <span class="listing-date">{{ formatDate(listing.listedDate) }}</span>
+                  <span class="listing-source">{{ listing.sourceSite }}</span>
+                  <span class="listing-date">{{ formatDate(listing.scrapedAt) }}</span>
                 </div>
               </div>
             </mat-card>
@@ -188,7 +199,7 @@
         <mat-card class="no-results">
           <mat-icon>search_off</mat-icon>
           <h3>No listings found</h3>
-          <p>Try adjusting your search criteria</p>
+          <p>Try adjusting your search criteria or wait for scrapers to complete</p>
         </mat-card>
       }
     </div>
