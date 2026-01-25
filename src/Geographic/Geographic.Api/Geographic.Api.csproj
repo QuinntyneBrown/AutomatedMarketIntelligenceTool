@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Geographic.Infrastructure\Geographic.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.ServiceDefaults\Shared.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

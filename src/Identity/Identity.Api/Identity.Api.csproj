@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Identity.Core\Identity.Core.csproj" />
     <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\Shared.Messaging\Shared.Messaging.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.ServiceDefaults\Shared.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

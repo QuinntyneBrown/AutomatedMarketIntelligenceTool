@@ -2,8 +2,11 @@ using ScrapingWorker.Infrastructure.Extensions;
 using ScrapingWorker.Service;
 using Shared.Contracts.Events;
 using Shared.Messaging;
+using Shared.ServiceDefaults.Extensions;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Add infrastructure
 builder.Services.AddScrapingWorkerInfrastructure();
@@ -17,9 +20,6 @@ builder.Services.AddHostedService<Worker>();
 var host = builder.Build();
 host.Run();
 
-/// <summary>
-/// Null event publisher for when messaging is not configured.
-/// </summary>
 internal sealed class NullEventPublisher : IEventPublisher
 {
     public Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
