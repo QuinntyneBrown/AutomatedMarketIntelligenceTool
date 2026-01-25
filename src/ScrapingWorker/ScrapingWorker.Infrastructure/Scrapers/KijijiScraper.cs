@@ -10,11 +10,11 @@ using System.Web;
 namespace ScrapingWorker.Infrastructure.Scrapers;
 
 /// <summary>
-/// Scraper for Kijiji Autos (kijijiautos.ca)
+/// Scraper for Kijiji (kijiji.ca) - Canada's largest classifieds site
 /// </summary>
 public sealed partial class KijijiScraper : BaseScraper
 {
-    private const string BaseUrl = "https://www.kijijiautos.ca";
+    private const string BaseUrl = "https://www.kijiji.ca";
 
     public override ScrapingSource Source => ScrapingSource.Kijiji;
 
@@ -31,27 +31,33 @@ public sealed partial class KijijiScraper : BaseScraper
 
     protected override string BuildSearchUrl(SearchParameters parameters)
     {
-        // Kijiji Autos URL structure: /cars/{make}/{model}/
-        var pathParts = new List<string> { "cars" };
+        // Classic Kijiji URL structure: /b-cars-trucks/canada/{make}-{model}/k0c174l0
+        // Query params: yearStart=YYYY__YYYY for year range, minPrice, maxPrice, maxKilometers
 
+        var searchTerms = new List<string>();
         if (!string.IsNullOrEmpty(parameters.Make))
         {
-            pathParts.Add(parameters.Make.ToLowerInvariant().Replace(" ", "-"));
+            searchTerms.Add(parameters.Make.ToLowerInvariant().Replace(" ", "-"));
         }
-
         if (!string.IsNullOrEmpty(parameters.Model))
         {
-            pathParts.Add(parameters.Model.ToLowerInvariant().Replace(" ", "-"));
+            searchTerms.Add(parameters.Model.ToLowerInvariant().Replace(" ", "-"));
         }
 
-        var path = string.Join("/", pathParts);
-        var queryParams = new List<string>();
+        var searchSlug = searchTerms.Count > 0 ? string.Join("-", searchTerms) + "/" : "";
 
-        if (parameters.YearFrom.HasValue)
-            queryParams.Add($"minYear={parameters.YearFrom}");
+        // c174 is the category ID for Cars & Trucks, l0 is Canada-wide
+        var basePath = $"{BaseUrl}/b-cars-trucks/canada/{searchSlug}k0c174l0";
 
-        if (parameters.YearTo.HasValue)
-            queryParams.Add($"maxYear={parameters.YearTo}");
+        var queryParams = new List<string> { "rb=true" }; // Enable all filters
+
+        // Year range: format is yearStart=YYYY__YYYY
+        if (parameters.YearFrom.HasValue || parameters.YearTo.HasValue)
+        {
+            var yearFrom = parameters.YearFrom ?? 1900;
+            var yearTo = parameters.YearTo ?? DateTime.UtcNow.Year + 1;
+            queryParams.Add($"yearStart={yearFrom}__{yearTo}");
+        }
 
         if (parameters.MinPrice.HasValue)
             queryParams.Add($"minPrice={parameters.MinPrice}");
@@ -60,17 +66,10 @@ public sealed partial class KijijiScraper : BaseScraper
             queryParams.Add($"maxPrice={parameters.MaxPrice}");
 
         if (parameters.MaxMileage.HasValue)
-            queryParams.Add($"maxKms={parameters.MaxMileage}");
+            queryParams.Add($"maxKilometers={parameters.MaxMileage}");
 
-        if (!string.IsNullOrEmpty(parameters.PostalCode))
-        {
-            queryParams.Add($"address={HttpUtility.UrlEncode(parameters.PostalCode)}");
-            if (parameters.RadiusKm.HasValue)
-                queryParams.Add($"radius={parameters.RadiusKm}");
-        }
-
-        var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-        return $"{BaseUrl}/{path}/{query}";
+        var query = string.Join("&", queryParams);
+        return $"{basePath}?{query}";
     }
 
     protected override string GetPageUrl(string baseUrl, int page)
@@ -78,11 +77,19 @@ public sealed partial class KijijiScraper : BaseScraper
         if (page == 1)
             return baseUrl;
 
-        var separator = baseUrl.Contains('?') ? "&" : "?";
-        return $"{baseUrl}{separator}page={page}";
+        // Classic Kijiji uses page/N/ in the URL path
+        // Insert before the query string if present
+        var queryIndex = baseUrl.IndexOf('?');
+        if (queryIndex > 0)
+        {
+            var pathPart = baseUrl[..queryIndex];
+            var queryPart = baseUrl[queryIndex..];
+            return $"{pathPart}page-{page}/{queryPart}";
+        }
+        return $"{baseUrl}page-{page}/";
     }
 
-    protected override int GetPageSize() => 46; // Kijiji shows ~46 items per page in JSON-LD
+    protected override int GetPageSize() => 40; // Classic Kijiji shows ~40 items per page
 
     protected override async Task<(List<ScrapedListing> Listings, int EstimatedTotal)> ScrapePageAsync(
         string pageUrl,
@@ -179,8 +186,14 @@ public sealed partial class KijijiScraper : BaseScraper
 
     private ScrapedListing? ParseCarItem(JsonElement item)
     {
-        // Verify it's a Car type
-        if (!item.TryGetProperty("@type", out var typeEl) || typeEl.GetString() != "Car")
+        // Verify it's a Car or Vehicle type
+        if (!item.TryGetProperty("@type", out var typeEl))
+        {
+            return null;
+        }
+
+        var itemType = typeEl.GetString();
+        if (itemType != "Car" && itemType != "Vehicle")
         {
             return null;
         }

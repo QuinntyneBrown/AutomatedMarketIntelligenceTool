@@ -6,7 +6,7 @@ using ScrapingWorker.Core.Services;
 using ScrapingWorker.Infrastructure.Extensions;
 
 Console.WriteLine("=== Automated Market Intelligence Tool - Playground ===");
-Console.WriteLine("Kijiji Autos scraping test for: 2007 Toyota Camry");
+Console.WriteLine("Kijiji.ca scraping test for: 2007 Toyota Camry");
 Console.WriteLine();
 
 // Set up dependency injection
