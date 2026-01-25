@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Search - Market Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    /* ============================================
+       CSS VARIABLES & TOKENS (MD3 Dark Theme)
+       ============================================ */
+    :root {
+      --primary-500: #2196f3;
+      --primary-600: #1e88e5;
+      --primary-700: #1976d2;
+      --accent-500: #ff9800;
+      --accent-700: #f57c00;
+      --warn-500: #f44336;
+      --surface-background: #121212;
+      --surface-card: #1e1e1e;
+      --surface-elevated: #2d2d2d;
+      --surface-divider: rgba(255, 255, 255, 0.12);
+      --surface-hover: rgba(255, 255, 255, 0.08);
+      --surface-selected: rgba(33, 150, 243, 0.16);
+      --text-primary: rgba(255, 255, 255, 0.87);
+      --text-secondary: rgba(255, 255, 255, 0.60);
+      --text-disabled: rgba(255, 255, 255, 0.38);
+      --status-success: #4caf50;
+      --status-warning: #ff9800;
+      --status-error: #f44336;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 50%;
+      --radius-chip: 16px;
+      --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --elevation-2: 0 3px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+      --elevation-4: 0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+      --transition-fast: 150ms ease;
+      --transition-standard: 300ms ease;
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--surface-background);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ============================================
+       APP SHELL
+       ============================================ */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .mat-toolbar {
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-md);
+      height: 64px;
+      background-color: var(--surface-card);
+      box-shadow: var(--elevation-4);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    .mat-toolbar__title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-left: var(--spacing-md);
+    }
+
+    .mat-toolbar__spacer {
+      flex: 1;
+    }
+
+    .layout-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ============================================
+       SIDENAV
+       ============================================ */
+    .mat-sidenav {
+      width: 256px;
+      background-color: var(--surface-card);
+      border-right: 1px solid var(--surface-divider);
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: transform var(--transition-standard);
+    }
+
+    .mat-nav-list {
+      list-style: none;
+      padding: var(--spacing-sm) 0;
+    }
+
+    .mat-list-item {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-md) var(--spacing-lg);
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .mat-list-item:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .mat-list-item--active {
+      background-color: var(--surface-selected);
+      color: var(--primary-500);
+    }
+
+    .mat-list-item__icon {
+      margin-right: var(--spacing-md);
+      color: var(--text-secondary);
+    }
+
+    .mat-list-item--active .mat-list-item__icon {
+      color: var(--primary-500);
+    }
+
+    .nav-divider {
+      margin: var(--spacing-md) 0;
+      height: 1px;
+      background-color: var(--surface-divider);
+    }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-xl);
+    }
+
+    /* ============================================
+       PAGE HEADER
+       ============================================ */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-xl);
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 400;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 var(--spacing-lg);
+      height: 40px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1.25px;
+      cursor: pointer;
+      gap: var(--spacing-sm);
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn--primary {
+      background-color: var(--primary-500);
+      color: white;
+      box-shadow: var(--elevation-2);
+    }
+
+    .btn--primary:hover {
+      background-color: var(--primary-700);
+      box-shadow: var(--elevation-4);
+    }
+
+    .btn--primary:disabled {
+      background-color: var(--text-disabled);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn--secondary {
+      background-color: transparent;
+      color: var(--primary-500);
+      border: 1px solid var(--primary-500);
+    }
+
+    .btn--secondary:hover {
+      background-color: var(--surface-selected);
+    }
+
+    .icon-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .icon-button:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .icon-button:disabled {
+      color: var(--text-disabled);
+      cursor: not-allowed;
+    }
+
+    /* ============================================
+       SEARCH FORM CARD
+       ============================================ */
+    .search-card {
+      background-color: var(--surface-card);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      box-shadow: var(--elevation-1);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .search-card__title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .search-card__title .material-icons-outlined {
+      color: var(--primary-500);
+    }
+
+    .search-form {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-md);
+      align-items: end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .select-input,
+    .text-input {
+      width: 100%;
+      padding: var(--spacing-md);
+      background-color: var(--surface-elevated);
+      border: 1px solid var(--surface-divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color var(--transition-fast);
+    }
+
+    .select-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='rgba(255,255,255,0.6)'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 40px;
+    }
+
+    .select-input:focus,
+    .text-input:focus {
+      outline: none;
+      border-color: var(--primary-500);
+    }
+
+    .select-input option {
+      background-color: var(--surface-elevated);
+      color: var(--text-primary);
+    }
+
+    /* Type-ahead/Autocomplete wrapper */
+    .autocomplete-wrapper {
+      position: relative;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: var(--surface-elevated);
+      border: 1px solid var(--surface-divider);
+      border-top: none;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      z-index: 100;
+      display: none;
+    }
+
+    .autocomplete-list.show {
+      display: block;
+    }
+
+    .autocomplete-item {
+      padding: var(--spacing-sm) var(--spacing-md);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.highlighted {
+      background-color: var(--surface-hover);
+    }
+
+    .autocomplete-item.selected {
+      background-color: var(--surface-selected);
+      color: var(--primary-500);
+    }
+
+    /* ============================================
+       SCRAPER SOURCES
+       ============================================ */
+    .scraper-sources {
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--surface-divider);
+    }
+
+    .scraper-sources__title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .scraper-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+    }
+
+    .scraper-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: var(--radius-chip);
+      font-size: 12px;
+      font-weight: 500;
+      background-color: rgba(33, 150, 243, 0.15);
+      color: var(--primary-500);
+      gap: var(--spacing-xs);
+    }
+
+    .scraper-chip .material-icons-outlined {
+      font-size: 16px;
+    }
+
+    /* ============================================
+       LOADING STATE
+       ============================================ */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--surface-divider);
+      border-top-color: var(--primary-500);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--text-primary);
+      font-size: 16px;
+    }
+
+    .loading-progress {
+      width: 300px;
+      text-align: center;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background-color: var(--surface-divider);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: var(--spacing-sm);
+    }
+
+    .progress-bar__fill {
+      height: 100%;
+      background-color: var(--primary-500);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .scraper-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      justify-content: center;
+      margin-top: var(--spacing-md);
+      max-width: 500px;
+    }
+
+    .scraper-status-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: var(--radius-chip);
+      font-size: 11px;
+      font-weight: 500;
+      gap: var(--spacing-xs);
+    }
+
+    .scraper-status-chip--pending {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+    }
+
+    .scraper-status-chip--running {
+      background-color: rgba(33, 150, 243, 0.2);
+      color: var(--primary-500);
+    }
+
+    .scraper-status-chip--done {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: var(--status-success);
+    }
+
+    .scraper-status-chip--error {
+      background-color: rgba(244, 67, 54, 0.2);
+      color: var(--status-error);
+    }
+
+    /* ============================================
+       RESULTS SECTION
+       ============================================ */
+    .results-section {
+      display: none;
+    }
+
+    .results-section.show {
+      display: block;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+    }
+
+    .results-count {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .results-count strong {
+      color: var(--text-primary);
+    }
+
+    .results-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .sort-select {
+      min-width: 180px;
+    }
+
+    /* ============================================
+       RESULTS GRID
+       ============================================ */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--spacing-lg);
+    }
+
+    .listing-card {
+      background-color: var(--surface-card);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--elevation-1);
+      transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .listing-card:hover {
+      box-shadow: var(--elevation-4);
+      transform: translateY(-2px);
+    }
+
+    .listing-card__image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background-color: var(--surface-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .listing-card__image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .listing-card__image .material-icons-outlined {
+      font-size: 64px;
+      color: var(--text-disabled);
+    }
+
+    .listing-card__content {
+      padding: var(--spacing-md);
+    }
+
+    .listing-card__title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: var(--spacing-xs);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .listing-card__subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .listing-card__price {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--status-success);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .listing-card__details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .listing-detail {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .listing-detail .material-icons-outlined {
+      font-size: 16px;
+    }
+
+    .listing-card__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--surface-divider);
+    }
+
+    .listing-source {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: var(--radius-chip);
+      font-size: 11px;
+      font-weight: 500;
+      background-color: rgba(255, 152, 0, 0.15);
+      color: var(--accent-500);
+    }
+
+    .listing-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       NO RESULTS
+       ============================================ */
+    .no-results {
+      text-align: center;
+      padding: var(--spacing-xl) * 2;
+      color: var(--text-secondary);
+    }
+
+    .no-results .material-icons-outlined {
+      font-size: 64px;
+      color: var(--text-disabled);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .no-results__title {
+      font-size: 18px;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    /* ============================================
+       PAGINATION
+       ============================================ */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: var(--spacing-xl);
+      gap: var(--spacing-sm);
+    }
+
+    .pagination__info {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin: 0 var(--spacing-md);
+    }
+
+    /* ============================================
+       RESPONSIVE BREAKPOINTS
+       ============================================ */
+    @media (max-width: 991px) {
+      .mat-sidenav {
+        position: fixed;
+        left: 0;
+        top: 64px;
+        height: calc(100vh - 64px);
+        transform: translateX(-100%);
+        z-index: 999;
+      }
+
+      .mat-sidenav.open {
+        transform: translateX(0);
+      }
+
+      .search-form {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 767px) {
+      .main-content {
+        padding: var(--spacing-md);
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .search-form {
+        grid-template-columns: 1fr;
+      }
+
+      .search-form .btn {
+        width: 100%;
+      }
+
+      .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .results-actions {
+        width: 100%;
+      }
+
+      .results-actions .select-input {
+        flex: 1;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .main-content {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Toolbar -->
+    <header class="mat-toolbar">
+      <button class="icon-button" id="menu-toggle">
+        <span class="material-icons-outlined">menu</span>
+      </button>
+      <h1 class="mat-toolbar__title">Market Intelligence Admin</h1>
+      <div class="mat-toolbar__spacer"></div>
+      <button class="icon-button">
+        <span class="material-icons-outlined">notifications</span>
+      </button>
+      <button class="icon-button">
+        <span class="material-icons-outlined">help_outline</span>
+      </button>
+      <button class="icon-button">
+        <span class="material-icons-outlined">account_circle</span>
+      </button>
+    </header>
+
+    <div class="layout-container">
+      <!-- Sidenav -->
+      <nav class="mat-sidenav" id="sidenav">
+        <ul class="mat-nav-list">
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">dashboard</span>
+            <span>Dashboard</span>
+          </li>
+          <li class="mat-list-item mat-list-item--active">
+            <span class="material-icons-outlined mat-list-item__icon">search</span>
+            <span>Car Search</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">bookmark</span>
+            <span>Watch List</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">notifications_active</span>
+            <span>Alerts</span>
+          </li>
+          <li class="nav-divider"></li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">people</span>
+            <span>User Management</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">admin_panel_settings</span>
+            <span>Role Management</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">vpn_key</span>
+            <span>API Keys</span>
+          </li>
+          <li class="nav-divider"></li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">settings</span>
+            <span>Settings</span>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Car Search</h2>
+            <p class="page-subtitle">Search across all marketplace sources for vehicle listings</p>
+          </div>
+        </div>
+
+        <!-- Search Form Card -->
+        <div class="search-card">
+          <h3 class="search-card__title">
+            <span class="material-icons-outlined">directions_car</span>
+            Find Your Vehicle
+          </h3>
+
+          <form class="search-form" id="searchForm">
+            <div class="form-group">
+              <label for="make">Make</label>
+              <select class="select-input" id="make" name="make" required>
+                <option value="">Select Make</option>
+                <option value="acura">Acura</option>
+                <option value="audi">Audi</option>
+                <option value="bmw">BMW</option>
+                <option value="chevrolet">Chevrolet</option>
+                <option value="dodge">Dodge</option>
+                <option value="ford">Ford</option>
+                <option value="honda">Honda</option>
+                <option value="hyundai">Hyundai</option>
+                <option value="jeep">Jeep</option>
+                <option value="kia">Kia</option>
+                <option value="lexus">Lexus</option>
+                <option value="mazda">Mazda</option>
+                <option value="mercedes-benz">Mercedes-Benz</option>
+                <option value="nissan">Nissan</option>
+                <option value="ram">RAM</option>
+                <option value="subaru">Subaru</option>
+                <option value="tesla">Tesla</option>
+                <option value="toyota">Toyota</option>
+                <option value="volkswagen">Volkswagen</option>
+                <option value="volvo">Volvo</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="year">Year</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" class="text-input" id="year" name="year" placeholder="Type or select year" autocomplete="off">
+                <div class="autocomplete-list" id="yearList"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="model">Model</label>
+              <select class="select-input" id="model" name="model" required>
+                <option value="">Select Model</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <button type="submit" class="btn btn--primary" id="searchBtn">
+                <span class="material-icons-outlined">search</span>
+                Search
+              </button>
+            </div>
+          </form>
+
+          <div class="scraper-sources">
+            <div class="scraper-sources__title">Searching across all sources</div>
+            <div class="scraper-chips">
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Autotrader.ca</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Kijiji.ca</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> CarGurus</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Clutch.ca</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Auto123</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> CarFax</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> CarMax</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Carvana</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> TrueCar</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Vroom</span>
+              <span class="scraper-chip"><span class="material-icons-outlined">check_circle</span> Tabangi Motors</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+          <div class="results-header">
+            <div class="results-count">
+              Found <strong id="resultCount">0</strong> listings for <strong id="searchSummary">-</strong>
+            </div>
+            <div class="results-actions">
+              <select class="select-input sort-select" id="sortBy">
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="mileage-asc">Mileage: Low to High</option>
+                <option value="mileage-desc">Mileage: High to Low</option>
+                <option value="date-desc">Newest Listed</option>
+              </select>
+              <button class="btn btn--secondary" id="exportBtn">
+                <span class="material-icons-outlined">download</span>
+                Export
+              </button>
+            </div>
+          </div>
+
+          <div class="results-grid" id="resultsGrid">
+            <!-- Results will be dynamically inserted here -->
+          </div>
+
+          <div class="pagination" id="pagination">
+            <button class="icon-button" id="prevPage" disabled>
+              <span class="material-icons-outlined">chevron_left</span>
+            </button>
+            <span class="pagination__info" id="paginationInfo">Page 1 of 1</span>
+            <button class="icon-button" id="nextPage" disabled>
+              <span class="material-icons-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-progress">
+      <div class="loading-text" id="loadingText">Initializing scraping job...</div>
+      <div class="progress-bar">
+        <div class="progress-bar__fill" id="progressFill"></div>
+      </div>
+    </div>
+    <div class="scraper-status" id="scraperStatus">
+      <!-- Scraper status chips will be inserted here -->
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // CONFIGURATION
+    // ============================================
+    const API_GATEWAY_URL = '/api/v1'; // API Gateway base URL
+
+    const SCRAPERS = [
+      { id: 'autotrader', name: 'Autotrader.ca' },
+      { id: 'kijiji', name: 'Kijiji.ca' },
+      { id: 'cargurus', name: 'CarGurus' },
+      { id: 'clutch', name: 'Clutch.ca' },
+      { id: 'auto123', name: 'Auto123' },
+      { id: 'carfax', name: 'CarFax' },
+      { id: 'carmax', name: 'CarMax' },
+      { id: 'carvana', name: 'Carvana' },
+      { id: 'truecar', name: 'TrueCar' },
+      { id: 'vroom', name: 'Vroom' },
+      { id: 'tabangi', name: 'Tabangi Motors' }
+    ];
+
+    // Model data by make
+    const MODELS_BY_MAKE = {
+      acura: ['ILX', 'Integra', 'MDX', 'RDX', 'TLX', 'NSX'],
+      audi: ['A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron', 'RS5', 'RS7'],
+      bmw: ['2 Series', '3 Series', '4 Series', '5 Series', '7 Series', 'X1', 'X3', 'X5', 'X7', 'M3', 'M5', 'i4', 'iX'],
+      chevrolet: ['Blazer', 'Camaro', 'Colorado', 'Corvette', 'Equinox', 'Malibu', 'Silverado', 'Suburban', 'Tahoe', 'Trailblazer', 'Traverse'],
+      dodge: ['Challenger', 'Charger', 'Durango', 'Hornet'],
+      ford: ['Bronco', 'Edge', 'Escape', 'Explorer', 'F-150', 'Maverick', 'Mustang', 'Ranger'],
+      honda: ['Accord', 'Civic', 'CR-V', 'HR-V', 'Odyssey', 'Passport', 'Pilot', 'Ridgeline'],
+      hyundai: ['Elantra', 'Ioniq', 'Kona', 'Palisade', 'Santa Fe', 'Sonata', 'Tucson', 'Venue'],
+      jeep: ['Cherokee', 'Compass', 'Gladiator', 'Grand Cherokee', 'Wagoneer', 'Wrangler'],
+      kia: ['Carnival', 'EV6', 'Forte', 'K5', 'Niro', 'Seltos', 'Sorento', 'Soul', 'Sportage', 'Telluride'],
+      lexus: ['ES', 'GX', 'IS', 'LC', 'LS', 'LX', 'NX', 'RX', 'TX', 'UX'],
+      mazda: ['CX-30', 'CX-5', 'CX-50', 'CX-90', 'Mazda3', 'Mazda6', 'MX-5 Miata'],
+      'mercedes-benz': ['A-Class', 'C-Class', 'E-Class', 'S-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'EQE', 'EQS'],
+      nissan: ['Altima', 'Ariya', 'Frontier', 'Kicks', 'Leaf', 'Maxima', 'Murano', 'Pathfinder', 'Rogue', 'Sentra', 'Titan'],
+      ram: ['1500', '2500', '3500', 'ProMaster'],
+      subaru: ['Ascent', 'BRZ', 'Crosstrek', 'Forester', 'Impreza', 'Legacy', 'Outback', 'Solterra', 'WRX'],
+      tesla: ['Model 3', 'Model S', 'Model X', 'Model Y', 'Cybertruck'],
+      toyota: ['4Runner', 'Camry', 'Corolla', 'GR86', 'Highlander', 'Land Cruiser', 'Prius', 'RAV4', 'Sequoia', 'Sienna', 'Tacoma', 'Tundra', 'Venza'],
+      volkswagen: ['Atlas', 'Golf', 'ID.4', 'Jetta', 'Passat', 'Taos', 'Tiguan'],
+      volvo: ['C40', 'S60', 'S90', 'V60', 'V90', 'XC40', 'XC60', 'XC90']
+    };
+
+    // Generate years (current year down to 1990)
+    const currentYear = new Date().getFullYear();
+    const YEARS = Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
+
+    // ============================================
+    // DOM ELEMENTS
+    // ============================================
+    const makeSelect = document.getElementById('make');
+    const yearInput = document.getElementById('year');
+    const yearList = document.getElementById('yearList');
+    const modelSelect = document.getElementById('model');
+    const searchForm = document.getElementById('searchForm');
+    const searchBtn = document.getElementById('searchBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    const progressFill = document.getElementById('progressFill');
+    const scraperStatus = document.getElementById('scraperStatus');
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultCount = document.getElementById('resultCount');
+    const searchSummary = document.getElementById('searchSummary');
+    const sortBy = document.getElementById('sortBy');
+
+    // ============================================
+    // YEAR AUTOCOMPLETE
+    // ============================================
+    let selectedYearIndex = -1;
+
+    function showYearList(filter = '') {
+      const filteredYears = filter
+        ? YEARS.filter(y => y.toString().includes(filter))
+        : YEARS;
+
+      yearList.innerHTML = filteredYears.map((year, index) =>
+        `<div class="autocomplete-item" data-year="${year}" data-index="${index}">${year}</div>`
+      ).join('');
+
+      yearList.classList.add('show');
+      selectedYearIndex = -1;
+    }
+
+    function hideYearList() {
+      setTimeout(() => {
+        yearList.classList.remove('show');
+        selectedYearIndex = -1;
+      }, 150);
+    }
+
+    function selectYear(year) {
+      yearInput.value = year;
+      yearList.classList.remove('show');
+    }
+
+    yearInput.addEventListener('focus', () => showYearList(yearInput.value));
+    yearInput.addEventListener('blur', hideYearList);
+    yearInput.addEventListener('input', (e) => showYearList(e.target.value));
+
+    yearInput.addEventListener('keydown', (e) => {
+      const items = yearList.querySelectorAll('.autocomplete-item');
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedYearIndex = Math.min(selectedYearIndex + 1, items.length - 1);
+        updateHighlight(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedYearIndex = Math.max(selectedYearIndex - 1, 0);
+        updateHighlight(items);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedYearIndex >= 0 && items[selectedYearIndex]) {
+          selectYear(items[selectedYearIndex].dataset.year);
+        }
+      } else if (e.key === 'Escape') {
+        hideYearList();
+      }
+    });
+
+    function updateHighlight(items) {
+      items.forEach((item, i) => {
+        item.classList.toggle('highlighted', i === selectedYearIndex);
+        if (i === selectedYearIndex) {
+          item.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+
+    yearList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('autocomplete-item')) {
+        selectYear(e.target.dataset.year);
+      }
+    });
+
+    // ============================================
+    // MODEL DROPDOWN POPULATION
+    // ============================================
+    makeSelect.addEventListener('change', (e) => {
+      const make = e.target.value;
+      modelSelect.innerHTML = '<option value="">Select Model</option>';
+
+      if (make && MODELS_BY_MAKE[make]) {
+        MODELS_BY_MAKE[make].forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.toLowerCase().replace(/\s+/g, '-');
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        });
+      }
+    });
+
+    // ============================================
+    // SEARCH FORM SUBMISSION
+    // ============================================
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const make = makeSelect.value;
+      const year = yearInput.value;
+      const model = modelSelect.options[modelSelect.selectedIndex]?.text || '';
+
+      if (!make || !model) {
+        alert('Please select a make and model');
+        return;
+      }
+
+      await executeSearch({ make, year, model });
+    });
+
+    async function executeSearch(criteria) {
+      showLoading();
+
+      try {
+        // Step 1: Create scraping job via API Gateway
+        const jobId = await createScrapingJob(criteria);
+
+        // Step 2: Poll for job status
+        const results = await pollJobStatus(jobId);
+
+        // Step 3: Display results
+        displayResults(results, criteria);
+      } catch (error) {
+        console.error('Search failed:', error);
+        alert('Search failed. Please try again.');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ============================================
+    // API CALLS (Mock Implementation)
+    // ============================================
+    async function createScrapingJob(criteria) {
+      // In production, this would call:
+      // POST {API_GATEWAY_URL}/scraping/jobs
+      // Body: { make, year, model, scrapers: SCRAPERS.map(s => s.id) }
+
+      console.log('Creating scraping job:', criteria);
+      updateLoadingText('Creating scraping job...');
+
+      // Simulate API delay
+      await delay(500);
+
+      // Return mock job ID
+      return 'job-' + Date.now();
+    }
+
+    async function pollJobStatus(jobId) {
+      // In production, this would poll:
+      // GET {API_GATEWAY_URL}/scraping/jobs/{jobId}
+
+      updateLoadingText('Dispatching scrapers...');
+      initScraperStatusChips();
+
+      // Simulate scraping progress
+      let completed = 0;
+      const results = [];
+
+      for (const scraper of SCRAPERS) {
+        await delay(300 + Math.random() * 500);
+
+        updateScraperStatus(scraper.id, 'running');
+        await delay(500 + Math.random() * 1000);
+
+        // Simulate results from each scraper
+        const scraperResults = generateMockResults(scraper, 2 + Math.floor(Math.random() * 5));
+        results.push(...scraperResults);
+
+        updateScraperStatus(scraper.id, 'done');
+        completed++;
+
+        const progress = (completed / SCRAPERS.length) * 100;
+        updateProgress(progress);
+        updateLoadingText(`Scraped ${completed}/${SCRAPERS.length} sources (${results.length} listings found)`);
+      }
+
+      return results;
+    }
+
+    function generateMockResults(scraper, count) {
+      const results = [];
+      const make = makeSelect.options[makeSelect.selectedIndex]?.text || 'Unknown';
+      const model = modelSelect.options[modelSelect.selectedIndex]?.text || 'Unknown';
+      const year = yearInput.value || '2023';
+
+      for (let i = 0; i < count; i++) {
+        results.push({
+          id: `${scraper.id}-${Date.now()}-${i}`,
+          title: `${year} ${make} ${model}`,
+          price: 15000 + Math.floor(Math.random() * 40000),
+          mileage: 10000 + Math.floor(Math.random() * 150000),
+          location: ['Toronto, ON', 'Vancouver, BC', 'Calgary, AB', 'Montreal, QC', 'Ottawa, ON'][Math.floor(Math.random() * 5)],
+          source: scraper.name,
+          sourceId: scraper.id,
+          listedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+          transmission: ['Automatic', 'Manual', 'CVT'][Math.floor(Math.random() * 3)],
+          drivetrain: ['FWD', 'RWD', 'AWD', '4WD'][Math.floor(Math.random() * 4)],
+          fuelType: ['Gasoline', 'Diesel', 'Hybrid', 'Electric'][Math.floor(Math.random() * 4)],
+          exteriorColor: ['Black', 'White', 'Silver', 'Blue', 'Red', 'Gray'][Math.floor(Math.random() * 6)],
+          url: '#'
+        });
+      }
+
+      return results;
+    }
+
+    // ============================================
+    // LOADING UI
+    // ============================================
+    function showLoading() {
+      loadingOverlay.classList.add('show');
+      progressFill.style.width = '0%';
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.remove('show');
+    }
+
+    function updateLoadingText(text) {
+      loadingText.textContent = text;
+    }
+
+    function updateProgress(percent) {
+      progressFill.style.width = `${percent}%`;
+    }
+
+    function initScraperStatusChips() {
+      scraperStatus.innerHTML = SCRAPERS.map(s =>
+        `<span class="scraper-status-chip scraper-status-chip--pending" data-scraper="${s.id}">${s.name}</span>`
+      ).join('');
+    }
+
+    function updateScraperStatus(scraperId, status) {
+      const chip = scraperStatus.querySelector(`[data-scraper="${scraperId}"]`);
+      if (chip) {
+        chip.className = `scraper-status-chip scraper-status-chip--${status}`;
+      }
+    }
+
+    // ============================================
+    // RESULTS DISPLAY
+    // ============================================
+    function displayResults(results, criteria) {
+      const make = makeSelect.options[makeSelect.selectedIndex]?.text || '';
+      const model = modelSelect.options[modelSelect.selectedIndex]?.text || '';
+      const year = yearInput.value;
+
+      searchSummary.textContent = `${year} ${make} ${model}`;
+      resultCount.textContent = results.length;
+
+      // Sort results
+      sortResults(results, sortBy.value);
+
+      // Render results
+      renderResults(results);
+
+      // Show results section
+      resultsSection.classList.add('show');
+
+      // Store results for sorting
+      window.currentResults = results;
+    }
+
+    function renderResults(results) {
+      if (results.length === 0) {
+        resultsGrid.innerHTML = `
+          <div class="no-results" style="grid-column: 1 / -1;">
+            <span class="material-icons-outlined">search_off</span>
+            <div class="no-results__title">No listings found</div>
+            <p>Try adjusting your search criteria</p>
+          </div>
+        `;
+        return;
+      }
+
+      resultsGrid.innerHTML = results.map(listing => `
+        <div class="listing-card" onclick="window.open('${listing.url}', '_blank')">
+          <div class="listing-card__image">
+            <span class="material-icons-outlined">directions_car</span>
+          </div>
+          <div class="listing-card__content">
+            <h4 class="listing-card__title">${escapeHtml(listing.title)}</h4>
+            <p class="listing-card__subtitle">${escapeHtml(listing.location)}</p>
+            <div class="listing-card__price">$${listing.price.toLocaleString()}</div>
+            <div class="listing-card__details">
+              <div class="listing-detail">
+                <span class="material-icons-outlined">speed</span>
+                ${listing.mileage.toLocaleString()} km
+              </div>
+              <div class="listing-detail">
+                <span class="material-icons-outlined">settings</span>
+                ${listing.transmission}
+              </div>
+              <div class="listing-detail">
+                <span class="material-icons-outlined">all_inclusive</span>
+                ${listing.drivetrain}
+              </div>
+              <div class="listing-detail">
+                <span class="material-icons-outlined">local_gas_station</span>
+                ${listing.fuelType}
+              </div>
+            </div>
+            <div class="listing-card__footer">
+              <span class="listing-source">${escapeHtml(listing.source)}</span>
+              <span class="listing-date">${formatDate(listing.listedDate)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function sortResults(results, sortKey) {
+      switch (sortKey) {
+        case 'price-asc':
+          results.sort((a, b) => a.price - b.price);
+          break;
+        case 'price-desc':
+          results.sort((a, b) => b.price - a.price);
+          break;
+        case 'mileage-asc':
+          results.sort((a, b) => a.mileage - b.mileage);
+          break;
+        case 'mileage-desc':
+          results.sort((a, b) => b.mileage - a.mileage);
+          break;
+        case 'date-desc':
+          results.sort((a, b) => new Date(b.listedDate) - new Date(a.listedDate));
+          break;
+      }
+    }
+
+    sortBy.addEventListener('change', () => {
+      if (window.currentResults) {
+        sortResults(window.currentResults, sortBy.value);
+        renderResults(window.currentResults);
+      }
+    });
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = now - date;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (days === 0) return 'Today';
+      if (days === 1) return 'Yesterday';
+      if (days < 7) return `${days} days ago`;
+      if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+      return date.toLocaleDateString();
+    }
+
+    // ============================================
+    // MOBILE MENU TOGGLE
+    // ============================================
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+      document.getElementById('sidenav').classList.toggle('open');
+    });
+
+    // ============================================
+    // EXPORT FUNCTIONALITY
+    // ============================================
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (!window.currentResults || window.currentResults.length === 0) {
+        alert('No results to export');
+        return;
+      }
+
+      // In production, this would call:
+      // POST {API_GATEWAY_URL}/reports/generate
+      // Body: { type: 'search-results', format: 'csv', data: currentResults }
+
+      const csv = convertToCSV(window.currentResults);
+      downloadCSV(csv, 'car-search-results.csv');
+    });
+
+    function convertToCSV(results) {
+      const headers = ['Title', 'Price', 'Mileage', 'Location', 'Source', 'Transmission', 'Drivetrain', 'Fuel Type', 'Listed Date'];
+      const rows = results.map(r => [
+        r.title,
+        r.price,
+        r.mileage,
+        r.location,
+        r.source,
+        r.transmission,
+        r.drivetrain,
+        r.fuelType,
+        new Date(r.listedDate).toLocaleDateString()
+      ]);
+
+      return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    }
+
+    function downloadCSV(csv, filename) {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+  </script>
+</body>
+</html>

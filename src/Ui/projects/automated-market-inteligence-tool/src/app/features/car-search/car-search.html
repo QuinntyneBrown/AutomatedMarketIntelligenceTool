@@ -1,0 +1,196 @@
+<div class="car-search-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header__info">
+      <h1 class="page-title">Car Search</h1>
+      <p class="page-subtitle">Search across all marketplace sources for vehicle listings</p>
+    </div>
+  </div>
+
+  <!-- Search Form Card -->
+  <mat-card class="search-card">
+    <div class="search-card__header">
+      <mat-icon class="search-card__icon">directions_car</mat-icon>
+      <h2 class="search-card__title">Find Your Vehicle</h2>
+    </div>
+
+    <form class="search-form" (ngSubmit)="onSearch()">
+      <!-- Make Select -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Make</mat-label>
+        <mat-select
+          [value]="selectedMake()"
+          (selectionChange)="onMakeChange($event.value)"
+          required
+        >
+          <mat-option value="">Select Make</mat-option>
+          @for (make of makes(); track make) {
+            <mat-option [value]="make">{{ make }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Year Autocomplete -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Year</mat-label>
+        <input
+          matInput
+          [value]="yearInput()"
+          (input)="onYearInputChange($event)"
+          [matAutocomplete]="yearAuto"
+          placeholder="Type or select year"
+        />
+        <mat-autocomplete
+          #yearAuto="matAutocomplete"
+          (optionSelected)="onYearSelected($event.option.value)"
+        >
+          @for (year of filteredYears(); track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <!-- Model Select -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Model</mat-label>
+        <mat-select
+          [value]="selectedModel()"
+          (selectionChange)="onModelChange($event.value)"
+          [disabled]="!selectedMake()"
+          required
+        >
+          <mat-option value="">Select Model</mat-option>
+          @for (model of availableModels(); track model) {
+            <mat-option [value]="model">{{ model }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Search Button -->
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        class="search-button"
+        [disabled]="!canSearch()"
+      >
+        <mat-icon>search</mat-icon>
+        Search
+      </button>
+    </form>
+
+    <!-- Scraper Sources -->
+    <div class="scraper-sources">
+      <span class="scraper-sources__label">Searching across all sources:</span>
+      <div class="scraper-chips">
+        @for (scraper of scrapers(); track scraper.id) {
+          <span class="scraper-chip">
+            <mat-icon>check_circle</mat-icon>
+            {{ scraper.name }}
+          </span>
+        }
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Loading Overlay -->
+  @if (isSearching()) {
+    <div class="loading-overlay">
+      <mat-card class="loading-card">
+        <mat-spinner diameter="48"></mat-spinner>
+        <div class="loading-content">
+          <p class="loading-text">{{ loadingMessage() }}</p>
+          <mat-progress-bar mode="determinate" [value]="searchProgress()"></mat-progress-bar>
+        </div>
+        <div class="scraper-status">
+          @for (scraper of scrapers(); track scraper.id) {
+            <span class="scraper-status-chip" [class]="getScraperStatusClass(scraper.status)">
+              @if (scraper.status === 'running') {
+                <mat-icon class="spinning">sync</mat-icon>
+              } @else if (scraper.status === 'done') {
+                <mat-icon>check</mat-icon>
+              } @else if (scraper.status === 'error') {
+                <mat-icon>error</mat-icon>
+              }
+              {{ scraper.name }}
+            </span>
+          }
+        </div>
+      </mat-card>
+    </div>
+  }
+
+  <!-- Results Section -->
+  @if (hasSearched() && !isSearching()) {
+    <div class="results-section">
+      <!-- Results Header -->
+      <div class="results-header">
+        <p class="results-count">
+          Found <strong>{{ results().length }}</strong> listings for <strong>{{ searchSummary() }}</strong>
+        </p>
+        <div class="results-actions">
+          <mat-form-field appearance="outline" class="sort-field">
+            <mat-label>Sort by</mat-label>
+            <mat-select [value]="sortBy()" (selectionChange)="onSortChange($event.value)">
+              <mat-option value="price-asc">Price: Low to High</mat-option>
+              <mat-option value="price-desc">Price: High to Low</mat-option>
+              <mat-option value="mileage-asc">Mileage: Low to High</mat-option>
+              <mat-option value="mileage-desc">Mileage: High to Low</mat-option>
+              <mat-option value="date-desc">Newest Listed</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-stroked-button color="primary" (click)="onExport()" [disabled]="results().length === 0">
+            <mat-icon>download</mat-icon>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Results Grid -->
+      @if (sortedResults().length > 0) {
+        <div class="results-grid">
+          @for (listing of sortedResults(); track listing.id) {
+            <mat-card class="listing-card" (click)="openListing(listing)">
+              <div class="listing-card__image">
+                <mat-icon>directions_car</mat-icon>
+              </div>
+              <div class="listing-card__content">
+                <h3 class="listing-card__title">{{ listing.title }}</h3>
+                <p class="listing-card__location">{{ listing.location }}</p>
+                <p class="listing-card__price">{{ formatPrice(listing.price) }}</p>
+                <div class="listing-card__details">
+                  <div class="listing-detail">
+                    <mat-icon>speed</mat-icon>
+                    <span>{{ formatMileage(listing.mileage) }}</span>
+                  </div>
+                  <div class="listing-detail">
+                    <mat-icon>settings</mat-icon>
+                    <span>{{ listing.transmission }}</span>
+                  </div>
+                  <div class="listing-detail">
+                    <mat-icon>all_inclusive</mat-icon>
+                    <span>{{ listing.drivetrain }}</span>
+                  </div>
+                  <div class="listing-detail">
+                    <mat-icon>local_gas_station</mat-icon>
+                    <span>{{ listing.fuelType }}</span>
+                  </div>
+                </div>
+                <div class="listing-card__footer">
+                  <span class="listing-source">{{ listing.source }}</span>
+                  <span class="listing-date">{{ formatDate(listing.listedDate) }}</span>
+                </div>
+              </div>
+            </mat-card>
+          }
+        </div>
+      } @else {
+        <mat-card class="no-results">
+          <mat-icon>search_off</mat-icon>
+          <h3>No listings found</h3>
+          <p>Try adjusting your search criteria</p>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

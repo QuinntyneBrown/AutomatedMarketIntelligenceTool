@@ -33,6 +33,7 @@ export class ShellComponent {
 
   protected readonly navItems = signal<NavItem[]>([
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
+    { label: 'Car Search', icon: 'search', route: '/car-search' },
     { label: 'User Management', icon: 'people', route: '/users' },
     { label: 'Role Management', icon: 'admin_panel_settings', route: '/roles' },
     { label: 'API Keys', icon: 'vpn_key', route: '/api-keys' },
