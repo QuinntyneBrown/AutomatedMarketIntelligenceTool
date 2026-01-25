@@ -1,0 +1,79 @@
+@startuml price-comparison
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Price Comparison Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "Vehicle Aggregation" as vehicle
+database "Vehicle DB" as db
+participant "Listing Service" as listing
+
+user -> gateway: GET /api/vehicles/{id}/price-comparison
+gateway -> vehicle: Forward request
+
+vehicle -> db: Get Vehicle with listings
+db --> vehicle: Vehicle + VehicleListing links
+
+vehicle -> listing: Get full listing details\nfor each linked listing
+listing --> vehicle: List<ListingDetail>
+
+vehicle -> vehicle: Build comparison data
+
+note right of vehicle
+  For each listing:
+  - Price
+  - Source (Kijiji, AutoTrader, etc.)
+  - Dealer name
+  - Location
+  - Days on market
+  - Mileage
+end note
+
+vehicle -> vehicle: Calculate rankings
+note right of vehicle
+  - Best Price (lowest)
+  - Best Deal Score
+  - Market position percentile
+end note
+
+vehicle -> vehicle: Calculate market stats
+note right of vehicle
+  - Average price
+  - Median price
+  - Standard deviation
+  - Price range
+end note
+
+vehicle --> gateway: PriceComparison
+gateway --> user: {listings, stats, rankings}
+
+note over user
+  Response:
+  {
+    "vehicle": {...},
+    "listings": [
+      {
+        "listingId": "...",
+        "price": 25000,
+        "source": "Kijiji",
+        "dealer": "ABC Motors",
+        "daysOnMarket": 15,
+        "rank": 1,
+        "dealScore": 95
+      },
+      ...
+    ],
+    "statistics": {
+      "averagePrice": 26500,
+      "medianPrice": 26000,
+      "bestPrice": 25000,
+      "worstPrice": 28000,
+      "priceRange": 3000
+    }
+  }
+end note
+
+@enduml

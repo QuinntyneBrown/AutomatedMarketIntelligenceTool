@@ -1,0 +1,81 @@
+@startuml reliability-scoring
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Dealer Reliability Scoring Flow
+
+participant "Scheduler" as scheduler
+participant "Dealer Service" as dealer
+database "Dealer DB" as db
+participant "Listing Service" as listing
+participant "Dashboard Service" as dashboard
+
+scheduler -> dealer: Calculate reliability scores\n(scheduled job)
+
+dealer -> db: Get all dealers
+db --> dealer: List<Dealer>
+
+loop For each dealer
+    dealer -> listing: Get dealer listings\n(last 90 days)
+    listing --> dealer: List<Listing>
+
+    dealer -> dealer: Calculate metrics
+    note right of dealer
+      Metrics:
+      1. Listing Accuracy (25%)
+         - Image quality
+         - Complete information
+         - VIN availability
+
+      2. Price Consistency (25%)
+         - Price changes frequency
+         - Reasonable pricing
+
+      3. Inventory Freshness (20%)
+         - Average days on market
+         - Regular updates
+
+      4. Response Rate (15%)
+         - (If available)
+
+      5. Customer Reviews (15%)
+         - (If available)
+    end note
+
+    dealer -> dealer: Calculate weighted score
+    note right of dealer
+      Score = (accuracy * 0.25) +
+              (priceConsistency * 0.25) +
+              (freshness * 0.20) +
+              (responseRate * 0.15) +
+              (reviews * 0.15)
+
+      Range: 0-100
+    end note
+
+    dealer -> db: Update reliability score
+    db --> dealer: Updated
+end
+
+dealer -> dashboard: Report scoring complete
+dashboard -> dashboard: Update dealer metrics
+
+== Manual Score Adjustment ==
+
+actor "Admin" as admin
+participant "API Gateway" as gateway
+
+admin -> gateway: PUT /api/dealers/{id}/reliability\n{score, reason}
+gateway -> dealer: Forward request
+
+dealer -> db: Update reliability score\nwith admin override
+db --> dealer: Updated
+
+dealer -> db: Log score adjustment
+db --> dealer: Logged
+
+dealer --> gateway: 200 OK
+gateway --> admin: Score updated
+
+@enduml

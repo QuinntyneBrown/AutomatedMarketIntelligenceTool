@@ -1,0 +1,65 @@
+@startuml price-tracking
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title WatchList Price Tracking Flow
+
+queue "Event Bus" as events
+participant "WatchList Service" as watchlist
+database "WatchList DB" as db
+participant "Notification Service" as notif
+
+events -> watchlist: PriceChangedEvent\n{listingId, oldPrice, newPrice}
+
+watchlist -> db: Find watchers for listing
+db --> watchlist: List<WatchedListing>
+
+loop For each watcher
+    watchlist -> watchlist: Calculate price change
+    note right of watchlist
+      Change = newPrice - priceAtWatch
+      ChangePercent = (change / priceAtWatch) * 100
+    end note
+
+    watchlist -> db: Update WatchedListing\n{currentPrice, priceChange, lastCheckedAt}
+    db --> watchlist: Updated
+
+    alt Significant price drop (> 5%)
+        watchlist -> notif: SendNotification\n{userId, "Price dropped!"}
+        notif --> watchlist: Sent
+    end
+end
+
+== Get Price Changes ==
+
+actor "User" as user
+participant "API Gateway" as gateway
+
+user -> gateway: GET /api/watchlist/user/{userId}/changes
+gateway -> watchlist: Forward request
+
+watchlist -> db: Get WatchedListings\nWHERE priceChange != 0
+db --> watchlist: Items with price changes
+
+watchlist -> watchlist: Sort by change magnitude
+
+watchlist --> gateway: List<PriceChange>\n{listing, originalPrice, currentPrice, change}
+gateway --> user: Price change summary
+
+== Listing Removed ==
+
+events -> watchlist: ListingDeletedEvent\n{listingId}
+
+watchlist -> db: Find watchers for listing
+db --> watchlist: List<WatchedListing>
+
+loop For each watcher
+    watchlist -> notif: SendNotification\n{userId, "Watched listing removed"}
+    notif --> watchlist: Sent
+
+    watchlist -> db: Mark as inactive\nor delete
+    db --> watchlist: Updated
+end
+
+@enduml

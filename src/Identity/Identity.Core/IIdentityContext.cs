@@ -1,3 +1,5 @@
+using Identity.Core.Models.ApiKeyAggregate;
+using Identity.Core.Models.RoleAggregate;
 using Identity.Core.Models.UserAggregate;
 using Identity.Core.Models.UserAggregate.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +35,16 @@ public interface IIdentityContext
     /// Password reset tokens.
     /// </summary>
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
+
+    /// <summary>
+    /// Roles for authorization.
+    /// </summary>
+    DbSet<Role> Roles { get; }
+
+    /// <summary>
+    /// API keys for programmatic access.
+    /// </summary>
+    DbSet<ApiKey> ApiKeys { get; }
 
     /// <summary>
     /// Saves all changes to the database.

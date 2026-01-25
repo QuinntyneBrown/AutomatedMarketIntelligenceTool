@@ -1,0 +1,52 @@
+@startuml listing-creation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Listing Creation Flow
+
+participant "Scraping Worker" as scraper
+queue "Event Bus" as events
+participant "Listing Service" as listing
+database "Listing DB" as db
+participant "Image Service" as image
+participant "Deduplication Service" as dedup
+participant "Vehicle Aggregation" as vehicle
+participant "Alert Service" as alert
+
+scraper -> events: Publish ListingScrapedEvent\n{source, data, imageUrls}
+
+events --> listing: ListingScrapedEvent
+
+listing -> listing: Validate listing data
+listing -> db: Check for existing\n(source + sourceListingId)
+db --> listing: Not found
+
+listing -> db: Create Listing record
+db --> listing: Listing created
+
+listing -> events: Publish ListingCreatedEvent\n{listingId, data}
+
+par Parallel Processing
+    events --> image: ListingCreatedEvent
+    image -> image: Download images
+    image -> image: Calculate hashes
+    image -> image: Store in blob storage
+    image -> events: Publish ImageProcessedEvent
+
+    events --> dedup: ListingCreatedEvent
+    dedup -> dedup: Find duplicate candidates
+    dedup -> dedup: Calculate similarity scores
+    dedup -> events: Publish DuplicateFoundEvent\n(if duplicates found)
+
+    events --> vehicle: ListingCreatedEvent
+    vehicle -> vehicle: Find/create vehicle by VIN
+    vehicle -> vehicle: Link listing to vehicle
+    vehicle -> vehicle: Recalculate price stats
+
+    events --> alert: ListingCreatedEvent
+    alert -> alert: Match against active alerts
+    alert -> alert: Trigger matching alerts
+end
+
+@enduml

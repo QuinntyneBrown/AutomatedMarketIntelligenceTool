@@ -1,0 +1,11 @@
+{
+  "name": "admin-ui-screenshots",
+  "version": "1.0.0",
+  "description": "Screenshot capture for admin UI mockups",
+  "scripts": {
+    "capture": "node capture-screenshots.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

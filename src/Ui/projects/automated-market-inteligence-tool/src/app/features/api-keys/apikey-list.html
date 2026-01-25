@@ -1,0 +1,235 @@
+<div class="apikey-list-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header__info">
+      <h1 class="page-title">API Keys</h1>
+      <p class="page-subtitle">Manage API keys for programmatic access</p>
+    </div>
+    <button mat-flat-button color="primary" routerLink="/api-keys/new">
+      <mat-icon>add</mat-icon>
+      Generate Key
+    </button>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <div class="stat-card__value">{{ stats().total }}</div>
+      <div class="stat-card__label">Total Keys</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-card__value stat-card__value--success">{{ stats().active }}</div>
+      <div class="stat-card__label">Active Keys</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-card__value stat-card__value--error">{{ stats().revoked }}</div>
+      <div class="stat-card__label">Revoked Keys</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-card__value stat-card__value--warning">{{ stats().expired }}</div>
+      <div class="stat-card__label">Expired Keys</div>
+    </mat-card>
+  </div>
+
+  <!-- Filter Bar -->
+  <mat-card class="filter-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Search keys</mat-label>
+      <input
+        matInput
+        placeholder="Search by name or prefix..."
+        [value]="searchQuery()"
+        (input)="onSearchChange($event)"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-option value="all">All Status</mat-option>
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="revoked">Revoked</mat-option>
+        <mat-option value="expired">Expired</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Owner</mat-label>
+      <mat-select [value]="ownerFilter()" (selectionChange)="onOwnerFilterChange($event.value)">
+        <mat-option value="all">All Users</mat-option>
+        <mat-option value="1">John Smith</mat-option>
+        <mat-option value="2">Sarah Anderson</mat-option>
+        <mat-option value="3">Michael Chen</mat-option>
+        <mat-option value="4">Emily Watson</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </mat-card>
+
+  <!-- Desktop Table -->
+  <mat-card class="table-card desktop-only">
+    <table mat-table [dataSource]="filteredApiKeys()" class="apikeys-table">
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Key Name</th>
+        <td mat-cell *matCellDef="let key" class="key-name">
+          {{ key.name }}
+        </td>
+      </ng-container>
+
+      <!-- Key Prefix Column -->
+      <ng-container matColumnDef="keyPrefix">
+        <th mat-header-cell *matHeaderCellDef>Key Prefix</th>
+        <td mat-cell *matCellDef="let key">
+          <span class="key-prefix">{{ key.keyPrefix }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Owner Column -->
+      <ng-container matColumnDef="owner">
+        <th mat-header-cell *matHeaderCellDef>Owner</th>
+        <td mat-cell *matCellDef="let key">
+          <div class="user-cell">
+            <div class="avatar avatar--small">{{ key.ownerInitials }}</div>
+            <span class="user-name">{{ key.ownerName }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let key">
+          <span class="chip" [class]="getStatusClass(key.status)">
+            {{ getStatusLabel(key.status) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Expires Column -->
+      <ng-container matColumnDef="expires">
+        <th mat-header-cell *matHeaderCellDef>Expires</th>
+        <td
+          mat-cell
+          *matCellDef="let key"
+          [class.text-secondary]="key.status !== 'expired'"
+          [class.text-error]="key.status === 'expired'"
+        >
+          {{ key.expiresAt || 'Never' }}
+        </td>
+      </ng-container>
+
+      <!-- Last Used Column -->
+      <ng-container matColumnDef="lastUsed">
+        <th mat-header-cell *matHeaderCellDef>Last Used</th>
+        <td mat-cell *matCellDef="let key" class="text-secondary">
+          {{ key.lastUsedAt }}
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let key">
+          <div class="actions-cell">
+            <button mat-icon-button [routerLink]="['/api-keys', key.id]" matTooltip="View">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="More">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item [routerLink]="['/api-keys', key.id]">
+                <mat-icon>visibility</mat-icon>
+                <span>View Details</span>
+              </button>
+              @if (key.status === 'active') {
+                <button mat-menu-item (click)="onRegenerate(key.id)">
+                  <mat-icon>refresh</mat-icon>
+                  <span>Regenerate</span>
+                </button>
+                <button mat-menu-item class="warn-item" (click)="onRevoke(key.id)">
+                  <mat-icon>block</mat-icon>
+                  <span>Revoke</span>
+                </button>
+              }
+            </mat-menu>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator
+      [length]="totalItems()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    ></mat-paginator>
+  </mat-card>
+
+  <!-- Mobile Cards -->
+  <div class="mobile-cards mobile-only">
+    @for (key of filteredApiKeys(); track key.id) {
+      <mat-card class="mobile-card">
+        <div class="mobile-card__header">
+          <div>
+            <div class="mobile-card__title">{{ key.name }}</div>
+            <span class="key-prefix key-prefix--small">{{ key.keyPrefix }}</span>
+          </div>
+          <button mat-icon-button [matMenuTriggerFor]="mobileMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #mobileMenu="matMenu">
+            <button mat-menu-item [routerLink]="['/api-keys', key.id]">
+              <mat-icon>visibility</mat-icon>
+              <span>View Details</span>
+            </button>
+            @if (key.status === 'active') {
+              <button mat-menu-item (click)="onRegenerate(key.id)">
+                <mat-icon>refresh</mat-icon>
+                <span>Regenerate</span>
+              </button>
+              <button mat-menu-item class="warn-item" (click)="onRevoke(key.id)">
+                <mat-icon>block</mat-icon>
+                <span>Revoke</span>
+              </button>
+            }
+          </mat-menu>
+        </div>
+        <div class="mobile-card__content">
+          <div class="mobile-card__field">
+            <span class="mobile-card__label">Owner</span>
+            <span class="mobile-card__value">{{ key.ownerName }}</span>
+          </div>
+          <div class="mobile-card__field">
+            <span class="mobile-card__label">Status</span>
+            <span class="chip" [class]="getStatusClass(key.status)">
+              {{ getStatusLabel(key.status) }}
+            </span>
+          </div>
+          <div class="mobile-card__field">
+            <span class="mobile-card__label">Expires</span>
+            <span class="mobile-card__value">{{ key.expiresAt || 'Never' }}</span>
+          </div>
+          <div class="mobile-card__field">
+            <span class="mobile-card__label">Last Used</span>
+            <span class="mobile-card__value">{{ key.lastUsedAt }}</span>
+          </div>
+        </div>
+      </mat-card>
+    }
+
+    <mat-paginator
+      [length]="totalItems()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPageChange($event)"
+    ></mat-paginator>
+  </div>
+</div>

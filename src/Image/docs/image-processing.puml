@@ -1,0 +1,58 @@
+@startuml image-processing
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Image Processing Flow
+
+queue "Event Bus" as events
+participant "Image Service" as image
+participant "Image Download\nService" as download
+participant "Image Hashing\nService" as hash
+participant "Blob Storage\nService" as blob
+database "Image DB" as db
+
+events -> image: ListingCreatedEvent\n{listingId, imageUrls}
+
+loop For each image URL
+    image -> db: Check if URL already processed
+    db --> image: Not found
+
+    image -> db: Create ImageRecord\n{sourceUrl, listingId, isProcessed: false}
+    db --> image: Record created
+
+    image -> download: DownloadImageAsync(url)
+
+    download -> download: HTTP GET image
+    download -> download: Validate content type
+    download -> download: Check file size
+
+    alt Download successful
+        download --> image: ImageData\n{bytes, contentType, size}
+
+        image -> hash: CalculateHashAsync(imageData)
+        hash -> hash: Resize to 8x8
+        hash -> hash: Convert to grayscale
+        hash -> hash: Calculate DCT
+        hash -> hash: Generate hash bits
+        hash --> image: Perceptual hash string
+
+        image -> blob: UploadAsync(imageData)
+        blob -> blob: Generate storage path
+        blob -> blob: Upload to cloud storage
+        blob --> image: StoragePath
+
+        image -> db: Update ImageRecord\n{hash, storagePath, dimensions, isProcessed: true}
+        db --> image: Updated
+
+        image -> events: Publish ImageProcessedEvent\n{imageId, hash, listingId}
+
+    else Download failed
+        download --> image: DownloadException
+
+        image -> db: Update ImageRecord\n{errorMessage, isProcessed: false}
+        db --> image: Updated
+    end
+end
+
+@enduml

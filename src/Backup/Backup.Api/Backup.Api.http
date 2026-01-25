@@ -1,0 +1,6 @@
+@Backup.Api_HostAddress = http://localhost:5225
+
+GET {{Backup.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

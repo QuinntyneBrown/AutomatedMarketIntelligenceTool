@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using Shared.Messaging.Abstractions;
-using Shared.Messaging.Configuration;
+using Shared.Contracts.Events;
+using Shared.Messaging;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -16,9 +16,6 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-
-    // Add Aspire service defaults
-    builder.AddServiceDefaults();
 
     // Serilog configuration
     builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -34,8 +31,8 @@ try
     // Add Infrastructure services
     builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
-    // Add Messaging (auto-selects Redis when Aspire provides connection string)
-    builder.Services.AddMessaging(builder.Configuration, "IdentityService");
+    // Add NullEventPublisher for standalone operation
+    builder.Services.AddSingleton<IEventPublisher, NullEventPublisher>();
 
     // Add JWT authentication
     var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -72,9 +69,9 @@ try
     {
         options.SwaggerDoc("v1", new OpenApiInfo
         {
-            Title = "Books Identity API",
+            Title = "Identity API",
             Version = "v1",
-            Description = "Authentication and user management API for Books"
+            Description = "Authentication and user management API"
         });
 
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -133,9 +130,7 @@ try
     app.UseSerilogRequestLogging();
 
     app.MapControllers();
-
-    // Aspire health check endpoints
-    app.MapDefaultEndpoints();
+    app.MapHealthChecks("/health");
 
     Log.Information("Starting Identity.Api");
     app.Run();
@@ -147,4 +142,10 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+public sealed class NullEventPublisher : IEventPublisher
+{
+    public Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default) where TEvent : IIntegrationEvent => Task.CompletedTask;
+    public Task PublishManyAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellationToken = default) where TEvent : IIntegrationEvent => Task.CompletedTask;
 }

@@ -1,0 +1,74 @@
+@startuml notification-delivery
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Notification Delivery Flow
+
+actor "Service" as service
+participant "Notification Service" as notif
+database "Notification DB" as db
+participant "Email Provider\n(SMTP/SendGrid)" as email
+participant "SMS Provider\n(Twilio)" as sms
+
+== Template-based Notification ==
+
+service -> notif: POST /api/notifications/send\n{templateId, recipientId, variables}
+
+notif -> db: Get NotificationTemplate
+db --> notif: Template with placeholders
+
+notif -> notif: Replace variables in template
+note right of notif
+  Template: "Hello {{name}}, price dropped to ${{price}}"
+  Variables: {name: "John", price: "25000"}
+  Result: "Hello John, price dropped to $25000"
+end note
+
+notif -> db: Create NotificationLog\n{status: Pending}
+db --> notif: Log created
+
+alt Template type: Email
+    notif -> email: Send email\n{to, subject, body}
+
+    alt Success
+        email --> notif: 200 OK
+        notif -> db: Update log\n{status: Sent, sentAt}
+    else Failure
+        email --> notif: Error
+        notif -> db: Update log\n{status: Failed, errorMessage, retryCount++}
+        notif -> notif: Schedule retry
+    end
+
+else Template type: SMS
+    notif -> sms: Send SMS\n{to, body}
+    sms --> notif: Response
+
+else Template type: Push
+    notif -> notif: Send push notification
+end
+
+notif --> service: {notificationId, status}
+
+== Direct Notification ==
+
+service -> notif: POST /api/notifications/send-direct\n{recipient, subject, body, type}
+
+notif -> db: Create NotificationLog
+db --> notif: Created
+
+notif -> notif: Send via appropriate channel
+notif --> service: {notificationId, status}
+
+== Retry Failed ==
+
+service -> notif: POST /api/notifications/{id}/retry
+
+notif -> db: Get NotificationLog
+db --> notif: Log with details
+
+notif -> notif: Resend notification
+notif -> db: Update status
+notif --> service: Retry result
+
+@enduml

@@ -1,4 +1,4 @@
-@VehicleAggregation.Api_HostAddress = http://localhost:5163
+@VehicleAggregation.Api_HostAddress = http://localhost:5075
 
 GET {{VehicleAggregation.Api_HostAddress}}/weatherforecast/
 Accept: application/json

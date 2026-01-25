@@ -1,0 +1,87 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--surface-card);
+  box-shadow: var(--elevation-4);
+  height: 64px;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin-left: var(--spacing-md);
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.sidenav-container {
+  flex: 1;
+  margin-top: 64px;
+}
+
+.app-sidenav {
+  width: 256px;
+  background-color: var(--surface-card);
+  border-right: 1px solid var(--surface-divider);
+}
+
+.app-sidenav mat-nav-list a {
+  color: var(--text-primary);
+
+  mat-icon {
+    color: var(--text-secondary);
+  }
+
+  &.active {
+    background-color: var(--surface-selected);
+    color: var(--primary-500);
+
+    mat-icon {
+      color: var(--primary-500);
+    }
+  }
+
+  &:hover:not(.active) {
+    background-color: var(--surface-hover);
+  }
+}
+
+.nav-divider {
+  height: 1px;
+  background-color: var(--surface-divider);
+  margin: var(--spacing-md) 0;
+}
+
+.main-content {
+  background-color: var(--surface-background);
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .app-sidenav {
+    width: 200px;
+  }
+
+  .main-content {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 16px;
+  }
+}

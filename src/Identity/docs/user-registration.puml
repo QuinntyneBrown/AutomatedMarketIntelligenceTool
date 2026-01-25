@@ -1,0 +1,44 @@
+@startuml user-registration
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title User Registration Flow
+
+actor "Client" as client
+participant "API Gateway" as gateway
+participant "Identity Service" as identity
+database "Identity DB" as db
+participant "Notification Service" as notif
+queue "Event Bus" as events
+
+client -> gateway: POST /api/auth/register\n{email, password, name}
+gateway -> identity: Forward request
+
+identity -> identity: Validate input
+identity -> db: Check email exists
+db --> identity: Email available
+
+identity -> identity: Hash password
+identity -> db: Create User record
+db --> identity: User created
+
+identity -> identity: Generate verification token
+identity -> db: Store EmailVerificationToken
+db --> identity: Token stored
+
+identity -> events: Publish UserRegisteredEvent
+events --> notif: UserRegisteredEvent
+
+notif -> notif: Generate verification email
+notif -> client: Send verification email
+
+identity --> gateway: 201 Created\n{userId, message}
+gateway --> client: Registration successful
+
+note right of client
+  User receives email with
+  verification link
+end note
+
+@enduml

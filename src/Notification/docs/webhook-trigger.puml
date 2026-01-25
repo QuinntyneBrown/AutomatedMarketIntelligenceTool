@@ -1,0 +1,88 @@
+@startuml webhook-trigger
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Webhook Trigger Flow
+
+actor "Service" as service
+participant "Notification Service" as notif
+database "Notification DB" as db
+participant "External System" as external
+
+== Trigger Webhooks ==
+
+service -> notif: POST /api/notifications/webhooks/trigger\n{event, payload}
+
+notif -> db: Get active webhooks\nsubscribed to event
+db --> notif: List<Webhook>
+
+loop For each webhook
+    notif -> notif: Prepare payload
+    notif -> notif: Generate signature\nHMAC-SHA256(payload, secret)
+
+    notif -> external: POST {webhook.url}\nX-Signature: {signature}\nBody: {payload}
+
+    alt Success (2xx)
+        external --> notif: 200 OK
+        notif -> db: Update webhook\n{lastTriggeredAt, failureCount: 0}
+
+    else Failure
+        external --> notif: Error
+
+        notif -> db: Increment failureCount
+        db --> notif: Updated
+
+        alt failureCount >= 5
+            notif -> db: Deactivate webhook
+            notif -> notif: Notify admin
+        else
+            notif -> notif: Schedule retry
+        end
+    end
+end
+
+notif --> service: {triggeredCount, failures}
+
+== Create Webhook ==
+
+actor "Admin" as admin
+participant "API Gateway" as gateway
+
+admin -> gateway: POST /api/notifications/webhooks\n{name, url, secret, events}
+gateway -> notif: Forward request
+
+notif -> notif: Validate URL
+notif -> notif: Test webhook endpoint
+
+alt Endpoint valid
+    notif -> db: Create Webhook
+    db --> notif: Created
+
+    notif --> gateway: 201 Created\n{webhookId}
+    gateway --> admin: Webhook created
+else Endpoint unreachable
+    notif --> gateway: 400 Bad Request
+    gateway --> admin: Invalid webhook URL
+end
+
+== Webhook Payload Example ==
+
+note over external
+  POST /webhook-endpoint
+  Content-Type: application/json
+  X-Webhook-Event: PriceChanged
+  X-Webhook-Signature: sha256=abc123...
+
+  {
+    "event": "PriceChanged",
+    "timestamp": "2026-01-25T10:30:00Z",
+    "data": {
+      "listingId": "...",
+      "oldPrice": 25000,
+      "newPrice": 23500
+    }
+  }
+end note
+
+@enduml

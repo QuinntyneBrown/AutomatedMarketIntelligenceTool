@@ -1,0 +1,277 @@
+<div class="apikey-detail-page">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/">Admin</a>
+    <mat-icon class="breadcrumb__separator">chevron_right</mat-icon>
+    <a routerLink="/api-keys">API Keys</a>
+    <mat-icon class="breadcrumb__separator">chevron_right</mat-icon>
+    <span>{{ pageTitle() }}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-title-section">
+      <div class="entity-icon">
+        <mat-icon>vpn_key</mat-icon>
+      </div>
+      <div class="page-title-content">
+        <h1>{{ pageTitle() }}</h1>
+        @if (!isNew()) {
+          <p class="page-subtitle">API key for production environment</p>
+          <div class="status-badges">
+            @if (apiKey().status === 'active') {
+              <span class="chip chip--active">
+                <mat-icon>check_circle</mat-icon>
+                Active
+              </span>
+            } @else if (apiKey().status === 'revoked') {
+              <span class="chip chip--revoked">
+                <mat-icon>block</mat-icon>
+                Revoked
+              </span>
+            } @else if (apiKey().status === 'expired') {
+              <span class="chip chip--expired">
+                <mat-icon>schedule</mat-icon>
+                Expired
+              </span>
+            }
+            @if (!apiKey().expiresAt) {
+              <span class="chip chip--info">
+                <mat-icon>all_inclusive</mat-icon>
+                Never Expires
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+    <div class="action-buttons">
+      @if (!isNew() && apiKey().status === 'active') {
+        <button mat-stroked-button (click)="onRegenerate()">
+          <mat-icon>refresh</mat-icon>
+          Regenerate
+        </button>
+        <button mat-stroked-button color="warn" (click)="onRevoke()">
+          <mat-icon>block</mat-icon>
+          Revoke Key
+        </button>
+      }
+      @if (isNew()) {
+        <button mat-flat-button color="primary" (click)="onSave()">
+          <mat-icon>add</mat-icon>
+          Generate Key
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Key Display Card (only for existing keys) -->
+  @if (!isNew()) {
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>API Key</mat-card-title>
+        <mat-card-subtitle>Your secret key for API authentication</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="notice notice--warning">
+          <mat-icon class="notice__icon">warning</mat-icon>
+          <span class="notice__text">
+            <strong>Security Warning:</strong> This is the only time you can view the full API key.
+            Store it securely and never share it publicly. If compromised, revoke it immediately.
+          </span>
+        </div>
+
+        <div class="key-display">
+          <div class="key-display__label">API Key</div>
+          <div class="key-display__value">
+            <span class="key-display__text">{{ displayedKey() }}</span>
+            <div class="key-display__actions">
+              <button mat-icon-button (click)="onCopyKey()" matTooltip="Copy to clipboard">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button mat-icon-button (click)="onToggleKeyVisibility()" matTooltip="Toggle visibility">
+                <mat-icon>{{ showFullKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="key-display">
+          <div class="key-display__label">Key Prefix (Public Identifier)</div>
+          <div class="key-display__value">
+            <span class="key-display__text">{{ apiKey().keyPrefix }}</span>
+            <div class="key-display__actions">
+              <button mat-icon-button (click)="onCopyPrefix()" matTooltip="Copy to clipboard">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Key Details Card -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Key Details</mat-card-title>
+      <mat-card-subtitle>Configuration and metadata</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Key Name</mat-label>
+          <input
+            matInput
+            [value]="apiKey().name"
+            (input)="onNameChange($event)"
+            placeholder="Enter key name"
+          />
+        </mat-form-field>
+
+        @if (!isNew()) {
+          <mat-form-field appearance="outline">
+            <mat-label>Owner</mat-label>
+            <input matInput [value]="apiKey().ownerName" disabled />
+          </mat-form-field>
+        }
+      </div>
+
+      @if (!isNew()) {
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Created At</mat-label>
+            <input matInput [value]="apiKey().createdAt" disabled />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Expires At</mat-label>
+            <input matInput [value]="apiKey().expiresAt || 'Never'" disabled />
+          </mat-form-field>
+        </div>
+      }
+
+      <div class="scopes-section">
+        <div class="scopes-label">Scopes</div>
+        <div class="scope-list">
+          @for (scope of allScopes(); track scope.id) {
+            <button
+              class="scope-chip"
+              [class.scope-chip--selected]="scope.selected"
+              (click)="onScopeToggle(scope.id)"
+            >
+              {{ scope.label }}
+            </button>
+          }
+        </div>
+        <div class="scopes-hint">Selected scopes define what this API key can access</div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Usage Statistics Card (only for existing keys) -->
+  @if (!isNew()) {
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>Usage Statistics</mat-card-title>
+        <mat-card-subtitle>API key usage over the last 30 days</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-item__label">Total Requests</div>
+            <div class="stat-item__value">{{ formatNumber(usageStats().totalRequests) }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item__label">Success Rate</div>
+            <div class="stat-item__value stat-item__value--success">{{ usageStats().successRate }}%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item__label">Last Used</div>
+            <div class="stat-item__value">{{ usageStats().lastUsed }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item__label">Avg. Requests/Day</div>
+            <div class="stat-item__value">{{ usageStats().avgRequestsPerDay }}</div>
+          </div>
+        </div>
+
+        <div class="usage-chart">
+          <mat-icon>insert_chart</mat-icon>
+          <span>Usage Chart Placeholder</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Activity Card -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>Recent Activity</mat-card-title>
+        <mat-card-subtitle>Latest API key usage</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="activity-list">
+          @for (activity of recentActivity(); track activity.id) {
+            <div class="activity-item">
+              <div class="activity-item__icon" [class.activity-item__icon--error]="!activity.success">
+                <mat-icon>{{ activity.success ? 'check' : 'close' }}</mat-icon>
+              </div>
+              <div class="activity-item__content">
+                <div class="activity-item__title">{{ activity.method }} {{ activity.endpoint }}</div>
+                <div class="activity-item__description">
+                  {{ activity.statusCode }} {{ activity.statusText }}
+                  @if (activity.duration) {
+                    - {{ activity.duration }}
+                  }
+                  - IP: {{ activity.ip }}
+                </div>
+              </div>
+              <div class="activity-item__time">{{ activity.timestamp }}</div>
+            </div>
+          }
+        </div>
+
+        <div class="view-all-button">
+          <button mat-stroked-button>View All Activity</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Danger Zone -->
+    <mat-card class="section-card danger-zone">
+      <mat-card-header>
+        <mat-card-title class="danger-title">Danger Zone</mat-card-title>
+        <mat-card-subtitle>Irreversible actions</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (apiKey().status === 'active') {
+          <div class="danger-action">
+            <div class="danger-action__info">
+              <div class="danger-action__title">Revoke API Key</div>
+              <div class="danger-action__description">
+                Immediately disable this API key. All requests using this key will fail.
+              </div>
+            </div>
+            <button mat-stroked-button color="warn" (click)="onRevoke()">
+              <mat-icon>block</mat-icon>
+              Revoke Key
+            </button>
+          </div>
+        }
+
+        <div class="danger-action">
+          <div class="danger-action__info">
+            <div class="danger-action__title">Delete API Key</div>
+            <div class="danger-action__description">
+              Permanently delete this API key and all usage history.
+            </div>
+          </div>
+          <button mat-stroked-button color="warn" (click)="onDelete()">
+            <mat-icon>delete</mat-icon>
+            Delete Key
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

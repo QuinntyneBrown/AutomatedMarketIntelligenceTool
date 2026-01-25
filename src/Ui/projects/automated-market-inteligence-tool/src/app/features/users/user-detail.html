@@ -1,0 +1,249 @@
+<div class="user-detail-page">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/">Admin</a>
+    <mat-icon class="breadcrumb__separator">chevron_right</mat-icon>
+    <a routerLink="/users">User Management</a>
+    <mat-icon class="breadcrumb__separator">chevron_right</mat-icon>
+    <span>{{ pageTitle() }}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-title-section">
+      @if (!isNew()) {
+        <div class="avatar avatar--large">{{ user().initials }}</div>
+      }
+      <div class="page-title-content">
+        <h1>
+          {{ pageTitle() }}
+          @if (!isNew() && roles()[0].assigned) {
+            <span class="badge badge--system">Admin</span>
+          }
+        </h1>
+        @if (!isNew()) {
+          <p class="page-subtitle">{{ user().email }}</p>
+          <div class="status-badges">
+            @if (user().isActive) {
+              <span class="chip chip--active">
+                <mat-icon>check_circle</mat-icon>
+                Active
+              </span>
+            } @else {
+              <span class="chip chip--inactive">
+                <mat-icon>cancel</mat-icon>
+                Inactive
+              </span>
+            }
+            @if (user().isEmailVerified) {
+              <span class="chip chip--info">
+                <mat-icon>verified_user</mat-icon>
+                Email Verified
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+    <div class="action-buttons">
+      @if (!isNew()) {
+        <button mat-stroked-button (click)="onResetPassword()">
+          <mat-icon>lock_reset</mat-icon>
+          Reset Password
+        </button>
+        <button mat-stroked-button color="warn" (click)="onDeactivate()">
+          <mat-icon>block</mat-icon>
+          Deactivate
+        </button>
+      }
+      <button mat-flat-button color="primary" (click)="onSave()">
+        <mat-icon>save</mat-icon>
+        {{ isNew() ? 'Create User' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Basic Information Card -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Basic Information</mat-card-title>
+      <mat-card-subtitle>User identity and contact details</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Email Address</mat-label>
+          <input
+            matInput
+            type="email"
+            [value]="user().email"
+            (input)="onEmailChange($event)"
+            placeholder="Enter email address"
+          />
+          <mat-hint>Email is used for login and notifications</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Display Name</mat-label>
+          <input
+            matInput
+            type="text"
+            [value]="user().displayName"
+            (input)="onDisplayNameChange($event)"
+            placeholder="Enter display name"
+          />
+        </mat-form-field>
+      </div>
+
+      @if (!isNew()) {
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>User ID</mat-label>
+            <input matInput [value]="user().id" disabled />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Created At</mat-label>
+            <input matInput [value]="user().createdAt" disabled />
+          </mat-form-field>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Security Settings Card -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Security Settings</mat-card-title>
+      <mat-card-subtitle>Account security and access controls</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="toggle-list">
+        <div class="toggle-item">
+          <div class="toggle-item__info">
+            <div class="toggle-item__title">Email Verified</div>
+            <div class="toggle-item__description">User has verified their email address</div>
+          </div>
+          <mat-slide-toggle
+            [checked]="user().isEmailVerified"
+            (change)="onEmailVerifiedChange($event.checked)"
+          ></mat-slide-toggle>
+        </div>
+
+        <div class="toggle-item">
+          <div class="toggle-item__info">
+            <div class="toggle-item__title">Account Active</div>
+            <div class="toggle-item__description">User can access the system</div>
+          </div>
+          <mat-slide-toggle
+            [checked]="user().isActive"
+            (change)="onActiveChange($event.checked)"
+          ></mat-slide-toggle>
+        </div>
+      </div>
+
+      @if (!isNew()) {
+        <mat-divider></mat-divider>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item__label">Last Login</div>
+            <div class="info-item__value">{{ user().lastLoginAt }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">Failed Login Attempts</div>
+            <div class="info-item__value">{{ user().failedLoginAttempts }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">Lockout Status</div>
+            <div class="info-item__value" [class]="lockoutStatus().class">
+              {{ lockoutStatus().text }}
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-item__label">Lockout End</div>
+            <div class="info-item__value">{{ user().lockoutEndAt || 'N/A' }}</div>
+          </div>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Role Assignment Card -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Role Assignment</mat-card-title>
+      <mat-card-subtitle>Assign roles to control user permissions</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="role-list">
+        @for (role of roles(); track role.id) {
+          <div class="role-item" (click)="onRoleToggle(role.id)">
+            <div class="role-item__info">
+              <mat-checkbox
+                [checked]="role.assigned"
+                (click)="$event.stopPropagation()"
+                (change)="onRoleToggle(role.id)"
+              ></mat-checkbox>
+              <div class="role-item__details">
+                <div class="role-item__name">{{ role.name }}</div>
+                <div class="role-item__description">{{ role.description }}</div>
+              </div>
+            </div>
+            @if (role.isSystem) {
+              <span class="badge badge--system">SYSTEM</span>
+            }
+          </div>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Recent Activity Card (only for existing users) -->
+  @if (!isNew()) {
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>Recent Activity</mat-card-title>
+        <mat-card-subtitle>User activity log</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="activity-list">
+          @for (activity of activities(); track activity.title + activity.time) {
+            <div class="activity-item">
+              <div class="activity-item__icon">
+                <mat-icon>{{ activity.icon }}</mat-icon>
+              </div>
+              <div class="activity-item__content">
+                <div class="activity-item__title">{{ activity.title }}</div>
+                <div class="activity-item__description">{{ activity.description }}</div>
+              </div>
+              <div class="activity-item__time">{{ activity.time }}</div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Danger Zone Card -->
+    <mat-card class="section-card danger-zone">
+      <mat-card-header>
+        <mat-card-title class="danger-title">Danger Zone</mat-card-title>
+        <mat-card-subtitle>Irreversible actions</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="danger-action">
+          <div class="danger-action__info">
+            <div class="danger-action__title">Delete User Account</div>
+            <div class="danger-action__description">
+              Permanently delete this user and all associated data. This action cannot be undone.
+            </div>
+          </div>
+          <button mat-stroked-button color="warn" (click)="onDelete()">
+            <mat-icon>delete</mat-icon>
+            Delete User
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

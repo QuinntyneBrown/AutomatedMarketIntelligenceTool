@@ -1,12 +1,16 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { ShellComponent } from './layout/shell';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  standalone: true,
+  imports: [ShellComponent],
+  template: '<app-shell />',
+  styles: `
+    :host {
+      display: block;
+      height: 100%;
+    }
+  `,
 })
-export class App {
-  protected readonly title = signal('automated-market-inteligence-tool');
-}
+export class App {}

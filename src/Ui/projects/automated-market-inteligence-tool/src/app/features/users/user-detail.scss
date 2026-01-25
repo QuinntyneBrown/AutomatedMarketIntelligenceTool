@@ -1,0 +1,380 @@
+.user-detail-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+// Breadcrumb
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-secondary);
+  font-size: 14px;
+  flex-wrap: wrap;
+
+  a {
+    color: var(--primary-500);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__separator {
+    font-size: 18px;
+    color: var(--text-secondary);
+  }
+}
+
+// Page Header
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.page-title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.page-title-content {
+  h1 {
+    font-size: 28px;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+}
+
+.status-badges {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  flex-wrap: wrap;
+
+  .chip mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+
+  button mat-icon {
+    margin-right: var(--spacing-sm);
+  }
+}
+
+// Section Cards
+.section-card {
+  margin-bottom: var(--spacing-lg);
+
+  mat-card-header {
+    padding: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--surface-divider);
+  }
+
+  mat-card-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+// Form Layout
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+// Toggle List
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background-color: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+
+  &__info {
+    flex: 1;
+  }
+
+  &__title {
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  &__description {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+}
+
+// Info Grid
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.info-item {
+  &__label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  &__value {
+    font-size: 14px;
+    font-weight: 500;
+
+    &--success {
+      color: var(--status-success);
+    }
+
+    &--warning {
+      color: var(--status-warning);
+    }
+
+    &--error {
+      color: var(--status-error);
+    }
+  }
+}
+
+// Role List
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.role-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background-color: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--surface-hover);
+  }
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  &__details {
+    flex: 1;
+  }
+
+  &__name {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  &__description {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+}
+
+// Activity List
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.activity-item {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--surface-elevated);
+  border-radius: var(--radius-sm);
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background-color: rgba(33, 150, 243, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-500);
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+  }
+
+  &__title {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  &__description {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  &__time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+}
+
+// Danger Zone
+.danger-zone {
+  border: 1px solid rgba(244, 67, 54, 0.3);
+
+  .danger-title {
+    color: var(--warn-500);
+  }
+}
+
+.danger-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+
+  &__info {
+    flex: 1;
+  }
+
+  &__title {
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  &__description {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  button mat-icon {
+    margin-right: var(--spacing-sm);
+  }
+}
+
+// Responsive
+@media (max-width: 991px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-buttons {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .page-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .avatar--large {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .page-title-content h1 {
+    font-size: 22px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .toggle-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .role-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+
+    &__info {
+      width: 100%;
+    }
+  }
+
+  .activity-item {
+    flex-direction: column;
+
+    &__icon {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .danger-action {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

@@ -1,0 +1,128 @@
+<div class="role-list-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-header__info">
+      <h1 class="page-title">Role Management</h1>
+      <p class="page-subtitle">Manage system roles and permissions</p>
+    </div>
+    <button mat-flat-button color="primary" routerLink="/roles/new">
+      <mat-icon>add</mat-icon>
+      Create Role
+    </button>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <div class="stat-card__value">{{ stats().total }}</div>
+      <div class="stat-card__label">Total Roles</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-card__value stat-card__value--warning">{{ stats().system }}</div>
+      <div class="stat-card__label">System Roles</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-card__value stat-card__value--primary">{{ stats().custom }}</div>
+      <div class="stat-card__label">Custom Roles</div>
+    </mat-card>
+  </div>
+
+  <!-- Filter Bar -->
+  <mat-card class="filter-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Search roles</mat-label>
+      <input
+        matInput
+        placeholder="Search by name..."
+        [value]="searchQuery()"
+        (input)="onSearchChange($event)"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Type</mat-label>
+      <mat-select [value]="typeFilter()" (selectionChange)="onTypeFilterChange($event.value)">
+        <mat-option value="all">All Types</mat-option>
+        <mat-option value="system">System</mat-option>
+        <mat-option value="custom">Custom</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </mat-card>
+
+  <!-- Role Cards Grid -->
+  <div class="role-cards-grid">
+    @for (role of filteredRoles(); track role.id) {
+      <mat-card class="role-card">
+        <div class="role-card__header">
+          <div class="role-card__title-section">
+            <div class="role-card__icon">
+              <mat-icon>{{ role.icon }}</mat-icon>
+            </div>
+            <div class="role-card__info">
+              <h3>{{ role.name }}</h3>
+              @if (role.isSystem) {
+                <span class="badge badge--system">SYSTEM</span>
+              } @else {
+                <span class="badge badge--custom">CUSTOM</span>
+              }
+            </div>
+          </div>
+          <button mat-icon-button [matMenuTriggerFor]="roleMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #roleMenu="matMenu">
+            <button mat-menu-item [routerLink]="['/roles', role.id]">
+              <mat-icon>{{ role.isSystem ? 'visibility' : 'edit' }}</mat-icon>
+              <span>{{ role.isSystem ? 'View' : 'Edit' }}</span>
+            </button>
+            <button mat-menu-item (click)="onCloneRole(role.id)">
+              <mat-icon>content_copy</mat-icon>
+              <span>Clone</span>
+            </button>
+            @if (!role.isSystem) {
+              <button mat-menu-item class="warn-item" (click)="onDeleteRole(role.id)">
+                <mat-icon>delete</mat-icon>
+                <span>Delete</span>
+              </button>
+            }
+          </mat-menu>
+        </div>
+
+        <mat-card-content class="role-card__content">
+          <p class="role-card__description">{{ role.description }}</p>
+          <div class="role-card__meta">
+            <div class="role-card__meta-item">
+              <span class="role-card__meta-label">Users</span>
+              <span class="role-card__meta-value">{{ role.userCount }}</span>
+            </div>
+            <div class="role-card__meta-item">
+              <span class="role-card__meta-label">Created</span>
+              <span class="role-card__meta-value">{{ role.createdAt }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+
+        <div class="role-card__actions">
+          <button
+            mat-button
+            color="primary"
+            [routerLink]="['/roles', role.id]"
+          >
+            <mat-icon>{{ role.isSystem ? 'visibility' : 'edit' }}</mat-icon>
+            {{ role.isSystem ? 'View' : 'Edit' }}
+          </button>
+          <button mat-button (click)="onCloneRole(role.id)">
+            <mat-icon>content_copy</mat-icon>
+            Clone
+          </button>
+        </div>
+      </mat-card>
+    }
+  </div>
+
+  <!-- Pagination Info -->
+  <div class="pagination-info">
+    Showing {{ filteredRoles().length }} of {{ stats().total }} roles
+  </div>
+</div>

@@ -1,0 +1,69 @@
+@startuml alert-triggering
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Alert Triggering Flow
+
+queue "Event Bus" as events
+participant "Alert Service" as alert
+database "Alert DB" as db
+participant "Notification Service" as notif
+
+events -> alert: ListingCreatedEvent\n{listingId, make, model, year, price, ...}
+
+alert -> db: Get active alerts
+db --> alert: List<Alert>
+
+loop For each alert
+    alert -> alert: Match listing against criteria
+
+    alt Make matches (or any)
+        alt Model matches (or any)
+            alt Year in range
+                alt Price in range
+                    alt Mileage under max
+                        alert -> alert: ALERT TRIGGERED
+
+                        alert -> db: Create AlertNotification\n{alertId, vehicleId, matchedPrice}
+                        db --> alert: Notification created
+
+                        alert -> db: Update Alert\n{lastTriggeredAt, triggerCount++}
+                        db --> alert: Updated
+
+                        alt Notification method: Email
+                            alert -> notif: SendEmail\n{to, subject, body}
+                            notif --> alert: Sent
+
+                        else Notification method: Webhook
+                            alert -> notif: TriggerWebhook\n{url, payload}
+                            notif --> alert: Triggered
+
+                        else Notification method: Both
+                            alert -> notif: SendEmail
+                            alert -> notif: TriggerWebhook
+                        end
+
+                        alert -> db: Update AlertNotification\n{wasSent: true, sentAt}
+                        db --> alert: Updated
+                    end
+                end
+            end
+        end
+    end
+end
+
+== Price Change Alerts ==
+
+events -> alert: PriceChangedEvent\n{listingId, oldPrice, newPrice}
+
+alt Price dropped
+    alert -> db: Get alerts with price drop criteria
+    db --> alert: Matching alerts
+
+    loop For each alert
+        alert -> notif: Send price drop notification
+    end
+end
+
+@enduml

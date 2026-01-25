@@ -1,4 +1,4 @@
-@Geographic.Api_HostAddress = http://localhost:5107
+@Geographic.Api_HostAddress = http://localhost:5181
 
 GET {{Geographic.Api_HostAddress}}/weatherforecast/
 Accept: application/json

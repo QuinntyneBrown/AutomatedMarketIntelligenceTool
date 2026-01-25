@@ -1,0 +1,69 @@
+@startuml similarity-detection
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Image Similarity Detection Flow
+
+actor "Client/Service" as client
+participant "API Gateway" as gateway
+participant "Image Service" as image
+database "Image DB" as db
+participant "Image Hashing\nService" as hash
+
+== Find Similar Images by Hash ==
+
+client -> gateway: GET /api/images/similar/{hash}?threshold=10
+gateway -> image: Forward request
+
+image -> db: Get all image hashes
+db --> image: List of ImageRecords
+
+loop For each stored hash
+    image -> hash: CalculateHammingDistance\n(queryHash, storedHash)
+    hash -> hash: XOR hash bits
+    hash -> hash: Count differences
+    hash --> image: Distance value
+
+    alt Distance <= threshold
+        image -> image: Add to similar list
+    end
+end
+
+image -> image: Sort by similarity
+image --> gateway: List<SimilarImage>\n{imageId, listingId, distance}
+gateway --> client: Similar images
+
+== Compare Two Images ==
+
+client -> gateway: POST /api/images/compare\n{hash1, hash2}
+gateway -> image: Forward request
+
+image -> hash: CalculateHammingDistance(hash1, hash2)
+hash --> image: Distance
+
+image -> image: Determine similarity level
+
+note right of image
+  Distance 0-5: Identical
+  Distance 6-10: Very similar
+  Distance 11-20: Somewhat similar
+  Distance >20: Different
+end note
+
+image --> gateway: {distance, isSimilar, similarityLevel}
+gateway --> client: Comparison result
+
+== Hash from URL ==
+
+client -> gateway: POST /api/images/hash\n{imageUrl}
+gateway -> image: Forward request
+
+image -> image: Download image
+image -> hash: CalculateHashAsync(imageData)
+hash --> image: Perceptual hash
+
+image --> gateway: {hash}
+gateway --> client: Hash calculated
+
+@enduml

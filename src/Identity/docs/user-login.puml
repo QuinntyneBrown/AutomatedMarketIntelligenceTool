@@ -1,0 +1,54 @@
+@startuml user-login
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title User Authentication Flow
+
+actor "Client" as client
+participant "API Gateway" as gateway
+participant "Identity Service" as identity
+database "Identity DB" as db
+queue "Event Bus" as events
+
+client -> gateway: POST /api/auth/login\n{email, password}
+gateway -> identity: Forward request
+
+identity -> db: Find user by email
+db --> identity: User record
+
+alt User not found
+    identity --> gateway: 401 Unauthorized
+    gateway --> client: Invalid credentials
+else User found
+    identity -> identity: Verify password hash
+
+    alt Password invalid
+        identity -> db: Increment failed attempts
+        db --> identity: Updated
+        identity --> gateway: 401 Unauthorized
+        gateway --> client: Invalid credentials
+    else Password valid
+        identity -> identity: Check account status
+
+        alt Account locked/inactive
+            identity --> gateway: 403 Forbidden
+            gateway --> client: Account locked
+        else Account active
+            identity -> identity: Generate JWT access token
+            identity -> identity: Generate refresh token
+            identity -> db: Store refresh token
+            db --> identity: Token stored
+
+            identity -> db: Update last login time
+            db --> identity: Updated
+
+            identity -> events: Publish UserLoggedInEvent
+
+            identity --> gateway: 200 OK\n{accessToken, refreshToken, expiresIn}
+            gateway --> client: Login successful
+        end
+    end
+end
+
+@enduml

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.1.25120.3" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.1.25120.3" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
@@ -18,7 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Identity.Core\Identity.Core.csproj" />
     <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Books.ServiceDefaults\Books.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Messaging\Shared.Messaging.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,74 @@
+@startuml scraping-execution
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Scraping Worker Execution Flow
+
+queue "Event Bus" as events
+participant "Scraping Worker" as worker
+participant "Scraper Factory" as factory
+participant "Site Scraper\n(Kijiji/AutoTrader)" as scraper
+participant "Rate Limiter" as limiter
+participant "User Agent Service" as ua
+participant "Listing Service" as listing
+
+events -> worker: ScrapingJobCreatedEvent\n{jobId, source, params}
+
+worker -> factory: GetScraper(source)
+factory --> worker: ISiteScraper instance
+
+worker -> ua: GetUserAgent()
+ua --> worker: Random user agent
+
+worker -> limiter: CheckRateLimit(source)
+limiter --> worker: Allowed
+
+loop For each search page
+    worker -> scraper: ScrapePageAsync(params, page)
+
+    scraper -> scraper: Build search URL
+    scraper -> scraper: HTTP GET with user agent
+
+    alt Success (200 OK)
+        scraper -> scraper: Parse HTML response
+        scraper -> scraper: Extract listing data
+        scraper --> worker: List<RawListing>
+
+        loop For each listing
+            worker -> events: Publish ListingScrapedEvent
+        end
+
+        worker -> limiter: RecordRequest(source)
+        limiter --> worker: OK
+
+        worker -> limiter: GetDelay(source)
+        limiter --> worker: Delay ms
+
+        worker -> worker: Wait(delay)
+
+    else Rate Limited (429)
+        scraper --> worker: RateLimitException
+
+        worker -> limiter: ApplyBackoff(source)
+        limiter --> worker: Backoff duration
+
+        worker -> worker: Wait(backoff)
+        worker -> ua: RotateUserAgent()
+
+    else Error
+        scraper --> worker: ScrapingException
+        worker -> worker: Log error
+        worker -> worker: Increment retry count
+
+        alt Retries available
+            worker -> worker: Wait and retry
+        else Max retries
+            worker -> events: Publish ScrapingJobFailedEvent
+        end
+    end
+end
+
+worker -> events: Publish ScrapingJobCompletedEvent
+
+@enduml

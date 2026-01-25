@@ -1,1 +1,327 @@
-/* You can add global styles to this file, and also import other style files */
+/* Angular Material Theme */
+@use '@angular/material' as mat;
+
+/* Include Angular Material core styles */
+@include mat.core();
+
+/* Define dark theme using Angular Material */
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$blue-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  typography: (
+    brand-family: 'Roboto',
+    plain-family: 'Roboto',
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+/* Apply the theme */
+html {
+  @include mat.all-component-themes($dark-theme);
+}
+
+/* CSS Variables & Tokens (MD3 Dark Theme) */
+:root {
+  /* Primary Colors (Blue) */
+  --primary-50: #e3f2fd;
+  --primary-100: #bbdefb;
+  --primary-200: #90caf9;
+  --primary-300: #64b5f6;
+  --primary-400: #42a5f5;
+  --primary-500: #2196f3;
+  --primary-600: #1e88e5;
+  --primary-700: #1976d2;
+  --primary-800: #1565c0;
+  --primary-900: #0d47a1;
+
+  /* Accent Colors (Orange) */
+  --accent-500: #ff9800;
+  --accent-600: #fb8c00;
+  --accent-700: #f57c00;
+
+  /* Warn/Error Colors (Red) */
+  --warn-500: #f44336;
+  --warn-600: #e53935;
+  --warn-700: #d32f2f;
+
+  /* Surface Colors (Dark Theme) */
+  --surface-background: #121212;
+  --surface-card: #1e1e1e;
+  --surface-elevated: #2d2d2d;
+  --surface-dialog: #2d2d2d;
+  --surface-divider: rgba(255, 255, 255, 0.12);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --surface-selected: rgba(33, 150, 243, 0.16);
+
+  /* Text Colors */
+  --text-primary: rgba(255, 255, 255, 0.87);
+  --text-secondary: rgba(255, 255, 255, 0.60);
+  --text-disabled: rgba(255, 255, 255, 0.38);
+  --text-hint: rgba(255, 255, 255, 0.38);
+
+  /* Status Colors */
+  --status-success: #4caf50;
+  --status-warning: #ff9800;
+  --status-error: #f44336;
+  --status-info: #2196f3;
+
+  /* Spacing (8px base unit) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Border Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-chip: 16px;
+  --radius-full: 50%;
+
+  /* Elevation (Box Shadows) */
+  --elevation-0: none;
+  --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --elevation-2: 0 3px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+  --elevation-4: 0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+  --elevation-8: 0 15px 25px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.05);
+  --elevation-16: 0 20px 40px rgba(0,0,0,0.2);
+  --elevation-24: 0 25px 50px rgba(0,0,0,0.25);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-standard: 300ms ease;
+  --transition-slow: 500ms ease;
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--surface-background);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Typography System */
+.headline-1 { font-size: 96px; font-weight: 300; letter-spacing: -1.5px; }
+.headline-2 { font-size: 60px; font-weight: 300; letter-spacing: -0.5px; }
+.headline-3 { font-size: 48px; font-weight: 400; letter-spacing: 0; }
+.headline-4 { font-size: 34px; font-weight: 400; letter-spacing: 0.25px; }
+.headline-5 { font-size: 24px; font-weight: 400; letter-spacing: 0; }
+.headline-6 { font-size: 20px; font-weight: 500; letter-spacing: 0.15px; }
+
+.page-title {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.subtitle-1 { font-size: 16px; font-weight: 400; letter-spacing: 0.15px; }
+.subtitle-2 { font-size: 14px; font-weight: 500; letter-spacing: 0.1px; }
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.body-1 { font-size: 16px; font-weight: 400; letter-spacing: 0.5px; }
+.body-2 { font-size: 14px; font-weight: 400; letter-spacing: 0.25px; }
+
+.caption {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+
+.overline {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.button-text {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1.25px;
+  text-transform: uppercase;
+}
+
+.monospace {
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* Status Chips/Badges */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 500;
+  gap: var(--spacing-xs);
+}
+
+.chip--success, .chip--active {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: var(--status-success);
+}
+
+.chip--error, .chip--inactive {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: var(--status-error);
+}
+
+.chip--warning, .chip--locked {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: var(--status-warning);
+}
+
+.chip--info {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: var(--primary-500);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge--system {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: var(--accent-500);
+}
+
+.badge--custom {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: var(--primary-500);
+}
+
+.role-chip {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: var(--primary-500);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Avatar */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.avatar--large {
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
+}
+
+.entity-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: white;
+}
+
+/* Notice/Alert Banners */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.notice--info {
+  background-color: rgba(33, 150, 243, 0.1);
+  border-left: 3px solid var(--primary-500);
+}
+
+.notice--warning {
+  background-color: rgba(255, 152, 0, 0.1);
+  border-left: 3px solid var(--accent-500);
+}
+
+.notice--error {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid var(--warn-500);
+}
+
+.notice--success {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid var(--status-success);
+}
+
+.notice__icon {
+  color: inherit;
+}
+
+.notice--info .notice__icon { color: var(--primary-500); }
+.notice--warning .notice__icon { color: var(--accent-500); }
+.notice--error .notice__icon { color: var(--warn-500); }
+.notice--success .notice__icon { color: var(--status-success); }
+
+.notice__text {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-elevated);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

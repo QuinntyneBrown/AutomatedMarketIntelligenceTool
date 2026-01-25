@@ -1,34 +1,34 @@
-using Identity.Core;
 using Identity.Core.Models.UserAggregate;
 using Identity.Core.Models.UserAggregate.Entities;
 using Identity.Core.Models.UserAggregate.Events;
 using Identity.Core.Services;
+using Identity.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Messaging.Abstractions;
+using Shared.Messaging;
 
 namespace Identity.Api.Features.Auth.Commands.Register;
 
 public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResponse>
 {
-    private readonly IIdentityContext _context;
+    private readonly IdentityDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailService _emailService;
-    private readonly IMessagePublisher _messagePublisher;
+    private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<RegisterCommandHandler> _logger;
 
     public RegisterCommandHandler(
-        IIdentityContext context,
+        IdentityDbContext context,
         IPasswordHasher passwordHasher,
         IEmailService emailService,
-        IMessagePublisher messagePublisher,
+        IEventPublisher eventPublisher,
         ILogger<RegisterCommandHandler> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
-        _messagePublisher = messagePublisher;
+        _eventPublisher = eventPublisher;
         _logger = logger;
     }
 
@@ -84,11 +84,11 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Re
         await _emailService.SendVerificationEmailAsync(user.Email, verificationToken.Token, cancellationToken);
 
         // Publish event
-        await _messagePublisher.PublishAsync(new UserRegisteredEvent
+        await _eventPublisher.PublishAsync(new UserRegisteredEvent
         {
             UserId = user.UserId.ToString(),
             Email = user.Email,
-            RegisteredAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            RegisteredAt = DateTimeOffset.UtcNow
         }, cancellationToken);
 
         _logger.LogInformation("User registered: {UserId} ({Email})", user.UserId, user.Email);

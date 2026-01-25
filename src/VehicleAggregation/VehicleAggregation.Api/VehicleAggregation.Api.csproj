@@ -8,6 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VehicleAggregation.Infrastructure\VehicleAggregation.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Contracts\Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.Messaging\Shared.Messaging.csproj" />
   </ItemGroup>
 
 </Project>

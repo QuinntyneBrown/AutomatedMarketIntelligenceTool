@@ -1,0 +1,54 @@
+@startuml price-change
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Price Change Detection Flow
+
+participant "Scraping Worker" as scraper
+queue "Event Bus" as events
+participant "Listing Service" as listing
+database "Listing DB" as db
+participant "WatchList Service" as watchlist
+participant "Alert Service" as alert
+participant "Vehicle Aggregation" as vehicle
+
+scraper -> events: Publish ListingScrapedEvent\n{sourceListingId, newPrice}
+
+events --> listing: ListingScrapedEvent
+
+listing -> db: Find existing listing\n(source + sourceListingId)
+db --> listing: Existing listing found
+
+listing -> listing: Compare prices
+alt Price changed
+    listing -> db: Store price history entry
+    db --> listing: History saved
+
+    listing -> db: Update current price
+    db --> listing: Listing updated
+
+    listing -> events: Publish PriceChangedEvent\n{listingId, oldPrice, newPrice}
+
+    events --> watchlist: PriceChangedEvent
+    watchlist -> watchlist: Find watchers
+    watchlist -> db: Update watched listing prices
+
+    alt Significant price drop
+        watchlist -> events: Publish WatchedPriceDropEvent
+    end
+
+    events --> alert: PriceChangedEvent
+    alert -> alert: Check price drop alerts
+    alert -> alert: Notify matched users
+
+    events --> vehicle: PriceChangedEvent
+    vehicle -> vehicle: Recalculate vehicle stats
+    vehicle -> vehicle: Update best price reference
+
+else Price unchanged
+    listing -> db: Update lastSeenAt
+    db --> listing: Updated
+end
+
+@enduml

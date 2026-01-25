@@ -1,0 +1,73 @@
+@startuml profile-management
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Search Profile Management Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "Search Service" as search
+database "Search DB" as db
+participant "Alert Service" as alert
+
+== Create Search Profile ==
+
+user -> gateway: POST /api/search/profiles\n{name, criteria, isActive}
+gateway -> search: Forward request
+
+search -> search: Validate criteria
+search -> db: Create SearchProfile
+db --> search: Profile created
+
+alt Profile is active
+    search -> alert: CreateAlertFromProfile\n{profileId, criteria}
+    alert --> search: Alert created
+end
+
+search --> gateway: 201 Created\n{profileId}
+gateway --> user: Profile saved
+
+== Execute Saved Search ==
+
+user -> gateway: GET /api/search/profiles/{id}
+gateway -> search: Forward request
+
+search -> db: Get SearchProfile
+db --> search: Profile with criteria
+
+search -> search: Execute search with criteria
+search --> gateway: {profile, results}
+gateway --> user: Search results
+
+== Update Profile ==
+
+user -> gateway: PUT /api/search/profiles/{id}\n{name, criteria, isActive}
+gateway -> search: Forward request
+
+search -> db: Update SearchProfile
+db --> search: Updated
+
+alt Active status changed
+    search -> alert: UpdateAlertStatus
+    alert --> search: Alert updated
+end
+
+search --> gateway: 200 OK
+gateway --> user: Profile updated
+
+== Activate/Deactivate ==
+
+user -> gateway: POST /api/search/profiles/{id}/activate
+gateway -> search: Forward request
+
+search -> db: Set isActive = true
+db --> search: Updated
+
+search -> alert: CreateAlert\n{profileId, criteria}
+alert --> search: Alert created
+
+search --> gateway: 200 OK
+gateway --> user: Profile activated
+
+@enduml

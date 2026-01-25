@@ -1,0 +1,69 @@
+@startuml watchlist-management
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title WatchList Management Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "WatchList Service" as watchlist
+database "WatchList DB" as db
+participant "Listing Service" as listing
+
+== Add to WatchList ==
+
+user -> gateway: POST /api/watchlist\n{listingId, notes}
+gateway -> watchlist: Forward request
+
+watchlist -> listing: Get listing details
+listing --> watchlist: {price, make, model, ...}
+
+watchlist -> db: Check if already watching
+db --> watchlist: Not found
+
+watchlist -> db: Create WatchedListing\n{userId, listingId, priceAtWatch, notes}
+db --> watchlist: Created
+
+watchlist --> gateway: 201 Created
+gateway --> user: Added to watchlist
+
+== Get User WatchList ==
+
+user -> gateway: GET /api/watchlist/user/{userId}
+gateway -> watchlist: Forward request
+
+watchlist -> db: Get WatchedListings for user
+db --> watchlist: List<WatchedListing>
+
+watchlist -> listing: Get current listing details
+listing --> watchlist: Current prices and status
+
+watchlist -> watchlist: Calculate price changes
+
+watchlist --> gateway: List<WatchedItem>\n{listing, priceAtWatch, currentPrice, priceChange}
+gateway --> user: WatchList with price changes
+
+== Update Notes ==
+
+user -> gateway: PATCH /api/watchlist/user/{userId}/listing/{listingId}/notes\n{notes}
+gateway -> watchlist: Forward request
+
+watchlist -> db: Update notes
+db --> watchlist: Updated
+
+watchlist --> gateway: 200 OK
+gateway --> user: Notes updated
+
+== Remove from WatchList ==
+
+user -> gateway: DELETE /api/watchlist/user/{userId}/listing/{listingId}
+gateway -> watchlist: Forward request
+
+watchlist -> db: Delete WatchedListing
+db --> watchlist: Deleted
+
+watchlist --> gateway: 204 No Content
+gateway --> user: Removed from watchlist
+
+@enduml

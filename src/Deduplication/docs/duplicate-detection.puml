@@ -1,0 +1,64 @@
+@startuml duplicate-detection
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Duplicate Detection Flow
+
+queue "Event Bus" as events
+participant "Deduplication Service" as dedup
+database "Deduplication DB" as db
+participant "Listing Service" as listing
+participant "Image Service" as image
+
+events -> dedup: ListingCreatedEvent\n{listingId, listingData}
+
+dedup -> listing: Get candidate listings\n(same make, model, year range)
+listing --> dedup: List<CandidateListing>
+
+loop For each candidate
+    dedup -> dedup: Calculate Title Score
+    note right: Levenshtein distance / fuzzy match
+
+    dedup -> dedup: Calculate VIN Score
+    note right: Exact match = 100, partial = 50
+
+    dedup -> image: Compare image hashes
+    image --> dedup: Image similarity score
+
+    dedup -> dedup: Calculate Price Score
+    note right: Within 5% = 100, 10% = 75, etc.
+
+    dedup -> dedup: Calculate Mileage Score
+    note right: Within 1000km = 100, etc.
+
+    dedup -> dedup: Calculate Location Score
+    note right: Same city = 100, province = 50
+
+    dedup -> dedup: Calculate Overall Score
+    note right
+      Title: 15%
+      VIN: 30%
+      Image: 25%
+      Price: 10%
+      Mileage: 10%
+      Location: 10%
+    end note
+
+    alt Score >= 85 (High Confidence)
+        dedup -> db: Create DuplicateMatch\n{confidence: High}
+        dedup -> events: Publish DuplicateFoundEvent
+
+    else Score >= 60 (Medium Confidence)
+        dedup -> db: Create DuplicateMatch\n{confidence: Medium}
+        dedup -> db: Create ReviewItem
+        dedup -> events: Publish ReviewRequiredEvent
+
+    else Score >= 40 (Low Confidence)
+        dedup -> db: Create DuplicateMatch\n{confidence: Low}
+    end
+end
+
+dedup -> events: Publish DeduplicationCompletedEvent\n{listingId, duplicatesFound}
+
+@enduml

@@ -1,0 +1,77 @@
+@startuml search-execution
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Search Execution Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "Search Service" as search
+participant "Listing Service" as listing
+participant "Geographic Service" as geo
+database "Search Index" as index
+
+user -> gateway: POST /api/search\n{criteria, page, pageSize}
+gateway -> search: Forward request
+
+search -> search: Validate criteria
+
+alt Location-based search
+    search -> geo: Geocode location\n{postalCode or city}
+    geo --> search: {lat, long}
+
+    search -> geo: Get postal codes in radius
+    geo --> search: List<PostalCode>
+end
+
+search -> index: Build search query
+note right of search
+  Filters:
+  - Make/Model
+  - Year range
+  - Price range
+  - Mileage range
+  - Location
+  - Body style
+  - Transmission
+  - Keywords
+end note
+
+search -> index: Execute search
+index --> search: Raw results
+
+search -> search: Calculate relevance scores
+search -> search: Apply pagination
+
+search -> listing: Enrich with listing details
+listing --> search: Full listing data
+
+search -> search: Build response
+search --> gateway: {results, totalCount, facets}
+gateway --> user: Search results
+
+== Autocomplete ==
+
+user -> gateway: GET /api/search/autocomplete?q=hon
+gateway -> search: Forward request
+
+search -> index: Prefix search on Make/Model
+index --> search: Matching terms
+
+search -> search: Rank by popularity
+search --> gateway: {suggestions}
+gateway --> user: Autocomplete suggestions
+
+== Get Facets ==
+
+user -> gateway: POST /api/search/facets\n{criteria}
+gateway -> search: Forward request
+
+search -> index: Aggregate query
+index --> search: Facet counts
+
+search --> gateway: {makes, models, years, bodyStyles, priceRange, ...}
+gateway --> user: Available filters
+
+@enduml

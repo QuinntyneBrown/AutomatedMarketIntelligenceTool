@@ -1,26 +1,26 @@
-using Identity.Core;
 using Identity.Core.Models.UserAggregate.Events;
 using Identity.Core.Services;
+using Identity.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Messaging.Abstractions;
+using Shared.Messaging;
 
 namespace Identity.Api.Features.Profile.Commands.UpdateProfile;
 
 public sealed class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand, UpdateProfileResponse>
 {
-    private readonly IIdentityContext _context;
-    private readonly IMessagePublisher _messagePublisher;
+    private readonly IdentityDbContext _context;
+    private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<UpdateProfileCommandHandler> _logger;
 
     public UpdateProfileCommandHandler(
-        IIdentityContext context,
-        IMessagePublisher messagePublisher,
+        IdentityDbContext context,
+        IEventPublisher eventPublisher,
         ILogger<UpdateProfileCommandHandler> logger)
     {
         _context = context;
-        _messagePublisher = messagePublisher;
+        _eventPublisher = eventPublisher;
         _logger = logger;
     }
 
@@ -69,11 +69,11 @@ public sealed class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileC
         await _context.SaveChangesAsync(cancellationToken);
 
         // Publish event
-        await _messagePublisher.PublishAsync(new UserProfileUpdatedEvent
+        await _eventPublisher.PublishAsync(new UserProfileUpdatedEvent
         {
             UserId = request.UserId.ToString(),
             BusinessName = request.BusinessName,
-            UpdatedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            UpdatedAt = DateTimeOffset.UtcNow
         }, cancellationToken);
 
         _logger.LogInformation("Profile updated for user: {UserId}", request.UserId);

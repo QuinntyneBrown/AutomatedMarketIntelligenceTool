@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Detail - Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    /* ============================================
+       CSS VARIABLES & TOKENS (MD3 Dark Theme)
+       ============================================ */
+    :root {
+      --primary-500: #2196f3;
+      --primary-600: #1e88e5;
+      --primary-700: #1976d2;
+      --accent-500: #ff9800;
+      --accent-700: #f57c00;
+      --warn-500: #f44336;
+      --surface-background: #121212;
+      --surface-card: #1e1e1e;
+      --surface-elevated: #2d2d2d;
+      --surface-divider: rgba(255, 255, 255, 0.12);
+      --surface-hover: rgba(255, 255, 255, 0.08);
+      --surface-selected: rgba(33, 150, 243, 0.16);
+      --text-primary: rgba(255, 255, 255, 0.87);
+      --text-secondary: rgba(255, 255, 255, 0.60);
+      --text-disabled: rgba(255, 255, 255, 0.38);
+      --status-success: #4caf50;
+      --status-warning: #ff9800;
+      --status-error: #f44336;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 50%;
+      --radius-chip: 16px;
+      --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --elevation-2: 0 3px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+      --elevation-4: 0 10px 20px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+      --transition-fast: 150ms ease;
+      --transition-standard: 300ms ease;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--surface-background);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .mat-toolbar {
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-md);
+      height: 64px;
+      background-color: var(--surface-card);
+      box-shadow: var(--elevation-4);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    .mat-toolbar__title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-left: var(--spacing-md);
+    }
+
+    .mat-toolbar__spacer { flex: 1; }
+
+    .layout-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .mat-sidenav {
+      width: 256px;
+      background-color: var(--surface-card);
+      border-right: 1px solid var(--surface-divider);
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: transform var(--transition-standard);
+    }
+
+    .mat-nav-list {
+      list-style: none;
+      padding: var(--spacing-sm) 0;
+    }
+
+    .mat-list-item {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-md) var(--spacing-lg);
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .mat-list-item:hover { background-color: var(--surface-hover); }
+    .mat-list-item--active {
+      background-color: var(--surface-selected);
+      color: var(--primary-500);
+    }
+
+    .mat-list-item__icon {
+      margin-right: var(--spacing-md);
+      color: var(--text-secondary);
+    }
+
+    .mat-list-item--active .mat-list-item__icon { color: var(--primary-500); }
+
+    .nav-divider {
+      margin: var(--spacing-md) 0;
+      height: 1px;
+      background-color: var(--surface-divider);
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-xl);
+    }
+
+    .main-content--centered {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* ============================================
+       BREADCRUMB
+       ============================================ */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+      color: var(--text-secondary);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+      color: var(--primary-500);
+      text-decoration: none;
+    }
+
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    .breadcrumb__separator {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 var(--spacing-md);
+      height: 36px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1.25px;
+      cursor: pointer;
+      gap: var(--spacing-sm);
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn--primary {
+      background-color: var(--primary-500);
+      color: white;
+      box-shadow: var(--elevation-2);
+    }
+
+    .btn--primary:hover {
+      background-color: var(--primary-700);
+      box-shadow: var(--elevation-4);
+    }
+
+    .btn--outlined {
+      background-color: transparent;
+      color: var(--primary-500);
+      border: 1px solid var(--primary-500);
+    }
+
+    .btn--outlined:hover {
+      background-color: rgba(33, 150, 243, 0.08);
+    }
+
+    .btn--warn {
+      background-color: transparent;
+      color: var(--warn-500);
+      border: 1px solid var(--warn-500);
+    }
+
+    .btn--warn:hover {
+      background-color: rgba(244, 67, 54, 0.08);
+    }
+
+    .btn--danger {
+      background-color: transparent;
+      color: var(--warn-500);
+      border: 1px solid var(--warn-500);
+    }
+
+    .btn--danger:hover {
+      background-color: rgba(244, 67, 54, 0.08);
+    }
+
+    .icon-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .icon-button:hover { background-color: var(--surface-hover); }
+
+    /* ============================================
+       PAGE HEADER (Detail)
+       ============================================ */
+    .page-header--detail {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-xl);
+      gap: var(--spacing-lg);
+      flex-wrap: wrap;
+    }
+
+    .page-title-section {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+
+    .page-title-content h1 {
+      font-size: 28px;
+      font-weight: 400;
+      margin-bottom: var(--spacing-xs);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+    }
+
+    .status-badges {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    /* ============================================
+       AVATAR
+       ============================================ */
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      font-size: 16px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .avatar--large {
+      width: 80px;
+      height: 80px;
+      font-size: 32px;
+    }
+
+    /* ============================================
+       CHIPS & BADGES
+       ============================================ */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-chip);
+      font-size: 12px;
+      font-weight: 500;
+      gap: var(--spacing-xs);
+    }
+
+    .chip--active, .chip--success {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: var(--status-success);
+    }
+
+    .chip--info {
+      background-color: rgba(33, 150, 243, 0.2);
+      color: var(--primary-500);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge--system {
+      background-color: rgba(255, 152, 0, 0.2);
+      color: var(--accent-500);
+    }
+
+    /* ============================================
+       CARDS
+       ============================================ */
+    .mat-card {
+      background-color: var(--surface-card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--elevation-1);
+      overflow: hidden;
+    }
+
+    .mat-card--padded {
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .mat-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--surface-divider);
+    }
+
+    .mat-card__title {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .mat-card__subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ============================================
+       FORM ELEMENTS
+       ============================================ */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-field--full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: var(--spacing-md);
+      background-color: var(--surface-elevated);
+      border: 1px solid var(--surface-divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      transition: border-color var(--transition-fast);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-500);
+    }
+
+    .form-input:disabled {
+      color: var(--text-disabled);
+      cursor: not-allowed;
+    }
+
+    .form-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ============================================
+       TOGGLE SWITCH
+       ============================================ */
+    .toggle-field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md);
+      background-color: var(--surface-elevated);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .toggle-label {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toggle-label__title {
+      font-weight: 500;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .toggle-label__description {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .toggle-switch--checked {
+      background-color: rgba(33, 150, 243, 0.5);
+    }
+
+    .toggle-switch__thumb {
+      width: 20px;
+      height: 20px;
+      background-color: #fafafa;
+      border-radius: var(--radius-full);
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      box-shadow: var(--elevation-1);
+      transition: all var(--transition-fast);
+    }
+
+    .toggle-switch--checked .toggle-switch__thumb {
+      background-color: var(--primary-500);
+      left: 22px;
+    }
+
+    /* ============================================
+       INFO GRID
+       ============================================ */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-lg);
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-item__label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .info-item__value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .info-item__value--success { color: var(--status-success); }
+    .info-item__value--warning { color: var(--status-warning); }
+    .info-item__value--error { color: var(--status-error); }
+
+    /* ============================================
+       ROLE ASSIGNMENT
+       ============================================ */
+    .role-assignment {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .role-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md);
+      background-color: var(--surface-elevated);
+      border-radius: var(--radius-sm);
+      transition: background-color var(--transition-fast);
+    }
+
+    .role-item:hover {
+      background-color: var(--surface-hover);
+    }
+
+    .role-item__info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .role-item__details {
+      flex: 1;
+    }
+
+    .role-item__name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .role-item__description {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--text-secondary);
+      border-radius: 2px;
+      background-color: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all var(--transition-fast);
+    }
+
+    .checkbox--checked {
+      background-color: var(--primary-500);
+      border-color: var(--primary-500);
+    }
+
+    .checkbox--checked::after {
+      content: '\2713';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    /* ============================================
+       ACTIVITY LIST
+       ============================================ */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .activity-item {
+      display: flex;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+      background-color: var(--surface-elevated);
+      border-radius: var(--radius-sm);
+    }
+
+    .activity-item__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background-color: rgba(33, 150, 243, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-500);
+      flex-shrink: 0;
+    }
+
+    .activity-item__content {
+      flex: 1;
+    }
+
+    .activity-item__title {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .activity-item__description {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .activity-item__time {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    /* ============================================
+       RESPONSIVE BREAKPOINTS
+       ============================================ */
+
+    /* Tablet */
+    @media (max-width: 991px) {
+      .mat-sidenav {
+        position: fixed;
+        left: 0;
+        top: 64px;
+        height: calc(100vh - 64px);
+        transform: translateX(-100%);
+        z-index: 999;
+      }
+
+      .mat-sidenav.open {
+        transform: translateX(0);
+      }
+
+      .page-header--detail {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .action-buttons {
+        width: 100%;
+      }
+
+      .action-buttons .btn {
+        flex: 1;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+      .main-content {
+        padding: var(--spacing-md);
+      }
+
+      .page-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .avatar--large {
+        width: 64px;
+        height: 64px;
+        font-size: 24px;
+      }
+
+      .page-title-content h1 {
+        font-size: 22px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .role-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+      }
+
+      .role-item__info {
+        width: 100%;
+      }
+
+      .activity-item {
+        flex-direction: column;
+      }
+
+      .activity-item__icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .toggle-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+      }
+
+      .mat-card--padded {
+        padding: var(--spacing-md);
+      }
+    }
+
+    /* Large Desktop */
+    @media (min-width: 1200px) {
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Toolbar -->
+    <header class="mat-toolbar">
+      <button class="icon-button" id="menu-toggle">
+        <span class="material-icons-outlined">menu</span>
+      </button>
+      <h1 class="mat-toolbar__title">Market Intelligence Admin</h1>
+      <div class="mat-toolbar__spacer"></div>
+      <button class="icon-button">
+        <span class="material-icons-outlined">notifications</span>
+      </button>
+      <button class="icon-button">
+        <span class="material-icons-outlined">help_outline</span>
+      </button>
+      <button class="icon-button">
+        <span class="material-icons-outlined">account_circle</span>
+      </button>
+    </header>
+
+    <div class="layout-container">
+      <!-- Sidenav -->
+      <nav class="mat-sidenav" id="sidenav">
+        <ul class="mat-nav-list">
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">dashboard</span>
+            <span>Dashboard</span>
+          </li>
+          <li class="mat-list-item mat-list-item--active">
+            <span class="material-icons-outlined mat-list-item__icon">people</span>
+            <span>User Management</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">admin_panel_settings</span>
+            <span>Role Management</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">vpn_key</span>
+            <span>API Keys</span>
+          </li>
+          <li class="nav-divider"></li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">analytics</span>
+            <span>Market Analysis</span>
+          </li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">trending_up</span>
+            <span>Intelligence Reports</span>
+          </li>
+          <li class="nav-divider"></li>
+          <li class="mat-list-item">
+            <span class="material-icons-outlined mat-list-item__icon">settings</span>
+            <span>Settings</span>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content main-content--centered">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+          <a href="#">Admin</a>
+          <span class="material-icons-outlined breadcrumb__separator">chevron_right</span>
+          <a href="user-list.html">User Management</a>
+          <span class="material-icons-outlined breadcrumb__separator">chevron_right</span>
+          <span>John Smith</span>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header page-header--detail">
+          <div class="page-title-section">
+            <div class="avatar avatar--large">JS</div>
+            <div class="page-title-content">
+              <h1>
+                John Smith
+                <span class="badge badge--system">Admin</span>
+              </h1>
+              <p class="page-subtitle">john.smith@example.com</p>
+              <div class="status-badges">
+                <span class="chip chip--success">
+                  <span class="material-icons-outlined" style="font-size: 16px;">check_circle</span>
+                  Active
+                </span>
+                <span class="chip chip--info">
+                  <span class="material-icons-outlined" style="font-size: 16px;">verified_user</span>
+                  Email Verified
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn--outlined">
+              <span class="material-icons-outlined">lock_reset</span>
+              Reset Password
+            </button>
+            <button class="btn btn--warn">
+              <span class="material-icons-outlined">block</span>
+              Deactivate
+            </button>
+            <button class="btn btn--primary">
+              <span class="material-icons-outlined">save</span>
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- Basic Information Card -->
+        <div class="mat-card mat-card--padded">
+          <div class="mat-card__header">
+            <div>
+              <h2 class="mat-card__title">Basic Information</h2>
+              <p class="mat-card__subtitle">User identity and contact details</p>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" value="john.smith@example.com">
+              <div class="form-hint">Email is used for login and notifications</div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Display Name</label>
+              <input type="text" class="form-input" value="John Smith">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">User ID</label>
+              <input type="text" class="form-input" value="a1b2c3d4-e5f6-7890-abcd-ef1234567890" disabled>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Created At</label>
+              <input type="text" class="form-input" value="January 15, 2025" disabled>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Settings Card -->
+        <div class="mat-card mat-card--padded">
+          <div class="mat-card__header">
+            <div>
+              <h2 class="mat-card__title">Security Settings</h2>
+              <p class="mat-card__subtitle">Account security and access controls</p>
+            </div>
+          </div>
+
+          <div class="toggle-field">
+            <div class="toggle-label">
+              <div class="toggle-label__title">Email Verified</div>
+              <div class="toggle-label__description">User has verified their email address</div>
+            </div>
+            <div class="toggle-switch toggle-switch--checked">
+              <div class="toggle-switch__thumb"></div>
+            </div>
+          </div>
+
+          <div class="toggle-field">
+            <div class="toggle-label">
+              <div class="toggle-label__title">Account Active</div>
+              <div class="toggle-label__description">User can access the system</div>
+            </div>
+            <div class="toggle-switch toggle-switch--checked">
+              <div class="toggle-switch__thumb"></div>
+            </div>
+          </div>
+
+          <div style="margin-top: var(--spacing-lg);">
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-item__label">Last Login</div>
+                <div class="info-item__value">January 25, 2026 at 2:30 PM</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item__label">Failed Login Attempts</div>
+                <div class="info-item__value">0</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item__label">Lockout Status</div>
+                <div class="info-item__value info-item__value--success">Not Locked</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item__label">Lockout End</div>
+                <div class="info-item__value">N/A</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role Assignment Card -->
+        <div class="mat-card mat-card--padded">
+          <div class="mat-card__header">
+            <div>
+              <h2 class="mat-card__title">Role Assignment</h2>
+              <p class="mat-card__subtitle">Assign roles to control user permissions</p>
+            </div>
+          </div>
+
+          <div class="role-assignment">
+            <div class="role-item">
+              <div class="role-item__info">
+                <div class="checkbox checkbox--checked"></div>
+                <div class="role-item__details">
+                  <div class="role-item__name">Admin</div>
+                  <div class="role-item__description">Full system access with administrative privileges</div>
+                </div>
+              </div>
+              <span class="badge badge--system">SYSTEM</span>
+            </div>
+
+            <div class="role-item">
+              <div class="role-item__info">
+                <div class="checkbox checkbox--checked"></div>
+                <div class="role-item__details">
+                  <div class="role-item__name">User</div>
+                  <div class="role-item__description">Standard user access for day-to-day operations</div>
+                </div>
+              </div>
+              <span class="badge badge--system">SYSTEM</span>
+            </div>
+
+            <div class="role-item">
+              <div class="role-item__info">
+                <div class="checkbox"></div>
+                <div class="role-item__details">
+                  <div class="role-item__name">ReadOnly</div>
+                  <div class="role-item__description">View-only access to reports and dashboards</div>
+                </div>
+              </div>
+              <span class="badge badge--system">SYSTEM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="mat-card mat-card--padded">
+          <div class="mat-card__header">
+            <div>
+              <h2 class="mat-card__title">Recent Activity</h2>
+              <p class="mat-card__subtitle">User activity log</p>
+            </div>
+          </div>
+
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-item__icon">
+                <span class="material-icons-outlined">login</span>
+              </div>
+              <div class="activity-item__content">
+                <div class="activity-item__title">Successful Login</div>
+                <div class="activity-item__description">Logged in from 192.168.1.105</div>
+              </div>
+              <div class="activity-item__time">2 hours ago</div>
+            </div>
+
+            <div class="activity-item">
+              <div class="activity-item__icon">
+                <span class="material-icons-outlined">edit</span>
+              </div>
+              <div class="activity-item__content">
+                <div class="activity-item__title">Profile Updated</div>
+                <div class="activity-item__description">Changed display name</div>
+              </div>
+              <div class="activity-item__time">1 day ago</div>
+            </div>
+
+            <div class="activity-item">
+              <div class="activity-item__icon">
+                <span class="material-icons-outlined">security</span>
+              </div>
+              <div class="activity-item__content">
+                <div class="activity-item__title">Password Changed</div>
+                <div class="activity-item__description">Password was reset successfully</div>
+              </div>
+              <div class="activity-item__time">5 days ago</div>
+            </div>
+
+            <div class="activity-item">
+              <div class="activity-item__icon">
+                <span class="material-icons-outlined">person_add</span>
+              </div>
+              <div class="activity-item__content">
+                <div class="activity-item__title">Account Created</div>
+                <div class="activity-item__description">User account was created by admin</div>
+              </div>
+              <div class="activity-item__time">10 days ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone Card -->
+        <div class="mat-card mat-card--padded" style="border: 1px solid rgba(244, 67, 54, 0.3);">
+          <div class="mat-card__header">
+            <div>
+              <h2 class="mat-card__title" style="color: var(--warn-500);">Danger Zone</h2>
+              <p class="mat-card__subtitle">Irreversible actions</p>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--spacing-md);">
+            <div>
+              <div style="font-weight: 500; margin-bottom: var(--spacing-xs);">Delete User Account</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Permanently delete this user and all associated data. This action cannot be undone.</div>
+            </div>
+            <button class="btn btn--danger">
+              <span class="material-icons-outlined">delete</span>
+              Delete User
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+      document.getElementById('sidenav').classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

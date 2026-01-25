@@ -1,0 +1,64 @@
+@startuml dealer-discovery
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Dealer Discovery Flow
+
+participant "Scraping Worker" as scraper
+queue "Event Bus" as events
+participant "Listing Service" as listing
+participant "Dealer Service" as dealer
+database "Dealer DB" as db
+
+scraper -> events: Publish ListingScrapedEvent\n{dealerName, dealerAddress, ...}
+
+events --> listing: ListingScrapedEvent
+
+listing -> dealer: FindOrCreateDealer\n{name, address, city, province}
+
+dealer -> dealer: Normalize dealer name
+note right of dealer
+  "ABC Motors Inc." -> "abc motors"
+  "ABC Motors Ltd" -> "abc motors"
+  Remove: Inc, Ltd, LLC, Corp
+  Lowercase, trim spaces
+end note
+
+dealer -> db: Find by normalized name
+db --> dealer: Result
+
+alt Dealer exists
+    dealer -> db: Update dealer info\n{address, phone if changed}
+    db --> dealer: Updated
+
+    dealer -> db: Increment listing count
+    db --> dealer: Updated
+
+    dealer --> listing: {dealerId}
+
+else Dealer not found
+    dealer -> db: Create Dealer\n{name, normalizedName, address, city, province}
+    db --> dealer: Dealer created
+
+    dealer --> listing: {dealerId}
+end
+
+listing -> listing: Link listing to dealer
+
+== Search Dealers ==
+
+actor "User" as user
+participant "API Gateway" as gateway
+
+user -> gateway: POST /api/dealers/search\n{query, province, city}
+gateway -> dealer: Forward request
+
+dealer -> dealer: Normalize search query
+dealer -> db: Search by normalized name\nFilter by location
+db --> dealer: List<Dealer>
+
+dealer --> gateway: Search results
+gateway --> user: Matching dealers
+
+@enduml

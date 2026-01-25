@@ -1,25 +1,25 @@
-using Identity.Core;
 using Identity.Core.Models.UserAggregate.Events;
+using Identity.Infrastructure.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Messaging.Abstractions;
+using Shared.Messaging;
 
 namespace Identity.Api.Features.Auth.Commands.VerifyEmail;
 
 public sealed class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, VerifyEmailResponse>
 {
-    private readonly IIdentityContext _context;
-    private readonly IMessagePublisher _messagePublisher;
+    private readonly IdentityDbContext _context;
+    private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<VerifyEmailCommandHandler> _logger;
 
     public VerifyEmailCommandHandler(
-        IIdentityContext context,
-        IMessagePublisher messagePublisher,
+        IdentityDbContext context,
+        IEventPublisher eventPublisher,
         ILogger<VerifyEmailCommandHandler> logger)
     {
         _context = context;
-        _messagePublisher = messagePublisher;
+        _eventPublisher = eventPublisher;
         _logger = logger;
     }
 
@@ -58,11 +58,11 @@ public sealed class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailComma
         await _context.SaveChangesAsync(cancellationToken);
 
         // Publish event
-        await _messagePublisher.PublishAsync(new UserEmailVerifiedEvent
+        await _eventPublisher.PublishAsync(new UserEmailVerifiedEvent
         {
             UserId = user.UserId.ToString(),
             Email = user.Email,
-            VerifiedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            VerifiedAt = DateTimeOffset.UtcNow
         }, cancellationToken);
 
         _logger.LogInformation("Email verified for user: {UserId}", user.UserId);

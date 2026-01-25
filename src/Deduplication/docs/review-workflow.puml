@@ -1,0 +1,77 @@
+@startuml review-workflow
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Manual Review Workflow
+
+actor "Reviewer" as reviewer
+participant "API Gateway" as gateway
+participant "Deduplication Service" as dedup
+database "Deduplication DB" as db
+participant "Listing Service" as listing
+participant "Metrics Service" as metrics
+
+== Get Review Queue ==
+
+reviewer -> gateway: GET /api/reviews?status=pending
+gateway -> dedup: Forward request
+
+dedup -> db: Get pending ReviewItems\nOrdered by priority
+db --> dedup: List<ReviewItem>
+
+dedup -> listing: Get listing details\nfor each match
+listing --> dedup: Listing data
+
+dedup --> gateway: ReviewQueue with listing details
+gateway --> reviewer: Display review queue
+
+== Review Single Match ==
+
+reviewer -> gateway: GET /api/duplicates/{matchId}
+gateway -> dedup: Forward request
+
+dedup -> db: Get DuplicateMatch
+db --> dedup: Match with score breakdown
+
+dedup -> listing: Get both listings
+listing --> dedup: Full listing details
+
+dedup --> gateway: {match, listings, scoreBreakdown}
+gateway --> reviewer: Display comparison view
+
+== Confirm as Duplicate ==
+
+reviewer -> gateway: POST /api/reviews/{id}/confirm\n{notes}
+gateway -> dedup: Forward request
+
+dedup -> db: Update DuplicateMatch\n{isConfirmed: true}
+db --> dedup: Updated
+
+dedup -> db: Update ReviewItem\n{status: Confirmed, reviewedBy, notes}
+db --> dedup: Updated
+
+dedup -> metrics: RecordConfirmedDuplicate
+metrics -> metrics: Update precision/recall
+
+dedup --> gateway: 200 OK
+gateway --> reviewer: Confirmed
+
+== Reject as Not Duplicate ==
+
+reviewer -> gateway: POST /api/reviews/{id}/reject\n{notes}
+gateway -> dedup: Forward request
+
+dedup -> db: Update ReviewItem\n{status: Rejected, reviewedBy, notes}
+db --> dedup: Updated
+
+dedup -> db: Delete DuplicateMatch\nor mark as false positive
+db --> dedup: Removed
+
+dedup -> metrics: RecordFalsePositive
+metrics -> metrics: Update precision/recall
+
+dedup --> gateway: 200 OK
+gateway --> reviewer: Rejected
+
+@enduml

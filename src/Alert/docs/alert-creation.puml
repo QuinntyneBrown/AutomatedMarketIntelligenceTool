@@ -1,0 +1,67 @@
+@startuml alert-creation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Alert Creation Flow
+
+actor "User" as user
+participant "API Gateway" as gateway
+participant "Alert Service" as alert
+database "Alert DB" as db
+
+user -> gateway: POST /api/alerts\n{name, criteria, notificationMethod, email/webhookUrl}
+gateway -> alert: Forward request
+
+alert -> alert: Validate criteria
+note right of alert
+  Criteria validation:
+  - At least one filter required
+  - Price range valid
+  - Year range valid
+end note
+
+alert -> alert: Validate notification method
+note right of alert
+  - Email: Valid format
+  - Webhook: Valid URL
+  - Both: Both valid
+end note
+
+alert -> db: Create Alert\n{userId, name, criteria, notificationMethod, isActive: true}
+db --> alert: Alert created
+
+alert --> gateway: 201 Created\n{alertId, name}
+gateway --> user: Alert created
+
+== Update Alert ==
+
+user -> gateway: PUT /api/alerts/{id}\n{criteria, notificationMethod}
+gateway -> alert: Forward request
+
+alert -> db: Get Alert
+db --> alert: Alert record
+
+alt User owns alert
+    alert -> db: Update Alert
+    db --> alert: Updated
+
+    alert --> gateway: 200 OK
+    gateway --> user: Alert updated
+else Not owner
+    alert --> gateway: 403 Forbidden
+    gateway --> user: Access denied
+end
+
+== Delete Alert ==
+
+user -> gateway: DELETE /api/alerts/{id}
+gateway -> alert: Forward request
+
+alert -> db: Soft delete Alert\n{isActive: false}
+db --> alert: Updated
+
+alert --> gateway: 204 No Content
+gateway --> user: Alert deleted
+
+@enduml

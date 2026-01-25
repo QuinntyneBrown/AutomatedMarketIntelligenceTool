@@ -1,0 +1,58 @@
+@startuml api-key-generation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title API Key Generation Flow
+
+actor "Client" as client
+participant "API Gateway" as gateway
+participant "Identity Service" as identity
+database "Identity DB" as db
+queue "Event Bus" as events
+
+client -> gateway: POST /api/apikeys\n{name, scopes, expiresAt}\nAuthorization: Bearer token
+gateway -> identity: Forward request
+
+identity -> identity: Validate JWT token
+identity -> identity: Extract user ID
+
+identity -> identity: Validate scopes requested
+identity -> identity: Generate cryptographic key
+identity -> identity: Calculate key hash
+identity -> identity: Extract key prefix
+
+identity -> db: Create ApiKey record\n{userId, name, keyHash, keyPrefix, scopes}
+db --> identity: ApiKey created
+
+identity -> events: Publish ApiKeyGeneratedEvent
+
+identity --> gateway: 201 Created\n{keyId, keyPrefix, plainTextKey, scopes}
+gateway --> client: API Key generated
+
+note right of client
+  IMPORTANT: plainTextKey is only
+  returned once and cannot be
+  retrieved again
+end note
+
+== Later: API Key Usage ==
+
+client -> gateway: GET /api/some-endpoint\nX-API-Key: full-key
+gateway -> identity: Validate API key
+
+identity -> identity: Extract key prefix
+identity -> db: Find by prefix
+db --> identity: ApiKey record
+
+identity -> identity: Verify key hash
+identity -> identity: Check scopes
+identity -> identity: Check expiration
+
+identity -> db: Update lastUsedAt
+db --> identity: Updated
+
+identity --> gateway: Key valid\n{userId, scopes}
+gateway -> gateway: Route to service
+
+@enduml

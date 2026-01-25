@@ -1,0 +1,75 @@
+@startuml vehicle-aggregation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Vehicle Aggregation Flow
+
+queue "Event Bus" as events
+participant "Vehicle Aggregation" as vehicle
+database "Vehicle DB" as db
+participant "Deduplication Service" as dedup
+
+events -> vehicle: ListingCreatedEvent\n{listingId, vin, make, model, year, price, ...}
+
+alt VIN available
+    vehicle -> db: Find vehicle by VIN
+    db --> vehicle: Result
+
+    alt Vehicle exists
+        vehicle -> db: Create VehicleListing link\n{vehicleId, listingId, price, source}
+        db --> vehicle: Link created
+
+        vehicle -> vehicle: Recalculate price stats
+        note right of vehicle
+          BestPrice = MIN(all listing prices)
+          AveragePrice = AVG(all listing prices)
+          LowestPrice = MIN(historical)
+          HighestPrice = MAX(historical)
+        end note
+
+        vehicle -> db: Update Vehicle stats
+        db --> vehicle: Updated
+
+    else Vehicle not found
+        vehicle -> db: Create Vehicle\n{vin, make, model, year, ...}
+        db --> vehicle: Vehicle created
+
+        vehicle -> db: Create VehicleListing link
+        db --> vehicle: Link created
+    end
+
+else No VIN
+    vehicle -> dedup: Find potential matches\n{make, model, year, mileage}
+    dedup --> vehicle: Potential vehicle matches
+
+    alt High confidence match
+        vehicle -> db: Link to existing vehicle
+    else No match
+        vehicle -> db: Create new Vehicle\n(without VIN)
+    end
+end
+
+vehicle -> events: Publish VehicleUpdatedEvent
+
+== Duplicate Merge ==
+
+events -> vehicle: DuplicateConfirmedEvent\n{listing1Id, listing2Id}
+
+vehicle -> db: Get vehicles for both listings
+db --> vehicle: {vehicle1, vehicle2}
+
+alt Different vehicles
+    vehicle -> vehicle: Merge vehicles
+    note right of vehicle
+      1. Choose primary (with VIN)
+      2. Move listings to primary
+      3. Recalculate stats
+      4. Archive secondary
+    end note
+
+    vehicle -> db: Update vehicle records
+    db --> vehicle: Updated
+end
+
+@enduml

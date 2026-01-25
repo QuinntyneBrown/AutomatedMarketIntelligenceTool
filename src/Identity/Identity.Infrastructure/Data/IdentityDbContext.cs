@@ -1,4 +1,6 @@
 using Identity.Core;
+using Identity.Core.Models.ApiKeyAggregate;
+using Identity.Core.Models.RoleAggregate;
 using Identity.Core.Models.UserAggregate;
 using Identity.Core.Models.UserAggregate.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +22,8 @@ public sealed class IdentityDbContext : DbContext, IIdentityContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,0 +1,62 @@
+@startuml scraping-job-creation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Scraping Job Creation and Execution Flow
+
+actor "Admin/Scheduler" as admin
+participant "API Gateway" as gateway
+participant "Scraping Orchestration" as orch
+database "Scraping DB" as db
+participant "Configuration Service" as config
+queue "Event Bus" as events
+participant "Scraping Worker" as worker
+participant "Listing Service" as listing
+
+admin -> gateway: POST /api/scraping/jobs\n{sources, searchParams}
+gateway -> orch: Forward request
+
+orch -> config: Get throttle settings
+config --> orch: {maxConcurrent, rateLimit}
+
+orch -> db: Create SearchSession
+db --> orch: Session created
+
+loop For each source
+    orch -> db: Create ScrapingJob\n{sessionId, source, params}
+    db --> orch: Job created
+
+    orch -> events: Publish ScrapingJobCreatedEvent
+end
+
+orch --> gateway: 202 Accepted\n{sessionId, jobIds}
+gateway --> admin: Jobs created
+
+== Worker Processing ==
+
+events --> worker: ScrapingJobCreatedEvent
+
+worker -> worker: Initialize source scraper
+worker -> worker: Apply rate limiting
+
+loop For each page
+    worker -> worker: Scrape page
+    worker -> worker: Parse listings
+
+    loop For each listing
+        worker -> events: Publish ListingScrapedEvent
+        events --> listing: Process listing
+    end
+
+    worker -> worker: Check rate limit
+    worker -> worker: Wait if needed
+end
+
+worker -> events: Publish ScrapingJobCompletedEvent\n{listingsFound, pagesCrawled}
+
+events --> orch: ScrapingJobCompletedEvent
+orch -> db: Update job status
+orch -> db: Update session stats
+
+@enduml

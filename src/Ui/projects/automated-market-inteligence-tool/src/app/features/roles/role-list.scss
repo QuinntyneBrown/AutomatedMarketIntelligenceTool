@@ -1,0 +1,258 @@
+.role-list-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Page Header
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+
+  &__info {
+    flex: 1;
+  }
+
+  button mat-icon {
+    margin-right: var(--spacing-sm);
+  }
+}
+
+// Stats Grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.stat-card {
+  padding: var(--spacing-lg);
+  text-align: center;
+
+  &__value {
+    font-size: 32px;
+    font-weight: 300;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+
+    &--primary {
+      color: var(--primary-500);
+    }
+
+    &--warning {
+      color: var(--accent-500);
+    }
+  }
+
+  &__label {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+}
+
+// Filter Bar
+.filter-bar {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+
+  .search-field {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .filter-field {
+    min-width: 150px;
+  }
+
+  mat-form-field {
+    margin-bottom: -1.25em;
+  }
+}
+
+// Role Cards Grid
+.role-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.role-card {
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+
+  &:hover {
+    box-shadow: var(--elevation-4);
+    transform: translateY(-2px);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    background-color: var(--surface-elevated);
+  }
+
+  &__title-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  &__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__info {
+    h3 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: var(--spacing-xs);
+    }
+  }
+
+  &__content {
+    padding: var(--spacing-lg);
+  }
+
+  &__description {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+  }
+
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--surface-divider);
+  }
+
+  &__meta-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__meta-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__meta-value {
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--surface-divider);
+
+    button {
+      flex: 1;
+
+      mat-icon {
+        margin-right: var(--spacing-xs);
+      }
+    }
+  }
+}
+
+// Warn menu item
+.warn-item {
+  color: var(--warn-500);
+
+  mat-icon {
+    color: var(--warn-500);
+  }
+}
+
+// Pagination Info
+.pagination-info {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+// Responsive
+@media (max-width: 991px) {
+  .role-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .stat-card {
+    padding: var(--spacing-md);
+
+    &__value {
+      font-size: 24px;
+    }
+  }
+
+  .filter-bar {
+    flex-direction: column;
+
+    .search-field,
+    .filter-field {
+      width: 100%;
+      min-width: 100%;
+    }
+  }
+
+  .role-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .role-card {
+    &__header {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    &__meta {
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+  }
+}

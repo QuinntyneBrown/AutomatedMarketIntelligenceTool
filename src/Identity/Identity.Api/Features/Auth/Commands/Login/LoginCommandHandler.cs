@@ -1,22 +1,21 @@
-using Identity.Core;
-using Identity.Core.Models.UserAggregate.Entities;
 using Identity.Core.Models.UserAggregate.Events;
 using Identity.Core.Services;
+using Identity.Infrastructure.Data;
 using Identity.Infrastructure.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shared.Messaging.Abstractions;
+using Shared.Messaging;
 
 namespace Identity.Api.Features.Auth.Commands.Login;
 
 public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
 {
-    private readonly IIdentityContext _context;
+    private readonly IdentityDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
-    private readonly IMessagePublisher _messagePublisher;
+    private readonly IEventPublisher _eventPublisher;
     private readonly JwtOptions _jwtOptions;
     private readonly ILogger<LoginCommandHandler> _logger;
 
@@ -24,17 +23,17 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
     public LoginCommandHandler(
-        IIdentityContext context,
+        IdentityDbContext context,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
-        IMessagePublisher messagePublisher,
+        IEventPublisher eventPublisher,
         IOptions<JwtOptions> jwtOptions,
         ILogger<LoginCommandHandler> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
-        _messagePublisher = messagePublisher;
+        _eventPublisher = eventPublisher;
         _jwtOptions = jwtOptions.Value;
         _logger = logger;
     }
@@ -92,10 +91,10 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
         await _context.SaveChangesAsync(cancellationToken);
 
         // Publish event
-        await _messagePublisher.PublishAsync(new UserLoggedInEvent
+        await _eventPublisher.PublishAsync(new UserLoggedInEvent
         {
             UserId = user.UserId.ToString(),
-            LoggedInAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            LoggedInAt = DateTimeOffset.UtcNow
         }, cancellationToken);
 
         _logger.LogInformation("User logged in: {UserId}", user.UserId);
